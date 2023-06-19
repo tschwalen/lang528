@@ -1,0 +1,14 @@
+[ 
+  {
+    "name": "test1 token types only",
+    "input_file": "test1.src",
+    "type": ["lexer", "ttype only"],
+    "expected": [
+        "FUNCTION", "IDENTIFIER", "LPAREN", "RPAREN", "CONST", "IDENTIFIER",
+        "EQUALS", "INT_LITERAL", "SEMICOLON", "CONST", "IDENTIFIER", "EQUALS", 
+        "STRING_LITERAL", "SEMICOLON", "IDENTIFIER", "LPAREN", "IDENTIFIER",
+        "RPAREN", "SEMICOLON", "IDENTIFIER", "LPAREN", "IDENTIFIER", "RPAREN", 
+        "SEMICOLON", "DOT_DOT"
+    ]
+  }
+]

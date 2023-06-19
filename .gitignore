@@ -1,0 +1,22 @@
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+.cache
+
+# python stuff
+*/__pycache__/
+
+# executable name
+output
+
+# don't include third-party libraries
+include/nlohmann

@@ -1,0 +1,8 @@
+
+function main ( ) 
+  const a = 4;
+  const b = "I'm a string";
+
+  print(a);
+  print(b);
+..

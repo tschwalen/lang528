@@ -1,0 +1,12 @@
+function main ()
+    auto x = 5;
+    auto y = 6;
+
+    if true
+        x = 'yes';
+        auto x = 55;
+    ..
+
+    print(x); # should be 'yes'
+    print(y); # should be 6
+..

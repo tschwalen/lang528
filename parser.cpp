@@ -1,6 +1,10 @@
 
+#include <vector>
 
+#include <nlohmann/json.hpp>
+#include <memory>
 
+using json = nlohmann::json;
 
 // class ASTNode {
 
@@ -50,8 +54,12 @@ Node {
                                 # Or if I want to use the kind German fellow's JSON library for this.
 }
 
-
-
-
-
 */
+
+enum class NodeType {};
+
+class ASTNode {
+    NodeType type;
+    std::vector<ASTNode> children;
+    json metadata;
+};

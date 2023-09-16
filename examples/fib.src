@@ -7,7 +7,7 @@ function fibonacci ( n )
 ..
 
 function main()
-    auto i = 0; 
+    let i = 0; 
     while i < 12
         print( fibonacci (i) );
         i += 1;

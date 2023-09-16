@@ -1,15 +1,13 @@
 
+
 #include <vector>
 
 #include <nlohmann/json.hpp>
-#include <memory>
+#include "parser.h"
+#include "token.h"
 
+using std::vector;
 using json = nlohmann::json;
-
-// class ASTNode {
-
-// }
-
 
 
 /* 
@@ -56,10 +54,26 @@ Node {
 
 */
 
-enum class NodeType {};
 
-class ASTNode {
-    NodeType type;
-    std::vector<ASTNode> children;
-    json metadata;
-};
+/*
+* parse the top level of a file (variable and function definition statements)
+*/
+ASTNode top_level(ParserState ps) {
+    vector<ASTNode> children;
+    
+    while (ps.hasNext() ) {
+        
+    }
+
+
+}
+
+
+/*
+* parser entrypoint function
+*/
+ASTNode parse_tokens(vector<Token> tokens) {
+    ParserState ps {tokens};
+
+    return top_level(ps);
+}

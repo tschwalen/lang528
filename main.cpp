@@ -1,4 +1,3 @@
-#include "unittests.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -6,8 +5,10 @@
 #include <nlohmann/json.hpp>
 
 #include "lexer.h"
+#include "parser.h"
 #include "token.h"
 #include "util.h"
+#include "unittests.h"
 
 using json = nlohmann::json;
 
@@ -53,6 +54,8 @@ Options handle_commandline_args(int argc, char **argv) {
 int main(int argc, char **argv) {
   auto opts = handle_commandline_args(argc, argv);
 
+
+  // TEST ENTRYPOINT
   if (opts.test) {
     // run tests
     std::cout << "test option passed \n";
@@ -60,6 +63,7 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  // LEXER ENTRYPOINT
   if (opts.lex && !opts.input_file_path.empty()) {
     auto file_contents = UTIL::get_whole_file(opts.input_file_path);
     // std::cout << file_contents;
@@ -73,9 +77,11 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  // PARSER ENTRYPOINT
   if (opts.parse && !opts.input_file_path.empty()) {
     auto file_contents = UTIL::get_whole_file(opts.input_file_path);
     auto tokens = lex_string(file_contents);
+    auto ast = parse_tokens(tokens);
     // ... then parse them ... 
   }
 

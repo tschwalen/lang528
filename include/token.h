@@ -61,7 +61,7 @@ struct TokenMetadata {
 };
 
 struct Token {
-  TokenType type;
+  TokenType type; 
   std::variant<std::monostate, int, float, std::string, bool> value;
   TokenMetadata metadata;
 };

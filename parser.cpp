@@ -70,14 +70,25 @@ ASTNode function_declare(ParserState ps) {
     // TODO: in the future args could contain type info, default values, etc.
     vector<string> arg_names;
     if ( ps.currentTokenIs(TokenType::IDENTIFIER) ) {
-
+        // current token is an identifier 
         do {
+            // get the identifier and add it to list
             auto arg = std::get<string>(ps.currentToken().value);
             arg_names.push_back(arg);
-            ps.bumpToken()
+
+            // advance to the next token, either a comma or an rparen which closes the arg list
+            ps.bumpToken();
         } 
-        while ( ps.currentTokenIs(TokenType::COMMA) );
+
+        // TODO: there is probably a less hacky way to parse this
+        // due to short-circuiting, bumpToken() is only called if current token is comma
+        while ( ps.currentTokenIs(TokenType::COMMA) && ps.bumpToken().type != TokenType::END_OF_FILE );
     }
+
+    ps.expect(TokenType::RPAREN);
+
+    // TODO: add arg list to "data" in JSON format
+    // make the AST node, parse the body, and so on
 
 }
 

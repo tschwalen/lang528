@@ -33,6 +33,8 @@ unordered_map<string, TokenType> KEYWORDS{{"function", TokenType::FUNCTION},
                                           {"let", TokenType::LET},
                                           {"const", TokenType::CONST},
                                           {"if", TokenType::IF},
+                                          {"elseif", TokenType::ELSEIF},
+                                          {"else", TokenType::ELSE},
                                           {"while", TokenType::WHILE}};
 
 unordered_map<char, vector<pair<string, TokenType>>> SYMBOLS{

@@ -11,6 +11,8 @@ enum class TokenType {
   LET,
   CONST,
   IF,
+  ELSEIF,
+  ELSE,
   WHILE,
   // end of keywords
   IDENTIFIER,

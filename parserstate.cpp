@@ -12,10 +12,11 @@ bool ParserState::hasNext() {
 }
 
 Token ParserState::currentToken() {
+    // TODO: might need to return EOF token if out of bounds
     return this->tokens.at(this->index);
 }
 
-Token ParserState::bumpToken() {
+Token ParserState::advance() {
     auto current_token = this->currentToken();
     this->index++;
     return current_token;
@@ -23,6 +24,10 @@ Token ParserState::bumpToken() {
 
 bool ParserState::currentTokenIs(TokenType t) {
     return this->currentToken().type == t;
+}
+
+bool ParserState::currentTokenIsNot(TokenType t) {
+    return this->currentToken().type != t;
 }
 
 Token ParserState::expect(TokenType t) {

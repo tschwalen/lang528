@@ -56,9 +56,37 @@ Node {
 */
 
 
+/*
+    Parse any statement that could occur in a block:
+       - variable declaration
+       - assignments
+       - conditionals
+       - loops
+       - standalone expressions with side-effects
+*/
+ASTNode block_statement(ParserState ps) {
+
+}
+
+/*
+    Parse a block.
+
+    A block is a series of zero or more statements, and then a DOT_DOT (..) to close.
+*/
+ASTNode block(ParserState ps) {
+
+    // grab first token metadata for debug/error info
+    auto first_token_metadata = ps.currentToken().metadata;
+    
+    vector<ASTNode> children;
+    while ( ps.currentTokenIsNot(TokenType::DOT_DOT) ) {
+
+    }
+}
+
 ASTNode function_declare(ParserState ps) {
     // 'function' keyword
-    ps.expect(TokenType::FUNCTION);
+    auto first_token_metadata = ps.expect(TokenType::FUNCTION).metadata;
 
     // function name identifier
     auto fn_name = std::get<string>(ps.expect(TokenType::IDENTIFIER).value);
@@ -69,27 +97,25 @@ ASTNode function_declare(ParserState ps) {
     // parse zero or more arguments 
     // TODO: in the future args could contain type info, default values, etc.
     vector<string> arg_names;
-    if ( ps.currentTokenIs(TokenType::IDENTIFIER) ) {
-        // current token is an identifier 
-        do {
-            // get the identifier and add it to list
-            auto arg = std::get<string>(ps.currentToken().value);
-            arg_names.push_back(arg);
+    while(ps.currentTokenIsNot(TokenType::RPAREN)) {
 
-            // advance to the next token, either a comma or an rparen which closes the arg list
-            ps.bumpToken();
-        } 
+        // get token and advance
+        auto arg = std::get<string>(ps.expect(TokenType::IDENTIFIER).value);
+        arg_names.push_back(arg);
 
-        // TODO: there is probably a less hacky way to parse this
-        // due to short-circuiting, bumpToken() is only called if current token is comma
-        while ( ps.currentTokenIs(TokenType::COMMA) && ps.bumpToken().type != TokenType::END_OF_FILE );
+        // if next token is a comma, advance
+        if (ps.currentTokenIs(TokenType::COMMA)) {
+            ps.advance();
+        }
     }
 
+    // ')' (could just advance since loop above only exits once currentToken is RPAREN)
     ps.expect(TokenType::RPAREN);
 
-    // TODO: add arg list to "data" in JSON format
-    // make the AST node, parse the body, and so on
+    // parse function body
+    auto body = block(ps);
 
+    return ASTNode::makeFunctionDeclare(fn_name, arg_names, body, first_token_metadata);
 }
 
 ASTNode const_var_declare(ParserState ps) {}

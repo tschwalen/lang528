@@ -6,6 +6,9 @@
 
 #include "token.h"
 
+using std::vector;
+using std::string;
+
 enum class NodeType {
     TOP_LEVEL,
     BLOCK,
@@ -24,29 +27,34 @@ enum class NodeType {
     BASIC_LITERAL // numbers, strings, true/false, etc.
 };
 
-struct ASTNode {
+class ASTNode {
+public:
     NodeType type; 
-    std::vector<ASTNode> children;
+    vector<ASTNode> children;
     nlohmann::json data;
     TokenMetadata metadata;
+
+    // factory methods
+    static ASTNode makeFunctionDeclare(string name, vector<string> args, ASTNode body, TokenMetadata metadata);
 };
 
 class ParserState 
 {
 public:
-    std::vector<Token> tokens;
+    vector<Token> tokens;
     int index;
 
-    ParserState (std::vector<Token> tokens_, int index_=0)
+    ParserState (vector<Token> tokens_, int index_=0)
         : tokens { std::move(tokens_) }, index { index_ } {}
 
     bool hasNext();
     Token currentToken();
-    Token bumpToken();
+    Token advance();
 
     /* If current_token.type == t, return the the Token and advance */
     Token expect(TokenType t);
     bool currentTokenIs(TokenType t);
+    bool currentTokenIsNot(TokenType t);
     
     // Token peekToken(int n);
     // Token advance();
@@ -54,10 +62,10 @@ public:
     // Token matchTokenType(TokenType ttype);
     // Token matchSymbol(std::string smbl);
     // Token matchLiteral();
-    void error(std::string msg);
+    void error(string msg);
 };
 
 
 
-ASTNode parse_tokens(std::vector<Token> tokens);
+ASTNode parse_tokens(vector<Token> tokens);
 

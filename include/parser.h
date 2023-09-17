@@ -36,19 +36,25 @@ class ParserState
 public:
     std::vector<Token> tokens;
     int index;
+
     ParserState (std::vector<Token> tokens_, int index_=0)
         : tokens { std::move(tokens_) }, index { index_ } {}
 
     bool hasNext();
+    Token currentToken();
+    Token bumpToken();
 
-    // Token currentToken();
+    /* If current_token.type == t, return the the Token and advance */
+    Token expect(TokenType t);
+    bool currentTokenIs(TokenType t);
+    
     // Token peekToken(int n);
     // Token advance();
     // Token matchKeyword(std::string kwrd);
     // Token matchTokenType(TokenType ttype);
     // Token matchSymbol(std::string smbl);
     // Token matchLiteral();
-    // void  parsingError();
+    void error(std::string msg);
 };
 
 

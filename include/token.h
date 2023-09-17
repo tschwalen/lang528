@@ -17,6 +17,7 @@ enum class TokenType {
   // symbols and operators
   DOT,            // .
   DOT_DOT,        // ..
+  COMMA,          // ,
   EQUALS,         // =
   EQUALS_EQUALS,  // ==
   NOT,            // !

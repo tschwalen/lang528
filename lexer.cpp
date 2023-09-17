@@ -42,6 +42,7 @@ unordered_map<char, vector<pair<string, TokenType>>> SYMBOLS{
     {'<', {{"<", TokenType::LESS}, {"<=", TokenType::LESS_EQUALS}}},
     {'>', {{">", TokenType::GREATER}, {">=", TokenType::GREATER_EQUALS}}},
     {'+', {{"+", TokenType::PLUS}, {"+=", TokenType::PLUS_EQUALS}}},
+    {',', {{",", TokenType::COMMA}}},
     {'&', {{"&", TokenType::AND}}},
     {'|', {{"|", TokenType::OR}}},
     {'-', {{"-", TokenType::MINUS}, {"-=", TokenType::MINUS_EQUALS}}},

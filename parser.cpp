@@ -7,6 +7,7 @@
 #include "token.h"
 
 using std::vector;
+using std::string;
 using json = nlohmann::json;
 
 
@@ -55,6 +56,34 @@ Node {
 */
 
 
+ASTNode function_declare(ParserState ps) {
+    // 'function' keyword
+    ps.expect(TokenType::FUNCTION);
+
+    // function name identifier
+    auto fn_name = std::get<string>(ps.expect(TokenType::IDENTIFIER).value);
+
+    // '('
+    ps.expect(TokenType::LPAREN);
+
+    // parse zero or more arguments 
+    // TODO: in the future args could contain type info, default values, etc.
+    vector<string> arg_names;
+    if ( ps.currentTokenIs(TokenType::IDENTIFIER) ) {
+
+        do {
+            auto arg = std::get<string>(ps.currentToken().value);
+            arg_names.push_back(arg);
+            ps.bumpToken()
+        } 
+        while ( ps.currentTokenIs(TokenType::COMMA) );
+    }
+
+}
+
+ASTNode const_var_declare(ParserState ps) {}
+ASTNode let_var_declare(ParserState ps) {}
+
 /*
 * parse the top level of a file (variable and function definition statements)
 */
@@ -62,7 +91,31 @@ ASTNode top_level(ParserState ps) {
     vector<ASTNode> children;
     
     while (ps.hasNext() ) {
-        
+        ASTNode child;
+
+        auto currentToken= ps.currentToken();
+        switch(currentToken.type) {
+            case TokenType::CONST:
+            {
+                child = const_var_declare(ps);
+                break;
+            }
+            case TokenType::LET:
+            {
+                child = let_var_declare(ps);
+                break;
+            }
+            case TokenType::FUNCTION:
+            {
+                child = function_declare(ps);
+                break;
+            }
+            default:
+            {
+                // TODO: complain
+            }
+        }
+        children.push_back(child);
     }
 
 

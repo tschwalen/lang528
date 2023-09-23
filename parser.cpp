@@ -11,50 +11,98 @@ using std::string;
 using json = nlohmann::json;
 
 
-/* 
+ASTNode const_var_declare(ParserState ps) {}
 
-Use this space for planning first. Need to decide on data representation of the AST. Using OO kind of sucks with
-C++, last time I wrote a parser that used a unique class for each AST node type with a base class to enable polymorphism,
-I really wasn't happy with the inflexibility...
+ASTNode let_var_declare(ParserState ps) {}
 
-So instead I propose something like this: ( I experimented with this approach in flexcomp as well)
+ASTNode if_block(ParserState ps);
 
-Node {
-    type: Enum;                 # not sure how fine-grained I want to be with type. Could be like "UnaryOp, BinaryOp, AssignOp, etc."
-                                # or could be as specific as ADD, MULTIPLY, INCREMENT, etc.
+ASTNode while_loop(ParserState ps);
 
-    children: [Node]            # either a vector or map of nodes (or a pointer to one for better memory usage)
-                                # This provides great flexibility, since you can make assumptions about order, number, and so on.
-                                # For example, in binary operations, you can say the first arg is the left operand, and the second one
-                                # is the right.
-                                # 
-                                # Also usable for stuff like if/else
+ASTNode return_statement(ParserState ps);
 
-    metadata: {string -> ?}     # this gets interesting since we already store metadata for tokens about position in the file.
-                                #  
-                                # In my previous attemps to represent AST nodes with this sort of schema, I've also kept a 
-                                # 'metadata' entry, which stores information needed for interpretation or codegen, like 
-                                # function name for a function declare, argument names for for a function declare, variable 
-                                # name for a variable lookup and so on.
-                                #
-                                # Furthermore, I did this in python where it's very easy to have a dict whose values could
-                                # be strings, integers, a vector of strings, and so on.
-                                #
-                                # So I have to think about whether I want to structure this as:
-                                #
-                                #   unordered_map<
-                                #        string, 
-                                #        MetadataEntry { 
-                                #            type: string | string_vector, 
-                                #            value: variant<string, vector<string>>
-                                #        }
-                                #    >
-                                #
-                                # Or if I want to use the kind German fellow's JSON library for this.
+vector<ASTNode> expr_list(ParserState ps);
+
+ASTNode unary_op(ParserState ps);
+
+ASTNode binary_op(ParserState ps);
+
+ASTNode expr(ParserState ps);
+
+ASTNode basic_literal(ParserState ps);
+
+ASTNode vector_literal(ParserState ps) {
+    auto first_token_metadata = ps.currentToken().metadata;
+    // '['
+    ps.expect(TokenType::LBRACKET);
+    
+    vector<ASTNode> elements;
+    if(ps.currentTokenIsNot(TokenType::RBRACKET)) {
+        elements = expr_list(ps);
+        ps.expect(TokenType::RBRACKET);
+    }
+    else {
+        ps.advance();
+    }
+    
+    return ASTNode::makeVectorLiteral(elements, first_token_metadata);
 }
 
-*/
+ASTNode primary_expr(ParserState ps) {
+    auto current_token = ps.currentToken(); 
+    auto first_token_metadata = current_token.metadata;
+    auto current_token_type = current_token.type;
 
+    // parse vector literals and unary operators
+    switch (current_token_type) {
+        case TokenType::LBRACKET:
+            return vector_literal(ps); 
+        case TokenType::NOT:
+        case TokenType::MINUS:
+            return unary_op(ps);
+        default: break;
+    }
+
+    // next, try to parse identifiers and parenthesized expressions
+    ASTNode primary;
+    if ( current_token_type == TokenType::LPAREN ) {
+        ps.advance();
+        primary = expr(ps);
+        ps.expect(TokenType::RPAREN);
+    }
+    else if ( current_token_type == TokenType::IDENTIFIER ) {
+        auto identifier = std::get<string>(current_token.value);
+        primary = ASTNode::makeVarLookup(identifier, first_token_metadata);
+        ps.advance();
+    }
+    else {
+        return basic_literal(ps);
+    }
+
+    // check if identifier or parenthesized expr is follow by function call parens or index brackets
+    if ( ps.currentTokenIs(TokenType::LPAREN) ) {
+        ps.advance();
+
+        vector<ASTNode> arg_exprs;
+        if (ps.currentTokenIsNot(TokenType::RPAREN)) {
+            arg_exprs = expr_list(ps); 
+            ps.expect(TokenType::RPAREN); 
+        }
+        else {
+            ps.advance();
+        }
+
+        primary = ASTNode::makeFunctionCall(primary, arg_exprs, first_token_metadata);
+    }
+    else if (ps.currentTokenIs(TokenType::LBRACKET)) {
+        ps.advance();
+        auto index_expr = expr(ps);
+        ps.expect(TokenType::RBRACKET);
+        primary = ASTNode::makeIndexAccess(primary, index_expr, first_token_metadata);
+    }
+
+    return primary;
+}
 
 /*
     Parse any statement that could occur in a block:
@@ -64,7 +112,49 @@ Node {
        - loops
        - standalone expressions with side-effects
 */
-ASTNode block_statement(ParserState ps) {
+ASTNode statement(ParserState ps) {
+    // If we encounter an identifier, this might be an assignment or a standalone function call
+    /*
+        e.g
+
+        just_a_var = 5 + x;
+
+        an_array[x] = 5;
+
+        a_function(x, y, z);
+
+        an_object.something = 5;
+        
+        etc.
+
+        TODO: handle simple and array/object assignment, as well as standalone function calls
+    */
+
+    auto current_token_type = ps.currentToken().type;
+    if ( current_token_type == TokenType::IDENTIFIER ) {
+        auto lvalue = primary_expr(ps);
+
+        // if next token is a semicolon then we're done...
+
+        // if it's an assignment-like operator, then we do an assignment
+    }
+
+
+    switch(ps.currentToken().type) {
+        case TokenType::LET:  
+            return let_var_declare(ps);
+        case TokenType::CONST:
+            return const_var_declare(ps);
+        case TokenType::WHILE:
+            return while_loop(ps);
+        case TokenType::RETURN:
+            return return_statement(ps);
+        default:
+        {
+            // TODO: complain 
+        }
+    }
+
 
 }
 
@@ -78,10 +168,13 @@ ASTNode block(ParserState ps) {
     // grab first token metadata for debug/error info
     auto first_token_metadata = ps.currentToken().metadata;
     
-    vector<ASTNode> children;
+    vector<ASTNode> statements;
     while ( ps.currentTokenIsNot(TokenType::DOT_DOT) ) {
-
+        auto stmt = statement(ps);
+        statements.push_back(stmt);
     }
+
+    return ASTNode::makeBlock(statements, first_token_metadata);
 }
 
 ASTNode function_declare(ParserState ps) {
@@ -118,8 +211,6 @@ ASTNode function_declare(ParserState ps) {
     return ASTNode::makeFunctionDeclare(fn_name, arg_names, body, first_token_metadata);
 }
 
-ASTNode const_var_declare(ParserState ps) {}
-ASTNode let_var_declare(ParserState ps) {}
 
 /*
 * parse the top level of a file (variable and function definition statements)

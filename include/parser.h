@@ -32,10 +32,16 @@ public:
     NodeType type; 
     vector<ASTNode> children;
     nlohmann::json data;
-    TokenMetadata metadata;
+    // TODO: could stick metadata directly into data json?
+    TokenMetadata metadata; 
 
     // factory methods
     static ASTNode makeFunctionDeclare(string name, vector<string> args, ASTNode body, TokenMetadata metadata);
+    static ASTNode makeBlock(vector<ASTNode> statements, TokenMetadata metadata);
+    static ASTNode makeVectorLiteral(vector<ASTNode> elements, TokenMetadata metadata);
+    static ASTNode makeVarLookup(string identifier, TokenMetadata metadata);
+    static ASTNode makeFunctionCall(ASTNode lvalue_expr, vector<ASTNode> arg_exprs, TokenMetadata metadata);
+    static ASTNode makeIndexAccess(ASTNode lvalue_expr, ASTNode index_expr, TokenMetadata metadata);
 };
 
 class ParserState 

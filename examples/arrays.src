@@ -1,0 +1,12 @@
+
+function main ()
+  const a = 5;
+  const b = 3;
+
+
+  const x = [1, a, a + b];
+
+  print( x[1] );
+  print( x[2] );
+  print( x[3] );
+..

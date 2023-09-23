@@ -14,6 +14,7 @@ enum class TokenType {
   ELSEIF,
   ELSE,
   WHILE,
+  RETURN,
   // end of keywords
   IDENTIFIER,
   // symbols and operators

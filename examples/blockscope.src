@@ -1,10 +1,10 @@
 function main ()
-    auto x = 5;
-    auto y = 6;
+    let x = 5;
+    let y = 6;
 
     if true
         x = 'yes';
-        auto x = 55;
+        let x = 55;
     ..
 
     print(x); # should be 'yes'

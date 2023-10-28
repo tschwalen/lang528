@@ -186,3 +186,65 @@ void from_json(const json &j, Token &t) {
 /////////////////////////////////////////////////////////////////
 // END OF json conversion methods
 //////////////////////////////////////////////////////////////////
+
+/*
+  Returns true if the passed token type is a binary operator
+*/
+bool is_binary_op(TokenType tt) {
+  return ( tt == TokenType::GREATER_EQUALS
+        || tt == TokenType::EQUALS_EQUALS
+        || tt == TokenType::LESS_EQUALS
+        || tt == TokenType::NOT_EQUALS
+        || tt == TokenType::GREATER
+        || tt == TokenType::MINUS
+        || tt == TokenType::TIMES
+        || tt == TokenType::LESS
+        || tt == TokenType::PLUS
+        || tt == TokenType::DIV
+        || tt == TokenType::MOD
+        || tt == TokenType::AND
+        || tt == TokenType::OR 
+
+        // not infix operators in the traditional sense, but still binary ops
+        || tt == TokenType::LBRACKET // "[]", index
+        || tt == TokenType::LPAREN // "()", function call 
+        || tt == TokenType::DOT   // ".field", struct/class access
+  );
+}
+
+int op_precedence(TokenType tt) {
+  switch (tt) {
+    case TokenType::LBRACKET:
+    case TokenType::LPAREN:
+    case TokenType::DOT:
+      return 10;
+
+    case TokenType::TIMES:
+    case TokenType::MOD:
+    case TokenType::DIV:
+      return 9;
+
+    case TokenType::MINUS:
+    case TokenType::PLUS:
+      return 8;
+
+    case TokenType::GREATER_EQUALS:
+    case TokenType::LESS_EQUALS:
+    case TokenType::GREATER:
+    case TokenType::LESS:
+      return 7;
+
+    case TokenType::EQUALS_EQUALS:
+    case TokenType::NOT_EQUALS:
+      return 6;
+
+    case TokenType::AND:
+      return 5;
+
+    case TokenType::OR:
+      return 4;
+
+    default: break;
+  }
+  return -1;
+}

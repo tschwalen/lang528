@@ -70,6 +70,10 @@ struct Token {
   TokenMetadata metadata;
 };
 
+bool is_binary_op(TokenType tt);
+
+int op_precedence(TokenType tt);
+
 std::string token_type_to_string(TokenType tt);
 
 void to_json(nlohmann::json &j, const TokenMetadata &tm);

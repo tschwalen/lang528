@@ -48,7 +48,67 @@ ASTNode vector_literal(ParserState ps) {
     return ASTNode::makeVectorLiteral(elements, first_token_metadata);
 }
 
+
+
+ASTNode primary_prime(ParserState ps) {
+    // primary ::= '(' expression ')' | NUMBER | VARIABLE | '-' primary
+    
+    
+    // primary ::= '(' expression ')' | LITERAL | '-/!' primary
+    // https://en.wikipedia.org/wiki/Operator-precedence_parser
+    auto current_token = ps.currentToken(); 
+
+    // parenthesized expr
+    if (ps.currentTokenIs(TokenType::LPAREN)) {
+        ps.advance();
+        auto primary = expr(ps);
+        ps.expect(TokenType::RPAREN);
+        return primary;
+    }
+    // unary - or ! 
+    else if (ps.currentTokenIs(TokenType::MINUS) || ps.currentTokenIs(TokenType::NOT)) {
+        return unary_op(ps);
+    }
+    // vector literal
+    else if (ps.currentTokenIs(TokenType::LBRACKET)) {
+        return vector_literal(ps); 
+    }
+    else if (ps.currentTokenIs(TokenType::IDENTIFIER)) {
+        auto identifier = std::get<string>(current_token.value);
+        auto primary = ASTNode::makeVarLookup(identifier, current_token.metadata);
+        ps.advance(); 
+        return primary;
+    }
+
+    // all other literals (number, string, bool)
+    return basic_literal(ps);
+}
+
+ASTNode expr_helper(ParserState ps, ASTNode lhs, int min_precedence=0) {
+
+    while( is_binary_op(ps.currentToken().type) && 
+          (op_precedence(ps.currentToken().type) >= min_precedence)
+    ) {
+        auto op = ps.advance().type;
+        auto rhs = primary_prime(ps);
+
+        /*
+        while lookahead is a binary operator whose precedence is greater
+                 than op's, or a right-associative operator
+                 whose precedence is equal to op's
+        */
+    }
+}
+
+ASTNode expr(ParserState ps) {
+    return expr_helper(ps, primary_prime(ps));
+}
+
 ASTNode primary_expr(ParserState ps) {
+    // TODO:
+    // restructure this into proper operator precedence parsing
+
+
     auto current_token = ps.currentToken(); 
     auto first_token_metadata = current_token.metadata;
     auto current_token_type = current_token.type;
@@ -79,7 +139,7 @@ ASTNode primary_expr(ParserState ps) {
         return basic_literal(ps);
     }
 
-    // check if identifier or parenthesized expr is follow by function call parens or index brackets
+    // check if identifier or parenthesized expr is follow by function call parens, index brackets, or a dot field access
     if ( ps.currentTokenIs(TokenType::LPAREN) ) {
         ps.advance();
 
@@ -99,6 +159,10 @@ ASTNode primary_expr(ParserState ps) {
         auto index_expr = expr(ps);
         ps.expect(TokenType::RBRACKET);
         primary = ASTNode::makeIndexAccess(primary, index_expr, first_token_metadata);
+    }
+    else if (ps.currentTokenIs(TokenType::DOT)) {
+        ps.advance();
+
     }
 
     return primary;

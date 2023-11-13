@@ -14,6 +14,10 @@ ASTNode expr(ParserState ps);
 
 ASTNode primary_prime(ParserState ps);
 
+ASTNode block(ParserState ps);
+
+ASTNode statement(ParserState ps);
+
 ASTNode const_var_declare(ParserState ps) {
     assert(ps.currentTokenIs(TokenType::CONST));
     
@@ -46,9 +50,46 @@ ASTNode let_var_declare(ParserState ps) {
     return ASTNode::makeLetDeclare(id_name, rhs);
 }
 
-ASTNode if_block(ParserState ps);
+ASTNode if_block(ParserState ps) {
+    assert(ps.currentTokenIs(TokenType::IF) || ps.currentTokenIs(TokenType::ELSEIF));
+    // advance over the if/elseif but keep the metadata 
+    auto metadata = ps.advance().metadata;
+    auto condition = expr(ps);
+    
+    auto body_metadata = ps.currentToken().metadata;
+    vector<ASTNode> statements;
+    while ( ps.currentTokenIsNot(TokenType::DOT_DOT) && 
+	    ps.currentTokenIsNot(TokenType::ELSEIF) && 
+	    ps.currentTokenIsNot(TokenType::ELSE) ) {
+        auto stmt = statement(ps);
+        statements.push_back(stmt);
+    }
 
-ASTNode while_loop(ParserState ps);
+    auto body = ASTNode::makeBlock(statements, body_metadata);
+    
+    if ( ps.currentTokenIs(TokenType::DOT_DOT) ) {
+	return ASTNode::makeIf(condition, body, metadata); 
+    }
+    
+    // otherwise, handle and if/elseif block
+    ASTNode else_body;
+    if ( ps.currentTokenIs(TokenType:ELSEIF) ) {
+	// elseif is basically just another if, but with a different keyword
+	else_body = if_block(ps);
+    }
+    else {
+	else_body = block(ps);
+    }
+
+    return ASTNode::makeIfElse(condition, body, else_body, metadata);
+}
+
+ASTNode while_loop(ParserState ps) {
+    auto metadata = ps.expect(TokenType::WHILE).metadata;
+    auto condition = expr(ps);
+    auto body = block(ps);
+    return ASTNode::makeWhile(condition, body, metadata);
+}
 
 ASTNode return_statement(ParserState ps);
 
@@ -168,11 +209,11 @@ ASTNode expr_helper(ParserState ps, ASTNode lhs, int min_precedence=0) {
             auto new_precedence = ( binop_case ? binary_op_precedence(op) + 1 : 0 );
 
             rhs = expr_helper(ps, rhs, new_precedence);
-            
+
             lookahead = ps.currentToken().type;
         }
 
-        // just have "make binary op" handle the
+        // just have "make binary op" handle the function call and index access
         lhs = ASTNode::makeBinaryOp(op, lhs, rhs,  op_token.metadata);
     }
     return lhs;
@@ -191,27 +232,10 @@ ASTNode expr(ParserState ps) {
        - standalone expressions with side-effects
 */
 ASTNode statement(ParserState ps) {
-    // If we encounter an identifier, this might be an assignment or a standalone function call
-    /*
-        e.g
-
-        just_a_var = 5 + x;
-
-        an_array[x] = 5;
-
-        a_function(x, y, z);
-
-        an_object.something = 5;
-        
-        etc.
-
-        ~TODO: handle simple and array/object assignment, as well as standalone function calls~
-        I think expr handles this?
-    */
-
     switch(ps.currentToken().type) {
         case TokenType::IDENTIFIER:
         {
+            // If we encounter an identifier, this might be an assignment or a standalone function call
             auto result = expr(ps);
 
             // if next token is an assignment-like operator, then we do an assignment
@@ -232,6 +256,8 @@ ASTNode statement(ParserState ps) {
             return const_var_declare(ps);
         case TokenType::WHILE:
             return while_loop(ps);
+        case TokenType::IF:
+            return if_block(ps);
         case TokenType::RETURN:
             return return_statement(ps);
         default:
@@ -239,8 +265,6 @@ ASTNode statement(ParserState ps) {
             // TODO: complain 
         }
     }
-
-
 }
 
 /*
@@ -273,7 +297,7 @@ ASTNode function_declare(ParserState ps) {
     ps.expect(TokenType::LPAREN);
 
     // parse zero or more arguments 
-    // TODO: in the future args could contain type info, default values, etc.
+    // NOTE: in the future args could contain type info, default values, etc.
     vector<string> arg_names;
     while(ps.currentTokenIsNot(TokenType::RPAREN)) {
 

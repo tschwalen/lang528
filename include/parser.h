@@ -42,6 +42,7 @@ public:
     static ASTNode makeLetDeclare(string name, ASTNode rhs);
     static ASTNode makeConstDeclare(string name, ASTNode rhs);
     static ASTNode makeBlock(vector<ASTNode> statements, TokenMetadata metadata);
+    static ASTNode makeWhile(ASTNode condition, ASTNode body,  TokenMetadata metadata);
     static ASTNode makeVectorLiteral(vector<ASTNode> elements, TokenMetadata metadata);
     static ASTNode makeVarLookup(string identifier, TokenMetadata metadata);
     static ASTNode makeFunctionCall(ASTNode lvalue_expr, vector<ASTNode> arg_exprs, TokenMetadata metadata);

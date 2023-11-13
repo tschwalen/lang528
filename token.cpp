@@ -12,7 +12,8 @@ using std::string;
 using std::vector;
 
 // stupid methods I have to write because enum classes aren't that good
-
+// TODO: codegen this, or find something that does these enum to string
+// conversions automatically.
 string token_type_to_string(TokenType tt) {
   vector<string> entries{"FUNCTION",
                          "LET",
@@ -205,19 +206,43 @@ bool is_binary_op(TokenType tt) {
         || tt == TokenType::AND
         || tt == TokenType::OR 
 
-        // not infix operators in the traditional sense, but still binary ops
-        || tt == TokenType::LBRACKET // "[]", index
+        // not infix 'operators' in the traditional sense, but still binary ops
+        || tt == TokenType::LBRACKET // "[]", index/subscript access
         || tt == TokenType::LPAREN // "()", function call 
         || tt == TokenType::DOT   // ".field", struct/class access
   );
 }
 
-int op_precedence(TokenType tt) {
+/*
+  Returns true if the passed token type is a right-associative operator
+  TODO: consider if this logic is just "is unary op"
+*/
+bool is_right_assoc_op(TokenType tt) {
+  return tt == TokenType::MINUS || tt ==TokenType::NOT;  
+}
+
+bool is_assign_op(TokenType tt ) {
+  return tt == TokenType::EQUALS 
+      || tt == TokenType::PLUS_EQUALS
+      || tt == TokenType::MINUS_EQUALS
+      || tt == TokenType::TIMES_EQUALS
+      || tt == TokenType::DIV_EQUALS
+      || tt == TokenType::MOD_EQUALS;
+}
+
+
+// TODO: replace these magic numbers with a better system for 
+//        setting op precedence in one place
+int unary_op_precedence(TokenType tt) {
+  return is_right_assoc_op(tt) ? 11 : -1;
+}
+
+int binary_op_precedence(TokenType tt) {
   switch (tt) {
     case TokenType::LBRACKET:
     case TokenType::LPAREN:
     case TokenType::DOT:
-      return 10;
+      return 12;
 
     case TokenType::TIMES:
     case TokenType::MOD:

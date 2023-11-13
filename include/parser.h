@@ -22,6 +22,7 @@ enum class NodeType {
     FUNC_CALL, 
     INDEX_ACCESS, // e.g. "sub" X[Y]
     VAR_LOOKUP,
+    EXPR_LIST, 
 
     VEC_LITERAL, // e.g. brackets, which can contain sub-expressions
     BASIC_LITERAL // numbers, strings, true/false, etc.
@@ -35,13 +36,20 @@ public:
     // TODO: could stick metadata directly into data json?
     TokenMetadata metadata; 
 
-    // factory methods
+    // factory methods TODO: implement
+    static ASTNode makeTopLevel(vector<ASTNode> statements, TokenMetadata metadata);
     static ASTNode makeFunctionDeclare(string name, vector<string> args, ASTNode body, TokenMetadata metadata);
+    static ASTNode makeLetDeclare(string name, ASTNode rhs);
+    static ASTNode makeConstDeclare(string name, ASTNode rhs);
     static ASTNode makeBlock(vector<ASTNode> statements, TokenMetadata metadata);
     static ASTNode makeVectorLiteral(vector<ASTNode> elements, TokenMetadata metadata);
     static ASTNode makeVarLookup(string identifier, TokenMetadata metadata);
     static ASTNode makeFunctionCall(ASTNode lvalue_expr, vector<ASTNode> arg_exprs, TokenMetadata metadata);
+    static ASTNode makeExprList(vector<ASTNode> arg_exprs, TokenMetadata metadata);
     static ASTNode makeIndexAccess(ASTNode lvalue_expr, ASTNode index_expr, TokenMetadata metadata);
+    static ASTNode makeBinaryOp(TokenType op, ASTNode lhs_expr, ASTNode rhs_expr, TokenMetadata metadata);
+    static ASTNode makeUnaryOp(TokenType op, ASTNode expr, TokenMetadata metadata);
+    static ASTNode makeAssignOp(TokenType op, ASTNode lhs_expr, ASTNode rhs_expr, TokenMetadata metadata);
 };
 
 class ParserState 

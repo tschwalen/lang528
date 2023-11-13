@@ -72,7 +72,13 @@ struct Token {
 
 bool is_binary_op(TokenType tt);
 
-int op_precedence(TokenType tt);
+int binary_op_precedence(TokenType tt);
+
+bool is_right_assoc_op(TokenType tt);
+
+int unary_op_precedence(TokenType tt);
+
+bool is_assign_op(TokenType tt );
 
 std::string token_type_to_string(TokenType tt);
 

@@ -49,5 +49,6 @@ Token ParserState::expect(TokenType t) {
 }
 
 void ParserState::error(string msg) {
+    std::cerr << msg;
     exit(1);
 }

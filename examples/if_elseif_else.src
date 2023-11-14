@@ -14,7 +14,7 @@ function test1( a, b )
 ..
 
 
-function test2( a )
+function test2( a ) 
   if ( a == 5 )
     print( "a is 5!" );
   ..
@@ -29,7 +29,7 @@ function test3 ( a )
   else 
     print ( "I don't think a is 5" );
   ..
-
+..
 
 function main ()
   test1(5, 6);

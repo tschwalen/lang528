@@ -25,7 +25,14 @@ enum class NodeType {
     EXPR_LIST, 
 
     VEC_LITERAL, // e.g. brackets, which can contain sub-expressions
-    BASIC_LITERAL // numbers, strings, true/false, etc.
+    BOOL_LITERAL,
+    INT_LITERAL,
+    FLOAT_LITERAL,
+    STRING_LITERAL,
+
+    // DELETE IF UNUSED
+    BASIC_LITERAL,  // numbers, strings, true/false, etc.
+
 };
 
 class ASTNode {
@@ -43,6 +50,8 @@ public:
     static ASTNode makeConstDeclare(string name, ASTNode rhs);
     static ASTNode makeBlock(vector<ASTNode> statements, TokenMetadata metadata);
     static ASTNode makeWhile(ASTNode condition, ASTNode body,  TokenMetadata metadata);
+    static ASTNode makeIf(ASTNode condition, ASTNode body,  TokenMetadata metadata);
+    static ASTNode makeIfElse(ASTNode condition, ASTNode body, ASTNode else_body,  TokenMetadata metadata);
     static ASTNode makeVectorLiteral(vector<ASTNode> elements, TokenMetadata metadata);
     static ASTNode makeVarLookup(string identifier, TokenMetadata metadata);
     static ASTNode makeFunctionCall(ASTNode lvalue_expr, vector<ASTNode> arg_exprs, TokenMetadata metadata);
@@ -51,6 +60,12 @@ public:
     static ASTNode makeBinaryOp(TokenType op, ASTNode lhs_expr, ASTNode rhs_expr, TokenMetadata metadata);
     static ASTNode makeUnaryOp(TokenType op, ASTNode expr, TokenMetadata metadata);
     static ASTNode makeAssignOp(TokenType op, ASTNode lhs_expr, ASTNode rhs_expr, TokenMetadata metadata);
+    static ASTNode makeReturn(ASTNode value, TokenMetadata metadata);
+    static ASTNode makeLiteral(string value, TokenMetadata metadata);
+    static ASTNode makeLiteral(int value, TokenMetadata metadata);
+    static ASTNode makeLiteral(float value, TokenMetadata metadata);
+    static ASTNode makeLiteral(bool value, TokenMetadata metadata);
+    static ASTNode nothing();
 };
 
 class ParserState 

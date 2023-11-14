@@ -9,6 +9,8 @@ using std::string;
 using json = nlohmann::json;
 
 // TODO: move any redundant forward-declares here into .h
+// ... or don't? We don't really need to expose stuff in the 
+// header that's not used outside of this file.
 
 ASTNode expr(ParserState ps);
 
@@ -68,17 +70,17 @@ ASTNode if_block(ParserState ps) {
     auto body = ASTNode::makeBlock(statements, body_metadata);
     
     if ( ps.currentTokenIs(TokenType::DOT_DOT) ) {
-	return ASTNode::makeIf(condition, body, metadata); 
+	    return ASTNode::makeIf(condition, body, metadata); 
     }
     
     // otherwise, handle and if/elseif block
     ASTNode else_body;
-    if ( ps.currentTokenIs(TokenType:ELSEIF) ) {
-	// elseif is basically just another if, but with a different keyword
-	else_body = if_block(ps);
+    if ( ps.currentTokenIs(TokenType::ELSEIF) ) {
+        // elseif is basically just another if, but with a different keyword
+        else_body = if_block(ps);
     }
     else {
-	else_body = block(ps);
+        else_body = block(ps);
     }
 
     return ASTNode::makeIfElse(condition, body, else_body, metadata);
@@ -91,9 +93,20 @@ ASTNode while_loop(ParserState ps) {
     return ASTNode::makeWhile(condition, body, metadata);
 }
 
-ASTNode return_statement(ParserState ps);
+ASTNode return_statement(ParserState ps) {
+    auto metadata = ps.expect(TokenType::RETURN).metadata;
+    auto value = expr(ps);
+    ps.expect(TokenType::SEMICOLON);
+    return ASTNode::makeReturn(value, metadata);
+}
 
-vector<ASTNode> expr_list(ParserState ps);
+vector<ASTNode> expr_list(ParserState ps) {
+    vector<ASTNode> exprs;
+    do {
+        exprs.push_back(expr(ps));
+    } while (ps.currentTokenIs(TokenType::COMMA));
+    return exprs;
+}
 
 ASTNode unary_op(ParserState ps) {
     // current token is a unary op
@@ -104,11 +117,34 @@ ASTNode unary_op(ParserState ps) {
     return ASTNode::makeUnaryOp(op_token.type, expr, op_token.metadata);
 }
 
-// Seems unused, delete if so
-ASTNode binary_op(ParserState ps); 
-
-
-ASTNode basic_literal(ParserState ps);
+ASTNode basic_literal(ParserState ps) {
+    auto current_token = ps.currentToken();
+    switch (current_token.type) {
+        case TokenType::BOOL_LITERAL:
+            return ASTNode::makeLiteral(
+                std::get<bool>(current_token.value),
+                current_token.metadata
+            );
+        case TokenType::FLOAT_LITERAL:
+            return ASTNode::makeLiteral(
+                std::get<float>(current_token.value),
+                current_token.metadata
+            );
+        case TokenType::INT_LITERAL:
+            return ASTNode::makeLiteral(
+                std::get<int>(current_token.value),
+                current_token.metadata
+            );
+        case TokenType::STRING_LITERAL:
+            return ASTNode::makeLiteral(
+                std::get<string>(current_token.value),
+                current_token.metadata
+            );
+        default: break;
+    }
+    ps.error("Expected literal, got something else");
+    return ASTNode::nothing();
+}
 
 ASTNode vector_literal(ParserState ps) {
     auto first_token_metadata = ps.currentToken().metadata;
@@ -127,13 +163,8 @@ ASTNode vector_literal(ParserState ps) {
     return ASTNode::makeVectorLiteral(elements, first_token_metadata);
 }
 
-
-
 ASTNode primary_prime(ParserState ps) {
-    // primary ::= '(' expression ')' | NUMBER | VARIABLE | '-' primary
-     
-    
-    // primary ::= '(' expression ')' | LITERAL | '-/!' primary
+    // primary ::= '(' expression ')' | LITERAL | VARIABLE | '-/!' primary
     // https://en.wikipedia.org/wiki/Operator-precedence_parser
     auto current_token = ps.currentToken(); 
 
@@ -260,11 +291,10 @@ ASTNode statement(ParserState ps) {
             return if_block(ps);
         case TokenType::RETURN:
             return return_statement(ps);
-        default:
-        {
-            // TODO: complain 
-        }
+        default: break;
     }
+    ps.error("Expected start of statement, got something else");
+    return ASTNode::nothing();
 }
 
 /*
@@ -350,7 +380,7 @@ ASTNode top_level(ParserState ps) {
             }
             default:
             {
-                // TODO: complain
+                ps.error("Expected top level statement, got something else");
             }
         }
         children.push_back(child);
@@ -369,11 +399,9 @@ ASTNode parse_tokens(vector<Token> tokens) {
     return top_level(ps);
 }
 
-
+// UNUSED: replaced with primary_prime()
+// delete once we confirm that things work 
 ASTNode primary_expr(ParserState ps) {
-    // UNUSED: replaced with primary_prime()
-    // delete once we confirm that things work 
-
     auto current_token = ps.currentToken(); 
     auto first_token_metadata = current_token.metadata;
     auto current_token_type = current_token.type;

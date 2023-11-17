@@ -155,6 +155,9 @@ ASTNode vector_literal(ParserState &ps) {
 }
 
 ASTNode primary_prime(ParserState &ps) {
+  // Tries to use a standard operator precedence parsing algorithm.
+  // Not certain if this implementation is correct, needs more testing.
+  //
   // primary ::= '(' expression ')' | LITERAL | VARIABLE | '-/!' primary
   // https://en.wikipedia.org/wiki/Operator-precedence_parser
   auto current_token = ps.currentToken();
@@ -219,12 +222,8 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
     /*
     while lookahead is a binary operator whose precedence is greater than op's,
         or a right-associative operator whose precedence is equal to op's */
-    auto binop_case =
-        is_binary_op(lookahead) &&
-        (binary_op_precedence(lookahead) > binary_op_precedence(op));
-    auto unop_case =
-        is_right_assoc_op(lookahead) &&
-        (unary_op_precedence(lookahead) == unary_op_precedence(op));
+    auto binop_case = binary_precedence_test(op, lookahead);
+    auto unop_case = unary_precedence_test(op, lookahead);
     while (binop_case || unop_case) {
       // rhs := parse_expression_1 (rhs, precedence of op + (1 if lookahead
       // precedence is greater, else 0))
@@ -234,13 +233,8 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
 
       lookahead = ps.currentToken().type;
 
-      // TODO: make this less terrible with helper functions or something
-      binop_case =
-        is_binary_op(lookahead) &&
-        (binary_op_precedence(lookahead) > binary_op_precedence(op));
-      unop_case =
-        is_right_assoc_op(lookahead) &&
-        (unary_op_precedence(lookahead) == unary_op_precedence(op));
+      binop_case = binary_precedence_test(op, lookahead);
+      unop_case = unary_precedence_test(op, lookahead);
     }
 
     // just have "make binary op" handle the function call and index access

@@ -116,19 +116,19 @@ TokenType int_to_token_type(int i) {
 // json conversion methods
 //////////////////////////////////////////////////////////////////
 
-void to_json(json &j, const TokenMetadata &tm) {
+void to_json(json& j, const TokenMetadata& tm) {
   j = json{
       {"line", tm.line},
       {"column", tm.column},
   };
 }
 
-void from_json(const json &j, TokenMetadata &tm) {
+void from_json(const json& j, TokenMetadata& tm) {
   j.at("line").get_to(tm.line);
   j.at("column").get_to(tm.column);
 }
 
-void to_json(json &j, const Token &t) {
+void to_json(json& j, const Token& t) {
   auto type_string = token_type_to_string(t.type);
   auto type_int = (int)t.type;
 
@@ -141,25 +141,25 @@ void to_json(json &j, const Token &t) {
   auto value_variant = t.value;
   // <std::monostate, int, float, std::string, bool>
   switch (value_variant.index()) {
-  case 0: // monostate
-    j["value"] = nullptr;
-    break;
-  case 1: // int
-    j["value"] = std::get<int>(value_variant);
-    break;
-  case 2: // float
-    j["value"] = std::get<float>(value_variant);
-    break;
-  case 3: // string
-    j["value"] = std::get<string>(value_variant);
-    break;
-  case 4: // bool
-    j["value"] = std::get<bool>(value_variant);
-    break;
+    case 0:  // monostate
+      j["value"] = nullptr;
+      break;
+    case 1:  // int
+      j["value"] = std::get<int>(value_variant);
+      break;
+    case 2:  // float
+      j["value"] = std::get<float>(value_variant);
+      break;
+    case 3:  // string
+      j["value"] = std::get<string>(value_variant);
+      break;
+    case 4:  // bool
+      j["value"] = std::get<bool>(value_variant);
+      break;
   }
 }
 
-void from_json(const json &j, Token &t) {
+void from_json(const json& j, Token& t) {
   // metadata should be simple
   j.at("metadata").get_to(t.metadata);
 
@@ -194,24 +194,19 @@ void from_json(const json &j, Token &t) {
   Returns true if the passed token type is a binary operator
 */
 bool is_binary_op(TokenType tt) {
-  return ( tt == TokenType::GREATER_EQUALS
-        || tt == TokenType::EQUALS_EQUALS
-        || tt == TokenType::LESS_EQUALS
-        || tt == TokenType::NOT_EQUALS
-        || tt == TokenType::GREATER
-        || tt == TokenType::MINUS
-        || tt == TokenType::TIMES
-        || tt == TokenType::LESS
-        || tt == TokenType::PLUS
-        || tt == TokenType::DIV
-        || tt == TokenType::MOD
-        || tt == TokenType::AND
-        || tt == TokenType::OR 
+  return (
+      tt == TokenType::GREATER_EQUALS || tt == TokenType::EQUALS_EQUALS ||
+      tt == TokenType::LESS_EQUALS || tt == TokenType::NOT_EQUALS ||
+      tt == TokenType::GREATER || tt == TokenType::MINUS ||
+      tt == TokenType::TIMES || tt == TokenType::LESS ||
+      tt == TokenType::PLUS || tt == TokenType::DIV || tt == TokenType::MOD ||
+      tt == TokenType::AND ||
+      tt == TokenType::OR
 
-        // not infix 'operators' in the traditional sense, but still binary ops
-        || tt == TokenType::LBRACKET // "[]", index/subscript access
-        || tt == TokenType::LPAREN // "()", function call 
-        || tt == TokenType::DOT   // ".field", struct/class access
+      // not infix 'operators' in the traditional sense, but still binary ops
+      || tt == TokenType::LBRACKET  // "[]", index/subscript access
+      || tt == TokenType::LPAREN    // "()", function call
+      || tt == TokenType::DOT       // ".field", struct/class access
   );
 }
 
@@ -220,20 +215,26 @@ bool is_binary_op(TokenType tt) {
   TODO: consider if this logic is just "is unary op"
 */
 bool is_right_assoc_op(TokenType tt) {
-  return tt == TokenType::MINUS || tt ==TokenType::NOT;  
+  return tt == TokenType::MINUS || tt == TokenType::NOT;
 }
 
-bool is_assign_op(TokenType tt ) {
-  return tt == TokenType::EQUALS 
-      || tt == TokenType::PLUS_EQUALS
-      || tt == TokenType::MINUS_EQUALS
-      || tt == TokenType::TIMES_EQUALS
-      || tt == TokenType::DIV_EQUALS
-      || tt == TokenType::MOD_EQUALS;
+bool is_assign_op(TokenType tt) {
+  return tt == TokenType::EQUALS || tt == TokenType::PLUS_EQUALS ||
+         tt == TokenType::MINUS_EQUALS || tt == TokenType::TIMES_EQUALS ||
+         tt == TokenType::DIV_EQUALS || tt == TokenType::MOD_EQUALS;
 }
 
+bool binary_precedence_test(TokenType op, TokenType lookahead) {
+  return is_binary_op(lookahead) &&
+         (binary_op_precedence(lookahead) > binary_op_precedence(op));
+}
 
-// TODO: replace these magic numbers with a better system for 
+bool unary_precedence_test(TokenType op, TokenType lookahead) {
+  return is_right_assoc_op(lookahead) &&
+         (unary_op_precedence(lookahead) == unary_op_precedence(op));
+}
+
+// TODO: replace these magic numbers with a better system for
 //        setting op precedence in one place
 int unary_op_precedence(TokenType tt) {
   return is_right_assoc_op(tt) ? 11 : -1;
@@ -271,7 +272,8 @@ int binary_op_precedence(TokenType tt) {
     case TokenType::OR:
       return 4;
 
-    default: break;
+    default:
+      break;
   }
   return -1;
 }

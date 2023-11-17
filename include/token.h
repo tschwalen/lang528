@@ -78,6 +78,10 @@ bool is_right_assoc_op(TokenType tt);
 
 int unary_op_precedence(TokenType tt);
 
+bool binary_precedence_test(TokenType op, TokenType lookahead);
+
+bool unary_precedence_test(TokenType op, TokenType lookahead);
+
 bool is_assign_op(TokenType tt );
 
 std::string token_type_to_string(TokenType tt);

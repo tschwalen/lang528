@@ -103,6 +103,7 @@ public:
   Token expect (TokenType t);
   bool currentTokenIs (TokenType t);
   bool currentTokenIsNot (TokenType t);
+  bool advanceIfCurrentTokenIs (TokenType t);
 
   // Token peekToken(int n);
   // Token advance();
@@ -111,6 +112,7 @@ public:
   // Token matchSymbol(std::string smbl);
   // Token matchLiteral();
   void error (string msg);
+  void warn (string msg);
 };
 
 ASTNode parse_tokens (vector<Token> tokens);

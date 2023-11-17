@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 
 #include "parser.h"
@@ -12,18 +13,16 @@ using json = nlohmann::json;
 // ... or don't? We don't really need to expose stuff in the
 // header that's not used outside of this file.
 
-ASTNode expr(ParserState ps);
+ASTNode expr(ParserState &ps);
 
-ASTNode primary_prime(ParserState ps);
+ASTNode primary_prime(ParserState &ps);
 
-ASTNode block(ParserState ps);
+ASTNode block(ParserState &ps);
 
-ASTNode statement(ParserState ps);
+ASTNode statement(ParserState &ps);
 
-ASTNode const_var_declare(ParserState ps) {
-  assert(ps.currentTokenIs(TokenType::CONST));
-
-  auto metadata = ps.advance().metadata;
+ASTNode const_var_declare(ParserState &ps) {
+  auto metadata = ps.expect(TokenType::CONST).metadata;
   auto id_token = ps.expect(TokenType::IDENTIFIER);
   auto id_name = std::get<string>(id_token.value);
 
@@ -36,10 +35,8 @@ ASTNode const_var_declare(ParserState ps) {
   return ASTNode::makeConstDeclare(id_name, rhs, metadata);
 }
 
-ASTNode let_var_declare(ParserState ps) {
-  assert(ps.currentTokenIs(TokenType::LET));
-
-  auto metadata = ps.advance().metadata;
+ASTNode let_var_declare(ParserState &ps) {
+  auto metadata = ps.expect(TokenType::LET).metadata;
   auto id_token = ps.expect(TokenType::IDENTIFIER);
   auto id_name = std::get<string>(id_token.value);
 
@@ -52,7 +49,7 @@ ASTNode let_var_declare(ParserState ps) {
   return ASTNode::makeLetDeclare(id_name, rhs, metadata);
 }
 
-ASTNode if_block(ParserState ps) {
+ASTNode if_block(ParserState &ps) {
   assert(ps.currentTokenIs(TokenType::IF) ||
          ps.currentTokenIs(TokenType::ELSEIF));
   // advance over the if/elseif but keep the metadata
@@ -71,6 +68,7 @@ ASTNode if_block(ParserState ps) {
   auto body = ASTNode::makeBlock(statements, body_metadata);
 
   if (ps.currentTokenIs(TokenType::DOT_DOT)) {
+    ps.advance();
     return ASTNode::makeIf(condition, body, metadata);
   }
 
@@ -80,35 +78,36 @@ ASTNode if_block(ParserState ps) {
     // elseif is basically just another if, but with a different keyword
     else_body = if_block(ps);
   } else {
+    ps.advance();
     else_body = block(ps);
   }
 
   return ASTNode::makeIfElse(condition, body, else_body, metadata);
 }
 
-ASTNode while_loop(ParserState ps) {
+ASTNode while_loop(ParserState &ps) {
   auto metadata = ps.expect(TokenType::WHILE).metadata;
   auto condition = expr(ps);
   auto body = block(ps);
   return ASTNode::makeWhile(condition, body, metadata);
 }
 
-ASTNode return_statement(ParserState ps) {
+ASTNode return_statement(ParserState &ps) {
   auto metadata = ps.expect(TokenType::RETURN).metadata;
   auto value = expr(ps);
   ps.expect(TokenType::SEMICOLON);
   return ASTNode::makeReturn(value, metadata);
 }
 
-vector<ASTNode> expr_list(ParserState ps) {
+vector<ASTNode> expr_list(ParserState &ps) {
   vector<ASTNode> exprs;
   do {
     exprs.push_back(expr(ps));
-  } while (ps.currentTokenIs(TokenType::COMMA));
+  } while (ps.advanceIfCurrentTokenIs(TokenType::COMMA));
   return exprs;
 }
 
-ASTNode unary_op(ParserState ps) {
+ASTNode unary_op(ParserState &ps) {
   // current token is a unary op
   assert(is_right_assoc_op(ps.currentToken().type));
   auto op_token = ps.advance();
@@ -117,8 +116,8 @@ ASTNode unary_op(ParserState ps) {
   return ASTNode::makeUnaryOp(op_token.type, expr, op_token.metadata);
 }
 
-ASTNode basic_literal(ParserState ps) {
-  auto current_token = ps.currentToken();
+ASTNode basic_literal(ParserState &ps) {
+  auto current_token = ps.advance();
   switch (current_token.type) {
   case TokenType::BOOL_LITERAL:
     return ASTNode::makeLiteral(std::get<bool>(current_token.value),
@@ -139,7 +138,7 @@ ASTNode basic_literal(ParserState ps) {
   return ASTNode::nothing();
 }
 
-ASTNode vector_literal(ParserState ps) {
+ASTNode vector_literal(ParserState &ps) {
   auto first_token_metadata = ps.currentToken().metadata;
   // '['
   ps.expect(TokenType::LBRACKET);
@@ -155,7 +154,7 @@ ASTNode vector_literal(ParserState ps) {
   return ASTNode::makeVectorLiteral(elements, first_token_metadata);
 }
 
-ASTNode primary_prime(ParserState ps) {
+ASTNode primary_prime(ParserState &ps) {
   // primary ::= '(' expression ')' | LITERAL | VARIABLE | '-/!' primary
   // https://en.wikipedia.org/wiki/Operator-precedence_parser
   auto current_token = ps.currentToken();
@@ -186,7 +185,7 @@ ASTNode primary_prime(ParserState ps) {
   return basic_literal(ps);
 }
 
-ASTNode expr_helper(ParserState ps, ASTNode lhs, int min_precedence = 0) {
+ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
 
   while (is_binary_op(ps.currentToken().type) &&
          (binary_op_precedence(ps.currentToken().type) >= min_precedence)) {
@@ -205,7 +204,6 @@ ASTNode expr_helper(ParserState ps, ASTNode lhs, int min_precedence = 0) {
       } else {
         ps.advance();
       }
-
       rhs = ASTNode::makeExprList(arg_exprs, op_token.metadata);
     } else {
       rhs = primary_prime(ps);
@@ -228,7 +226,6 @@ ASTNode expr_helper(ParserState ps, ASTNode lhs, int min_precedence = 0) {
         is_right_assoc_op(lookahead) &&
         (unary_op_precedence(lookahead) == unary_op_precedence(op));
     while (binop_case || unop_case) {
-
       // rhs := parse_expression_1 (rhs, precedence of op + (1 if lookahead
       // precedence is greater, else 0))
       auto new_precedence = (binop_case ? binary_op_precedence(op) + 1 : 0);
@@ -236,6 +233,14 @@ ASTNode expr_helper(ParserState ps, ASTNode lhs, int min_precedence = 0) {
       rhs = expr_helper(ps, rhs, new_precedence);
 
       lookahead = ps.currentToken().type;
+
+      // TODO: make this less terrible with helper functions or something
+      binop_case =
+        is_binary_op(lookahead) &&
+        (binary_op_precedence(lookahead) > binary_op_precedence(op));
+      unop_case =
+        is_right_assoc_op(lookahead) &&
+        (unary_op_precedence(lookahead) == unary_op_precedence(op));
     }
 
     // just have "make binary op" handle the function call and index access
@@ -244,7 +249,7 @@ ASTNode expr_helper(ParserState ps, ASTNode lhs, int min_precedence = 0) {
   return lhs;
 }
 
-ASTNode expr(ParserState ps) { return expr_helper(ps, primary_prime(ps)); }
+ASTNode expr(ParserState &ps) { return expr_helper(ps, primary_prime(ps)); }
 
 /*
     Parse any statement that could occur in a block:
@@ -254,7 +259,7 @@ ASTNode expr(ParserState ps) { return expr_helper(ps, primary_prime(ps)); }
        - loops
        - standalone expressions with side-effects
 */
-ASTNode statement(ParserState ps) {
+ASTNode statement(ParserState &ps) {
   switch (ps.currentToken().type) {
   case TokenType::IDENTIFIER: {
     // If we encounter an identifier, this might be an assignment or a
@@ -298,7 +303,7 @@ ASTNode statement(ParserState ps) {
     A block is a series of zero or more statements, and then a DOT_DOT (..) to
    close.
 */
-ASTNode block(ParserState ps) {
+ASTNode block(ParserState &ps) {
 
   // grab first token metadata for debug/error info
   auto first_token_metadata = ps.currentToken().metadata;
@@ -309,10 +314,12 @@ ASTNode block(ParserState ps) {
     statements.push_back(stmt);
   }
 
+  ps.expect(TokenType::DOT_DOT);
+
   return ASTNode::makeBlock(statements, first_token_metadata);
 }
 
-ASTNode function_declare(ParserState ps) {
+ASTNode function_declare(ParserState &ps) {
   // 'function' keyword
   auto first_token_metadata = ps.expect(TokenType::FUNCTION).metadata;
 
@@ -351,7 +358,7 @@ ASTNode function_declare(ParserState ps) {
 /*
  * parse the top level of a file (variable and function definition statements)
  */
-ASTNode top_level(ParserState ps) {
+ASTNode top_level(ParserState &ps) {
   auto metadata = ps.currentToken().metadata;
   vector<ASTNode> children;
 
@@ -393,7 +400,7 @@ ASTNode parse_tokens(vector<Token> tokens) {
 
 // UNUSED: replaced with primary_prime()
 // delete once we confirm that things work
-// ASTNode primary_expr(ParserState ps) {
+// ASTNode primary_expr(ParserState &ps) {
 //   auto current_token = ps.currentToken();
 //   auto first_token_metadata = current_token.metadata;
 //   auto current_token_type = current_token.type;

@@ -18,5 +18,8 @@ _deps
 # executable name
 output
 
+# temporary stuff
+tmp.json
+
 # don't include third-party libraries
 include/nlohmann

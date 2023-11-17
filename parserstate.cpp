@@ -30,6 +30,14 @@ bool ParserState::currentTokenIsNot(TokenType t) {
     return this->currentToken().type != t;
 }
 
+bool ParserState::advanceIfCurrentTokenIs(TokenType t) {
+    auto match = this->currentTokenIs(t);
+    if (match) {
+        this->advance();
+    }
+    return match;
+}
+
 Token ParserState::expect(TokenType t) {
 
     auto current_token = this->currentToken();
@@ -48,7 +56,15 @@ Token ParserState::expect(TokenType t) {
     return current_token;
 }
 
+void ParserState::warn(string msg) {
+    auto metadata = this->currentToken().metadata;
+    std::cerr << "Error encountered at line: " 
+        << metadata.line << ", column: " << metadata.column << "\n";
+
+    std::cerr << msg << "\n";
+}
+
 void ParserState::error(string msg) {
-    std::cerr << msg;
+    this->warn(msg);
     exit(1);
 }

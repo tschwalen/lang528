@@ -1,0 +1,12 @@
+$CODEGEN_MESSAGE
+
+#pragma once
+#include <string>
+
+enum class $ENUM_NAME {
+    $ENUM_VALUES
+};
+
+std::string ${SNAKE_CASE_ENUM_NAME}_to_string($ENUM_NAME e);
+
+$ENUM_NAME int_to_${SNAKE_CASE_ENUM_NAME}(int i);

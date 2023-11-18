@@ -3,6 +3,7 @@
 
 #include "parser.h"
 #include "token.h"
+#include "tokentype.h"
 #include <nlohmann/json.hpp>
 
 using std::string;

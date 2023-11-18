@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include "token.h"
+#include "tokentype.h"
 
 using std::string;
 using std::vector;
@@ -31,10 +32,6 @@ enum class NodeType {
   INT_LITERAL,
   FLOAT_LITERAL,
   STRING_LITERAL,
-
-  // DELETE IF UNUSED
-  BASIC_LITERAL, // numbers, strings, true/false, etc.
-
 };
 
 class ASTNode {

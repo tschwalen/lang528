@@ -3,6 +3,7 @@
 
 #include "parser.h"
 #include "token.h"
+#include "tokentype.h"
 
 using std::string;
 using std::vector;

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "token.h"
+#include "tokentype.h"
 
 bool is_id_start_char(char c);
 

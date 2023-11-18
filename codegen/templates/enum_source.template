@@ -1,0 +1,23 @@
+$CODEGEN_MESSAGE
+
+#include <string>
+#include <vector>
+
+#include "$HEADER_FILE"
+
+using std::string;
+using std::vector;
+
+string ${SNAKE_CASE_ENUM_NAME}_to_string($ENUM_NAME e) {
+    vector<string> values {
+        $ENUM_STRING_VALUES
+    };
+    return values.at((int)e);
+}
+
+$ENUM_NAME int_to_${SNAKE_CASE_ENUM_NAME}(int i) {
+    vector<$ENUM_NAME> values {
+        $ENUM_VECTOR_VALUES
+    };
+    return values.at(i);
+}

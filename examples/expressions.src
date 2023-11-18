@@ -1,0 +1,24 @@
+
+const GLOBAL_THING = "hello hello";
+
+function subroutine(x, y, z)
+    print(GLOBAL_THING);
+    let result = 0;
+    if is_array(x)
+        
+        let index = 0;
+        while index < x.length()
+            result += (-y + --z) * z;
+        ..
+    ..
+    return result;
+..
+
+function main () 
+
+    const x = 4;
+    const y = 5;
+    const z = 6;
+
+    subroutine(x,y,z);
+..

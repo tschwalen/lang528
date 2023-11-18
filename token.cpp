@@ -5,112 +5,11 @@
 #include <nlohmann/json.hpp>
 
 #include "token.h"
+#include "tokentype.h"
 
 using json = nlohmann::json;
 
 using std::string;
-using std::vector;
-
-// stupid methods I have to write because enum classes aren't that good
-// TODO: codegen this, or find something that does these enum to string
-// conversions automatically.
-string token_type_to_string(TokenType tt) {
-  vector<string> entries{"FUNCTION",
-                         "LET",
-                         "CONST",
-                         "IF",
-                         "ELSEIF",
-                         "ELSE",
-                         "WHILE",
-                         "RETURN",
-                         "IDENTIFIER",
-                         "DOT",
-                         "DOT_DOT",
-                         "COMMA",
-                         "EQUALS",
-                         "EQUALS_EQUALS",
-                         "NOT",
-                         "NOT_EQUALS",
-                         "LESS",
-                         "LESS_EQUALS",
-                         "GREATER",
-                         "GREATER_EQUALS",
-                         "PLUS",
-                         "PLUS_EQUALS",
-                         "AND",
-                         "OR",
-                         "MINUS",
-                         "MINUS_EQUALS",
-                         "TIMES",
-                         "TIMES_EQUALS",
-                         "DIV",
-                         "DIV_EQUALS",
-                         "MOD",
-                         "MOD_EQUALS",
-                         "LPAREN",
-                         "RPAREN",
-                         "LBRACKET",
-                         "RBRACKET",
-                         "LBRACE",
-                         "RBRACE",
-                         "SEMICOLON",
-                         "BOOL_LITERAL",
-                         "INT_LITERAL",
-                         "FLOAT_LITERAL",
-                         "STRING_LITERAL",
-                         "END_OF_FILE",
-                         "NULL_TOKEN"};
-  return entries.at((int)tt);
-}
-
-TokenType int_to_token_type(int i) {
-  vector<TokenType> entries{TokenType::FUNCTION,
-                            TokenType::LET,
-                            TokenType::CONST,
-                            TokenType::IF,
-                            TokenType::ELSEIF,
-                            TokenType::ELSE,
-                            TokenType::WHILE,
-                            TokenType::RETURN,
-                            TokenType::IDENTIFIER,
-                            TokenType::DOT,
-                            TokenType::DOT_DOT,
-                            TokenType::COMMA,
-                            TokenType::EQUALS,
-                            TokenType::EQUALS_EQUALS,
-                            TokenType::NOT,
-                            TokenType::NOT_EQUALS,
-                            TokenType::LESS,
-                            TokenType::LESS_EQUALS,
-                            TokenType::GREATER,
-                            TokenType::GREATER_EQUALS,
-                            TokenType::PLUS,
-                            TokenType::PLUS_EQUALS,
-                            TokenType::AND,
-                            TokenType::OR,
-                            TokenType::MINUS,
-                            TokenType::MINUS_EQUALS,
-                            TokenType::TIMES,
-                            TokenType::TIMES_EQUALS,
-                            TokenType::DIV,
-                            TokenType::DIV_EQUALS,
-                            TokenType::MOD,
-                            TokenType::MOD_EQUALS,
-                            TokenType::LPAREN,
-                            TokenType::RPAREN,
-                            TokenType::LBRACKET,
-                            TokenType::RBRACKET,
-                            TokenType::LBRACE,
-                            TokenType::RBRACE,
-                            TokenType::SEMICOLON,
-                            TokenType::BOOL_LITERAL,
-                            TokenType::INT_LITERAL,
-                            TokenType::FLOAT_LITERAL,
-                            TokenType::STRING_LITERAL,
-                            TokenType::END_OF_FILE,
-                            TokenType::NULL_TOKEN};
-  return entries.at(i);
-}
 
 /////////////////////////////////////////////////////////////////
 // json conversion methods

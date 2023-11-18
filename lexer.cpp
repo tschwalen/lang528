@@ -11,6 +11,7 @@
 
 #include "lexer.h"
 #include "token.h"
+#include "tokentype.h"
 
 using std::pair;
 using std::string;

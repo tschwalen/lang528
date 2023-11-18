@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "token.h"
+#include "tokentype.h"
 #include "util.h"
 #include "unittests.h"
 
@@ -53,7 +54,6 @@ Options handle_commandline_args(int argc, char **argv) {
 
 int main(int argc, char **argv) {
   auto opts = handle_commandline_args(argc, argv);
-
 
   // TEST ENTRYPOINT
   if (opts.test) {

@@ -11,7 +11,7 @@ using json = nlohmann::json;
 
 using std::string;
 
-/////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 // json conversion methods
 //////////////////////////////////////////////////////////////////
 
@@ -85,7 +85,7 @@ void from_json(const json& j, Token& t) {
   }
 }
 
-/////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 // END OF json conversion methods
 //////////////////////////////////////////////////////////////////
 
@@ -113,7 +113,7 @@ bool is_binary_op(TokenType tt) {
   Returns true if the passed token type is a right-associative operator
   TODO: consider if this logic is just "is unary op"
 */
-bool is_right_assoc_op(TokenType tt) {
+bool is_unary_op(TokenType tt) {
   return tt == TokenType::MINUS || tt == TokenType::NOT;
 }
 
@@ -129,14 +129,14 @@ bool binary_precedence_test(TokenType op, TokenType lookahead) {
 }
 
 bool unary_precedence_test(TokenType op, TokenType lookahead) {
-  return is_right_assoc_op(lookahead) &&
+  return is_unary_op(lookahead) &&
          (unary_op_precedence(lookahead) == unary_op_precedence(op));
 }
 
 // TODO: replace these magic numbers with a better system for
 //        setting op precedence in one place
 int unary_op_precedence(TokenType tt) {
-  return is_right_assoc_op(tt) ? 11 : -1;
+  return is_unary_op(tt) ? 11 : -1;
 }
 
 int binary_op_precedence(TokenType tt) {

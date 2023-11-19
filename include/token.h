@@ -22,7 +22,7 @@ bool is_binary_op(TokenType tt);
 
 int binary_op_precedence(TokenType tt);
 
-bool is_right_assoc_op(TokenType tt);
+bool is_unary_op(TokenType tt);
 
 int unary_op_precedence(TokenType tt);
 

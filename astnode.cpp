@@ -4,9 +4,17 @@
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"
+#include "nodetype.h"
+
+using json = nlohmann::json;
+
 
 using std::string;
 using std::vector;
+
+//////////////////////////////////////////////////////////////////
+// ASTNode factory methods
+//////////////////////////////////////////////////////////////////
 
 ASTNode ASTNode::makeTopLevel(vector<ASTNode> statements,
                               TokenMetadata metadata) {
@@ -26,13 +34,13 @@ ASTNode ASTNode::makeFunctionDeclare(string name,
 ASTNode ASTNode::makeLetDeclare(string name,
                                 ASTNode rhs,
                                 TokenMetadata metadata) {
-  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {"const", false}, metadata};
+  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {{"identifier", name}, {"const", false}}, metadata};
 }
 
 ASTNode ASTNode::makeConstDeclare(string name,
                                   ASTNode rhs,
                                   TokenMetadata metadata) {
-  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {"const", true}, metadata};
+  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {{"identifier", name}, {"const", true}}, metadata};
 }
 
 ASTNode ASTNode::makeBlock(vector<ASTNode> statements, TokenMetadata metadata) {
@@ -163,3 +171,40 @@ ASTNode ASTNode::makeLiteral(bool value, TokenMetadata metadata) {
 ASTNode ASTNode::nothing() {
   return ASTNode{};
 }
+
+//////////////////////////////////////////////////////////////////
+// END OF ASTNode factory methods
+//////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////
+// json conversion methods
+//////////////////////////////////////////////////////////////////
+
+void to_json(json& j, const ASTNode& node) {
+  auto type_string = node_type_to_string(node.type);
+  auto type_int = (int)node.type;
+
+  j = json{
+      {"type_string", type_string},
+      {"type_int", type_int},
+      {"zchildren", node.children},
+      {"data", node.data},
+      {"xmetadata", node.metadata},
+  };
+}
+
+void from_json(const json& j, ASTNode& node) {
+  auto ntype = j.at("type_int");
+  assert(ntype.is_number_integer());
+  auto ntype_int = ntype.get<int>();
+  auto ntype_enum = int_to_node_type(ntype_int);
+
+  node.type = ntype_enum;
+  j.at("zchildren").get_to(node.children);
+  j.at("data").get_to(node.children);
+  j.at("xmetadata").get_to(node.children);
+}
+
+//////////////////////////////////////////////////////////////////
+// END OF json conversion methods
+//////////////////////////////////////////////////////////////////

@@ -4,6 +4,8 @@
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"
+#include "nodetype.h"
+
 #include <nlohmann/json.hpp>
 
 using std::string;
@@ -104,13 +106,13 @@ vector<ASTNode> expr_list(ParserState &ps) {
   vector<ASTNode> exprs;
   do {
     exprs.push_back(expr(ps));
-  } while (ps.advanceIfCurrentTokenIs(TokenType::COMMA));
+  } while (ps.matchTokenType(TokenType::COMMA));
   return exprs;
 }
 
 ASTNode unary_op(ParserState &ps) {
   // current token is a unary op
-  assert(is_right_assoc_op(ps.currentToken().type));
+  assert(is_unary_op(ps.currentToken().type));
   auto op_token = ps.advance();
   auto expr = primary_prime(ps);
 

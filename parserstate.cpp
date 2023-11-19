@@ -6,6 +6,7 @@
 #include "token.h"
 #include "tokentype.h"
 
+
 using std::string;
 
 bool ParserState::hasNext() {
@@ -31,7 +32,7 @@ bool ParserState::currentTokenIsNot(TokenType t) {
     return this->currentToken().type != t;
 }
 
-bool ParserState::advanceIfCurrentTokenIs(TokenType t) {
+bool ParserState::matchTokenType(TokenType t) {
     auto match = this->currentTokenIs(t);
     if (match) {
         this->advance();

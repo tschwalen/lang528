@@ -83,6 +83,11 @@ int main(int argc, char **argv) {
     auto tokens = lex_string(file_contents);
     auto ast = parse_tokens(tokens);
     // ... then parse them ... 
+
+    if (opts.dump_json) {
+      json j = ast;
+      std::cout << j.dump(2) << "\n";
+    }
   }
 
   return 0;

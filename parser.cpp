@@ -12,44 +12,23 @@ using std::string;
 using std::vector;
 using json = nlohmann::json;
 
-// TODO: move any redundant forward-declares here into .h
-// ... or don't? We don't really need to expose stuff in the
-// header that's not used outside of this file.
 
 ASTNode expr(ParserState &ps);
-
-ASTNode primary_prime(ParserState &ps);
-
+ASTNode primary(ParserState &ps);
 ASTNode block(ParserState &ps);
-
 ASTNode statement(ParserState &ps);
 
-ASTNode const_var_declare(ParserState &ps) {
-  auto metadata = ps.expect(TokenType::CONST).metadata;
+ASTNode var_declare(ParserState &ps, TokenType type) {
+  assert(type == TokenType::CONST || type == TokenType::LET);
+  auto metadata = ps.expect(type).metadata;
   auto id_token = ps.expect(TokenType::IDENTIFIER);
   auto id_name = std::get<string>(id_token.value);
 
   ps.expect(TokenType::EQUALS);
-
   auto rhs = expr(ps);
-
   ps.expect(TokenType::SEMICOLON);
 
-  return ASTNode::makeConstDeclare(id_name, rhs, metadata);
-}
-
-ASTNode let_var_declare(ParserState &ps) {
-  auto metadata = ps.expect(TokenType::LET).metadata;
-  auto id_token = ps.expect(TokenType::IDENTIFIER);
-  auto id_name = std::get<string>(id_token.value);
-
-  ps.expect(TokenType::EQUALS);
-
-  auto rhs = expr(ps);
-
-  ps.expect(TokenType::SEMICOLON);
-
-  return ASTNode::makeLetDeclare(id_name, rhs, metadata);
+  return ASTNode::makeVarDeclare(id_name, rhs, type == TokenType::CONST, metadata);
 }
 
 ASTNode if_block(ParserState &ps) {
@@ -114,7 +93,7 @@ ASTNode unary_op(ParserState &ps) {
   // current token is a unary op
   assert(is_unary_op(ps.currentToken().type));
   auto op_token = ps.advance();
-  auto expr = primary_prime(ps);
+  auto expr = primary(ps);
 
   return ASTNode::makeUnaryOp(op_token.type, expr, op_token.metadata);
 }
@@ -157,7 +136,7 @@ ASTNode vector_literal(ParserState &ps) {
   return ASTNode::makeVectorLiteral(elements, first_token_metadata);
 }
 
-ASTNode primary_prime(ParserState &ps) {
+ASTNode primary(ParserState &ps) {
   // Tries to use a standard operator precedence parsing algorithm.
   // Not certain if this implementation is correct, needs more testing.
   //
@@ -212,7 +191,7 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
       }
       rhs = ASTNode::makeExprList(arg_exprs, op_token.metadata);
     } else {
-      rhs = primary_prime(ps);
+      rhs = primary(ps);
 
       // handle closing bracket for index expressions
       if (op == TokenType::LBRACKET) {
@@ -246,7 +225,7 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
   return lhs;
 }
 
-ASTNode expr(ParserState &ps) { return expr_helper(ps, primary_prime(ps)); }
+ASTNode expr(ParserState &ps) { return expr_helper(ps, primary(ps)); }
 
 /*
     Parse any statement that could occur in a block:
@@ -257,7 +236,8 @@ ASTNode expr(ParserState &ps) { return expr_helper(ps, primary_prime(ps)); }
        - standalone expressions with side-effects
 */
 ASTNode statement(ParserState &ps) {
-  switch (ps.currentToken().type) {
+  auto current_token_type = ps.currentToken().type;
+  switch (current_token_type) {
   case TokenType::IDENTIFIER: {
     // If we encounter an identifier, this might be an assignment or a
     // standalone function call
@@ -278,9 +258,8 @@ ASTNode statement(ParserState &ps) {
     return result;
   }
   case TokenType::LET:
-    return let_var_declare(ps);
   case TokenType::CONST:
-    return const_var_declare(ps);
+    return var_declare(ps, current_token_type);
   case TokenType::WHILE:
     return while_loop(ps);
   case TokenType::IF:
@@ -364,12 +343,9 @@ ASTNode top_level(ParserState &ps) {
 
     auto currentToken = ps.currentToken();
     switch (currentToken.type) {
+    case TokenType::LET:
     case TokenType::CONST: {
-      child = const_var_declare(ps);
-      break;
-    }
-    case TokenType::LET: {
-      child = let_var_declare(ps);
+      child = var_declare(ps, currentToken.type);
       break;
     }
     case TokenType::FUNCTION: {
@@ -394,63 +370,3 @@ ASTNode parse_tokens(vector<Token> tokens) {
 
   return top_level(ps);
 }
-
-// UNUSED: replaced with primary_prime()
-// delete once we confirm that things work
-// ASTNode primary_expr(ParserState &ps) {
-//   auto current_token = ps.currentToken();
-//   auto first_token_metadata = current_token.metadata;
-//   auto current_token_type = current_token.type;
-
-//   // parse vector literals and unary operators
-//   switch (current_token_type) {
-//   case TokenType::LBRACKET:
-//     return vector_literal(ps);
-//   case TokenType::NOT:
-//   case TokenType::MINUS:
-//     return unary_op(ps);
-//   default:
-//     break;
-//   }
-
-//   // next, try to parse identifiers and parenthesized expressions
-//   ASTNode primary;
-//   if (current_token_type == TokenType::LPAREN) {
-//     ps.advance();
-//     primary = expr(ps);
-//     ps.expect(TokenType::RPAREN);
-//   } else if (current_token_type == TokenType::IDENTIFIER) {
-//     auto identifier = std::get<string>(current_token.value);
-//     primary = ASTNode::makeVarLookup(identifier, first_token_metadata);
-//     ps.advance();
-//   } else {
-//     return basic_literal(ps);
-//   }
-
-//   // check if identifier or parenthesized expr is follow by function call
-//   // parens, index brackets, or a dot field access
-//   if (ps.currentTokenIs(TokenType::LPAREN)) {
-//     ps.advance();
-
-//     vector<ASTNode> arg_exprs;
-//     if (ps.currentTokenIsNot(TokenType::RPAREN)) {
-//       arg_exprs = expr_list(ps);
-//       ps.expect(TokenType::RPAREN);
-//     } else {
-//       ps.advance();
-//     }
-
-//     primary =
-//         ASTNode::makeFunctionCall(primary, arg_exprs, first_token_metadata);
-//   } else if (ps.currentTokenIs(TokenType::LBRACKET)) {
-//     ps.advance();
-//     auto index_expr = expr(ps);
-//     ps.expect(TokenType::RBRACKET);
-//     primary =
-//         ASTNode::makeIndexAccess(primary, index_expr, first_token_metadata);
-//   } else if (ps.currentTokenIs(TokenType::DOT)) {
-//     ps.advance();
-//   }
-
-//   return primary;
-// }

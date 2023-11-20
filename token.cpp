@@ -110,8 +110,7 @@ bool is_binary_op(TokenType tt) {
 }
 
 /*
-  Returns true if the passed token type is a right-associative operator
-  TODO: consider if this logic is just "is unary op"
+  Returns true if the passed token type is a right-associative unary operator
 */
 bool is_unary_op(TokenType tt) {
   return tt == TokenType::MINUS || tt == TokenType::NOT;

@@ -31,16 +31,9 @@ ASTNode ASTNode::makeFunctionDeclare(string name,
                  metadata};
 }
 
-ASTNode ASTNode::makeLetDeclare(string name,
-                                ASTNode rhs,
-                                TokenMetadata metadata) {
-  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {{"identifier", name}, {"const", false}}, metadata};
-}
+ASTNode ASTNode::makeVarDeclare(string name, ASTNode rhs, bool is_const, TokenMetadata metadata) {
+  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {{"identifier", name}, {"const", is_const}}, metadata};
 
-ASTNode ASTNode::makeConstDeclare(string name,
-                                  ASTNode rhs,
-                                  TokenMetadata metadata) {
-  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {{"identifier", name}, {"const", true}}, metadata};
 }
 
 ASTNode ASTNode::makeBlock(vector<ASTNode> statements, TokenMetadata metadata) {

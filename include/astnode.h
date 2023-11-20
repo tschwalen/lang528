@@ -23,10 +23,8 @@ public:
                                TokenMetadata metadata);
   static ASTNode makeFunctionDeclare (string name, vector<string> args,
                                       ASTNode body, TokenMetadata metadata);
-  static ASTNode makeLetDeclare (string name, ASTNode rhs,
-                                 TokenMetadata metadata);
-  static ASTNode makeConstDeclare (string name, ASTNode rhs,
-                                   TokenMetadata metadata);
+  static ASTNode makeVarDeclare(string name, ASTNode rhs, 
+                                bool is_const, TokenMetadata metadata);
   static ASTNode makeBlock (vector<ASTNode> statements,
                             TokenMetadata metadata);
   static ASTNode makeWhile (ASTNode condition, ASTNode body,

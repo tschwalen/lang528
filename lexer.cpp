@@ -11,6 +11,7 @@
 
 #include "lexer.h"
 #include "token.h"
+#include "tokentype.h"
 
 using std::pair;
 using std::string;
@@ -33,6 +34,9 @@ unordered_map<string, TokenType> KEYWORDS{{"function", TokenType::FUNCTION},
                                           {"let", TokenType::LET},
                                           {"const", TokenType::CONST},
                                           {"if", TokenType::IF},
+                                          {"elseif", TokenType::ELSEIF},
+                                          {"else", TokenType::ELSE},
+                                          {"return", TokenType::RETURN},
                                           {"while", TokenType::WHILE}};
 
 unordered_map<char, vector<pair<string, TokenType>>> SYMBOLS{
@@ -42,6 +46,7 @@ unordered_map<char, vector<pair<string, TokenType>>> SYMBOLS{
     {'<', {{"<", TokenType::LESS}, {"<=", TokenType::LESS_EQUALS}}},
     {'>', {{">", TokenType::GREATER}, {">=", TokenType::GREATER_EQUALS}}},
     {'+', {{"+", TokenType::PLUS}, {"+=", TokenType::PLUS_EQUALS}}},
+    {',', {{",", TokenType::COMMA}}},
     {'&', {{"&", TokenType::AND}}},
     {'|', {{"|", TokenType::OR}}},
     {'-', {{"-", TokenType::MINUS}, {"-=", TokenType::MINUS_EQUALS}}},

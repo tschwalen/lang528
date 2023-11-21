@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 
 #include "token.h"
+#include "tokentype.h"
 #include "unittests.h"
 
 using json = nlohmann::json;
@@ -62,7 +63,7 @@ void test_that_token_serializes_to_json_as_expected() {
            {"column", 15},
            {"line", 44},
        }},
-      {"type_int", 38},
+      {"type_int", (int)TokenType::STRING_LITERAL},
       {"type_string", "STRING_LITERAL"},
       {"value", "this is the string"},
   };
@@ -78,7 +79,7 @@ void test_that_token_serializes_from_json_as_expected() {
            {"column", 15},
            {"line", 44},
        }},
-      {"type_int", 38},
+      {"type_int", (int)TokenType::STRING_LITERAL},
       {"type_string", "STRING_LITERAL"},
       {"value", "this is the string"},
   };

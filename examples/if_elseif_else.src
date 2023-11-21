@@ -1,0 +1,44 @@
+
+#
+# demonstrates my proposed syntax for else, elseif, else.
+# note that the ".." symbol is only used to close else
+#
+function test1( a, b )
+  if ( a > b )
+    print( "a is greater than b" );
+  elseif ( a < b )
+    print( "b is greater than a" );
+  else
+    print( "a and b are equal (or at least very close in value...)" );
+  ..
+..
+
+
+function test2( a ) 
+  if ( a == 5 )
+    print( "a is 5!" );
+  ..
+  print ( "..." );
+  print ( "I don't think a is 5" );
+..
+
+
+function test3 ( a )
+  if ( a == 5 )
+    print( "a is 5!" );
+  else 
+    print ( "I don't think a is 5" );
+  ..
+..
+
+function main ()
+  test1(5, 6);
+  test1(6, 5);
+  test1(5, 5);
+
+  test2(5);
+  test2(6);
+
+  test3(5);
+  test3(6);
+..

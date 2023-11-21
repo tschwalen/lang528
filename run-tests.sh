@@ -21,6 +21,6 @@ echo "Running unit tests..."
 ./"$EXECUTABLE_NAME" --test
 
 echo "Running integration tests..."
-./tests/run_integration_tests.py
+./scripts/run_integration_tests.py
 
 echo "Finished running tests."

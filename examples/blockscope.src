@@ -1,0 +1,12 @@
+function main ()
+    let x = 5;
+    let y = 6;
+
+    if true
+        x = 'yes';
+        let x = 55;
+    ..
+
+    print(x); # should be 'yes'
+    print(y); # should be 6
+..

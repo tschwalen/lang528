@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
+
+execute_process(COMMAND scripts/codegen.py)
+
 project(output)
 
 include_directories(include)

@@ -14,6 +14,8 @@ using std::shared_ptr;
 using std::optional;
 using std::unordered_map;
 
+// struct BoxedValue;
+
 enum class ValueType {
     LVALUE,
     RVALUE
@@ -34,12 +36,20 @@ struct Function {
     ASTNode body;
 };
 
-// struct SymbolTableEntry {};
+enum class VarType {
+    CONST, VAR, FUNCTION
+};
+
 struct BoxedValue;
+struct SymbolTableEntry {
+    VarType type;
+    shared_ptr<BoxedValue> value;
+};
+
 struct SymbolTable;
 struct SymbolTable {
     shared_ptr<SymbolTable> parent;
-    unordered_map<string, BoxedValue> entries;
+    unordered_map<string, SymbolTableEntry> entries;
 };
 
 // change this unless at some point we put things other than a symbol table in the execution context
@@ -57,7 +67,7 @@ typedef std::variant<
     float, 
     string, 
     shared_ptr<HeVec>, 
-    shared_ptr<Function>
+    Function
 > RawValue;
 
 struct BoxedValue {
@@ -71,6 +81,53 @@ struct EvalResult {
 
 EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt=ValueType::RVALUE);
 
+
+EvalResult eval_var_declare(ASTNode &node, ExecutionContext &ec) {
+  /*
+    What is the var's id?
+    Is it const or var?
+    Does the var exist in the current symbol table?
+  */
+
+  string identifier = node.data.at("identifier").get<string>();
+  bool is_const = node.data.at("const").get<bool>();
+
+  // make sure we don't declare more than once
+  // TODO: better error handling
+  assert(!ec.entries.contains(identifier));
+
+  // eval the right hand side of the expression (first and only child)
+  auto rhs = node.children[0];
+  auto result = eval_node(rhs,  ec);
+  auto value = std::make_shared<BoxedValue>(result.lv_result.value());
+
+  ec.entries["indentifier"] = SymbolTableEntry {
+    is_const ? VarType::CONST : VarType::VAR,
+    value
+  };
+
+  return EvalResult {};
+}
+
+EvalResult eval_func_declare(ASTNode &node, ExecutionContext &ec) {
+  string name = node.data.at("function_name").get<string>();
+  vector<string> args = node.data.at("args").get<vector<string>>();
+  auto body = node.children[0];
+
+  assert(!ec.entries.contains(name));
+
+  ec.entries["name"] = SymbolTableEntry {
+    VarType::FUNCTION,
+    std::make_shared<BoxedValue>(
+      DataType::FUNCTION,
+      Function {
+        name, args, body  
+      }
+    )
+  };
+
+  return EvalResult {};
+}
 
 EvalResult eval_vec_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     auto child_nodes = node.children;
@@ -138,7 +195,7 @@ EvalResult eval_top_level(ASTNode &node) {
 
     if(top_level_ec.entries.contains("main")) {
         auto main = top_level_ec.entries.at("main");
-        if(main.type == DataType::FUNCTION) {
+        if(main.type == VarType::FUNCTION) {
             // TODO: actually call main
         }
     }
@@ -158,10 +215,10 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
 
     break;
   case NodeType::VAR_DECLARE:
-
+    return eval_var_declare(node, ec);
     break;
   case NodeType::FUNC_DECLARE:
-
+    return eval_func_declare(node, ec);
     break;
   case NodeType::IF:
 

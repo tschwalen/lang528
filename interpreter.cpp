@@ -1,84 +1,26 @@
 
 
-#include "astnode.h"
+#include <cassert>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <variant>
 #include <vector>
 #include <unordered_map>
 
+#include "astnode.h"
+#include "interpreter.h"
+#include "runtime.h"
+#include "tokentype.h"
+
 
 using std::string;
 using std::vector;
-using std::shared_ptr;
-using std::optional;
-using std::unordered_map;
+// using std::shared_ptr;
+// using std::optional;
+// using std::unordered_map;
 
 // struct BoxedValue;
-
-enum class ValueType {
-    LVALUE,
-    RVALUE
-};
-
-enum class DataType {
-    BOOL,
-    FLOAT,
-    INT,
-    STRING,
-    VECTOR,
-    FUNCTION
-};
-
-struct Function {
-    string name;
-    vector<string> args;
-    ASTNode body;
-};
-
-enum class VarType {
-    CONST, VAR, FUNCTION
-};
-
-struct BoxedValue;
-struct SymbolTableEntry {
-    VarType type;
-    shared_ptr<BoxedValue> value;
-};
-
-struct SymbolTable;
-struct SymbolTable {
-    SymbolTable *parent = nullptr;
-    unordered_map<string, SymbolTableEntry> entries;
-};
-
-// change this unless at some point we put things other than a symbol table in the execution context
-typedef SymbolTable ExecutionContext;
-// struct ExecutionContext {
-
-// };
-
-typedef vector<shared_ptr<BoxedValue>> HeVec;
-
-typedef std::variant<
-    std::monostate, 
-    bool, 
-    int, 
-    float, 
-    string, 
-    shared_ptr<HeVec>, 
-    Function
-> RawValue;
-
-struct BoxedValue {
-    DataType type;
-    RawValue value;
-};
-
-struct EvalResult {
-    optional<BoxedValue> lv_result;
-    bool returned = false;
-};
 
 EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt=ValueType::RVALUE);
 
@@ -93,7 +35,7 @@ EvalResult eval_var_declare(ASTNode &node, ExecutionContext &ec) {
   string identifier = node.data.at("identifier").get<string>();
   bool is_const = node.data.at("const").get<bool>();
 
-  // make sure we don't declare more than once
+  // make sure we don't declare more than once in the same scope
   // TODO: better error handling
   assert(!ec.entries.contains(identifier));
 
@@ -130,7 +72,68 @@ EvalResult eval_func_declare(ASTNode &node, ExecutionContext &ec) {
   return EvalResult {};
 }
 
-EvalResult eval_vec_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+EvalResult eval_binary_op(ASTNode &node, ExecutionContext &ec) {
+  const size_t LHS = 0, RHS = 1;
+  const string op_key = "op";
+  auto op = int_to_token_type(node.data.at(op_key).get<int>());
+  auto lhs = eval_node(node.children[LHS], ec).lv_result.value();
+  auto rhs = eval_node(node.children[RHS], ec).lv_result.value();
+
+  return EvalResult {
+    apply_binary_operator(op, lhs, rhs)
+  };
+}
+
+EvalResult eval_unary_op(ASTNode &node, ExecutionContext &ec) {
+  const size_t RHS = 0;
+  const string op_key = "op";
+  auto op = int_to_token_type(node.data.at(op_key).get<int>());
+  auto rhs = eval_node(node.children[RHS], ec).lv_result.value();
+
+  return EvalResult {
+    apply_unary_operator(op, rhs)
+  };
+}
+
+EvalResult eval_func_call(ASTNode &node, ExecutionContext &ec) {
+  /*
+    return ASTNode{
+      NodeType::FUNC_CALL, {lvalue_expr, arg_expr_list}, {}, metadata};
+  */
+
+  const size_t FUNCTION = 0, ARGS = 1;
+
+  auto callee = eval_node(node.children[FUNCTION], ec).lv_result.value();
+  assert(callee.type == DataType::FUNCTION);
+
+  auto args = eval_node(node.children[ARGS], ec).lv_result.value();
+  assert(args.type == DataType::VECTOR);
+
+  auto function_rawvalue = std::get<Function>(callee.value);
+  auto arg_names = function_rawvalue.args;
+
+  auto arg_values = std::get<shared_ptr<HeVec>>(args.value);
+
+  // prep function's symbol table
+  ExecutionContext fn_ec {&ec,{}};
+
+  assert(arg_names.size() == arg_values->size());
+  auto len = arg_names.size();
+  for (size_t i = 0; i < len; i++) {
+    auto arg_name = arg_names.at(i);
+    auto arg_value = arg_values->at(i);
+
+    fn_ec.entries[arg_name] = SymbolTableEntry {
+      VarType::CONST,
+      arg_value
+    };
+  }
+  
+  return eval_node(function_rawvalue.body, fn_ec);
+}
+
+
+EvalResult eval_vec_literal(ASTNode &node, ExecutionContext &ec) {
     auto child_nodes = node.children;
     auto vec_value = std::make_shared<HeVec>();
     for (auto &node : child_nodes) {
@@ -146,7 +149,7 @@ EvalResult eval_vec_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
 }
 
 
-EvalResult eval_string_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+EvalResult eval_string_literal(ASTNode &node, ExecutionContext &ec) {
     auto value = node.data.at("value").get<string>();
     return EvalResult {
         BoxedValue {
@@ -156,7 +159,7 @@ EvalResult eval_string_literal(ASTNode &node, ExecutionContext &ec, ValueType vt
     };
 }
 
-EvalResult eval_float_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+EvalResult eval_float_literal(ASTNode &node, ExecutionContext &ec) {
     auto value = node.data.at("value").get<float>();
     return EvalResult {
         BoxedValue {
@@ -166,7 +169,7 @@ EvalResult eval_float_literal(ASTNode &node, ExecutionContext &ec, ValueType vt)
     };
 }
 
-EvalResult eval_int_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+EvalResult eval_int_literal(ASTNode &node, ExecutionContext &ec) {
     auto value = node.data.at("value").get<int>();
     return EvalResult {
         BoxedValue {
@@ -176,7 +179,7 @@ EvalResult eval_int_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     };
 }
 
-EvalResult eval_bool_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+EvalResult eval_bool_literal(ASTNode &node, ExecutionContext &ec) {
     auto value = node.data.at("value").get<bool>();
     return EvalResult {
         BoxedValue {
@@ -197,15 +200,17 @@ EvalResult eval_block(ASTNode &node, ExecutionContext &ec) {
 }
 
 EvalResult eval_while(ASTNode &node, ExecutionContext &ec) {
-  const int CONDITION = 0, BODY = 1;
+  const size_t CONDITION = 0, BODY = 1;
   EvalResult result;
+  BoxedValue condition_value;
+  bool raw_condition_value;
 
 CHECK_CONDITION:
-  auto condition = eval_node(node.children[CONDITION], ec).lv_result.value();
-  assert(condition.type == DataType::BOOL);
-  auto conditional_result = std::get<bool>(condition.value);
+  condition_value = eval_node(node.children[CONDITION], ec).lv_result.value();
+  assert(condition_value.type == DataType::BOOL);
+  raw_condition_value = std::get<bool>(condition_value.value);
 
-  if (conditional_result) {
+  if (raw_condition_value) {
     ExecutionContext block_ec {&ec, {}};
     result = eval_node(node.children[BODY], block_ec);
 
@@ -219,6 +224,17 @@ CHECK_CONDITION:
   return EvalResult {};
 }
 
+EvalResult eval_return(ASTNode &node, ExecutionContext &ec) {
+  auto return_value_expr = node.children.at(0);
+  auto return_value = eval_node(return_value_expr, ec);
+
+  // signals to any blocks/functions that a return statement has been encountered.
+  return_value.returned = true;
+
+  return return_value;
+}
+
+
 EvalResult eval_if(ASTNode &node, ExecutionContext &ec) {
   /*
       node.children[0] => conditional
@@ -226,7 +242,7 @@ EvalResult eval_if(ASTNode &node, ExecutionContext &ec) {
       node.children[2] => ?else-body
   */
 
-  const int CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
+  const size_t CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
 
   auto condition = eval_node(node.children[CONDITION], ec).lv_result.value();
   assert(condition.type == DataType::BOOL);
@@ -254,7 +270,9 @@ EvalResult eval_top_level(ASTNode &node) {
     if(top_level_ec.entries.contains("main")) {
         auto main = top_level_ec.entries.at("main");
         if(main.type == VarType::FUNCTION) {
-            // TODO: actually call main
+            // actually call main
+            auto main_function = std::get<Function>(main.value->value);
+            return eval_node(main_function.body, top_level_ec);
         }
     }
 
@@ -283,19 +301,19 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     return eval_if(node, ec);
     break;
   case NodeType::RETURN:
-
+    return eval_return(node, ec);
     break;
   case NodeType::WHILE:
     return eval_while(node, ec);
     break;
   case NodeType::BINARY_OP:
-
+    return eval_binary_op(node, ec);
     break;
   case NodeType::UNARY_OP:
-
+    return eval_unary_op(node, ec);
     break;
   case NodeType::FUNC_CALL:
-
+    return eval_func_call(node, ec);
     break;
   case NodeType::INDEX_ACCESS:
 
@@ -307,22 +325,24 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
 
     break;
   case NodeType::EXPR_LIST:
-
+    // not a typo, in current implementation the expr list is basically a 
+    // special case of a vector expression/literal
+    return eval_vec_literal(node, ec);
     break;
   case NodeType::VEC_LITERAL:
-    return eval_vec_literal(node, ec, vt);
+    return eval_vec_literal(node, ec);
     break;
   case NodeType::BOOL_LITERAL:
-    return eval_bool_literal(node, ec, vt);
+    return eval_bool_literal(node, ec);
     break;
   case NodeType::INT_LITERAL:
-    return eval_int_literal(node, ec, vt);
+    return eval_int_literal(node, ec);
     break;
   case NodeType::FLOAT_LITERAL:
-    return eval_float_literal(node, ec, vt);
+    return eval_float_literal(node, ec);
     break;
   case NodeType::STRING_LITERAL:
-    return eval_string_literal(node, ec, vt);
+    return eval_string_literal(node, ec);
     break;
   }
 }

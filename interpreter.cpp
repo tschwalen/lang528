@@ -48,7 +48,7 @@ struct SymbolTableEntry {
 
 struct SymbolTable;
 struct SymbolTable {
-    shared_ptr<SymbolTable> parent;
+    SymbolTable *parent = nullptr;
     unordered_map<string, SymbolTableEntry> entries;
 };
 
@@ -77,6 +77,7 @@ struct BoxedValue {
 
 struct EvalResult {
     optional<BoxedValue> lv_result;
+    bool returned = false;
 };
 
 EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt=ValueType::RVALUE);
@@ -185,6 +186,63 @@ EvalResult eval_bool_literal(ASTNode &node, ExecutionContext &ec, ValueType vt) 
     };
 }
 
+EvalResult eval_block(ASTNode &node, ExecutionContext &ec) {
+    for (auto &child : node.children) {
+        auto result = eval_node(child, ec);
+        if (result.returned) {
+          return result;
+        }
+    }
+    return EvalResult {};
+}
+
+EvalResult eval_while(ASTNode &node, ExecutionContext &ec) {
+  const int CONDITION = 0, BODY = 1;
+  EvalResult result;
+
+CHECK_CONDITION:
+  auto condition = eval_node(node.children[CONDITION], ec).lv_result.value();
+  assert(condition.type == DataType::BOOL);
+  auto conditional_result = std::get<bool>(condition.value);
+
+  if (conditional_result) {
+    ExecutionContext block_ec {&ec, {}};
+    result = eval_node(node.children[BODY], block_ec);
+
+    // exit early and propate return value if we returned from block
+    if (result.returned) {
+      return result;
+    }
+    goto CHECK_CONDITION;
+  }
+
+  return EvalResult {};
+}
+
+EvalResult eval_if(ASTNode &node, ExecutionContext &ec) {
+  /*
+      node.children[0] => conditional
+      node.children[1] => if-body
+      node.children[2] => ?else-body
+  */
+
+  const int CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
+
+  auto condition = eval_node(node.children[CONDITION], ec).lv_result.value();
+  assert(condition.type == DataType::BOOL);
+  auto conditional_result = std::get<bool>(condition.value);
+
+  if (conditional_result) {
+    ExecutionContext if_block_ec {&ec, {}};
+    return eval_node(node.children[IF_BODY], if_block_ec);
+  }
+  else if (node.children.size() == SIZE_IF_ELSE) {
+    ExecutionContext else_block_ec {&ec, {}};
+    return eval_node(node.children[ELSE_BODY], else_block_ec);
+  }
+  return EvalResult {};
+}
+
 EvalResult eval_top_level(ASTNode &node) {
     // TODO: argv needs to make it in somehow
     ExecutionContext top_level_ec;
@@ -199,7 +257,8 @@ EvalResult eval_top_level(ASTNode &node) {
             // TODO: actually call main
         }
     }
-    
+
+    return EvalResult {};
 }
 
 EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
@@ -209,7 +268,7 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     return eval_top_level(node);
     break;
   case NodeType::BLOCK:
-
+    return eval_block(node, ec);
     break;
   case NodeType::ASSIGN_OP:
 
@@ -221,13 +280,13 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     return eval_func_declare(node, ec);
     break;
   case NodeType::IF:
-
+    return eval_if(node, ec);
     break;
   case NodeType::RETURN:
 
     break;
   case NodeType::WHILE:
-
+    return eval_while(node, ec);
     break;
   case NodeType::BINARY_OP:
 

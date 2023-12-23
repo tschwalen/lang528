@@ -6,6 +6,7 @@
 #include <optional>
 #include <variant>
 #include <vector>
+#include <iostream>
 #include <unordered_map>
 
 #include "astnode.h"
@@ -42,7 +43,7 @@ EvalResult eval_var_declare(ASTNode &node, ExecutionContext &ec) {
   // eval the right hand side of the expression (first and only child)
   auto rhs = node.children[0];
   auto result = eval_node(rhs,  ec);
-  auto value = std::make_shared<BoxedValue>(result.lv_result.value());
+  auto value = std::make_shared<BoxedValue>(result.rv_result.value());
 
   ec.entries["indentifier"] = SymbolTableEntry {
     is_const ? VarType::CONST : VarType::VAR,
@@ -72,12 +73,27 @@ EvalResult eval_func_declare(ASTNode &node, ExecutionContext &ec) {
   return EvalResult {};
 }
 
+EvalResult eval_assign_op(ASTNode &node, ExecutionContext &ec) {
+  /*
+    several things to do:
+      1. determine lvalue - can be either a variable in the ExecutionContext/SymbolTable,
+         and object field access, or an index in another data structure (e.g.) a vector
+
+      2. determine RHS, e.g. evaluate the expression to the right of the assign operator
+
+      3. if the assign operator is +=,*=,..., apply that operation on the current value
+
+      4. set the new value in the appropriate place
+
+  */
+}
+
 EvalResult eval_binary_op(ASTNode &node, ExecutionContext &ec) {
   const size_t LHS = 0, RHS = 1;
   const string op_key = "op";
   auto op = int_to_token_type(node.data.at(op_key).get<int>());
-  auto lhs = eval_node(node.children[LHS], ec).lv_result.value();
-  auto rhs = eval_node(node.children[RHS], ec).lv_result.value();
+  auto lhs = eval_node(node.children[LHS], ec).rv_result.value();
+  auto rhs = eval_node(node.children[RHS], ec).rv_result.value();
 
   return EvalResult {
     apply_binary_operator(op, lhs, rhs)
@@ -88,7 +104,7 @@ EvalResult eval_unary_op(ASTNode &node, ExecutionContext &ec) {
   const size_t RHS = 0;
   const string op_key = "op";
   auto op = int_to_token_type(node.data.at(op_key).get<int>());
-  auto rhs = eval_node(node.children[RHS], ec).lv_result.value();
+  auto rhs = eval_node(node.children[RHS], ec).rv_result.value();
 
   return EvalResult {
     apply_unary_operator(op, rhs)
@@ -103,10 +119,10 @@ EvalResult eval_func_call(ASTNode &node, ExecutionContext &ec) {
 
   const size_t FUNCTION = 0, ARGS = 1;
 
-  auto callee = eval_node(node.children[FUNCTION], ec).lv_result.value();
+  auto callee = eval_node(node.children[FUNCTION], ec).rv_result.value();
   assert(callee.type == DataType::FUNCTION);
 
-  auto args = eval_node(node.children[ARGS], ec).lv_result.value();
+  auto args = eval_node(node.children[ARGS], ec).rv_result.value();
   assert(args.type == DataType::VECTOR);
 
   auto function_rawvalue = std::get<Function>(callee.value);
@@ -138,7 +154,7 @@ EvalResult eval_vec_literal(ASTNode &node, ExecutionContext &ec) {
     auto vec_value = std::make_shared<HeVec>();
     for (auto &node : child_nodes) {
         auto result = eval_node(node, ec);
-        vec_value->push_back(std::make_shared<BoxedValue>(result.lv_result->value));
+        vec_value->push_back(std::make_shared<BoxedValue>(result.rv_result->value));
     }
     return EvalResult {
         BoxedValue {
@@ -206,7 +222,7 @@ EvalResult eval_while(ASTNode &node, ExecutionContext &ec) {
   bool raw_condition_value;
 
 CHECK_CONDITION:
-  condition_value = eval_node(node.children[CONDITION], ec).lv_result.value();
+  condition_value = eval_node(node.children[CONDITION], ec).rv_result.value();
   assert(condition_value.type == DataType::BOOL);
   raw_condition_value = std::get<bool>(condition_value.value);
 
@@ -244,7 +260,7 @@ EvalResult eval_if(ASTNode &node, ExecutionContext &ec) {
 
   const size_t CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
 
-  auto condition = eval_node(node.children[CONDITION], ec).lv_result.value();
+  auto condition = eval_node(node.children[CONDITION], ec).rv_result.value();
   assert(condition.type == DataType::BOOL);
   auto conditional_result = std::get<bool>(condition.value);
 
@@ -256,6 +272,45 @@ EvalResult eval_if(ASTNode &node, ExecutionContext &ec) {
     ExecutionContext else_block_ec {&ec, {}};
     return eval_node(node.children[ELSE_BODY], else_block_ec);
   }
+  return EvalResult {};
+}
+
+EvalResult ExecutionContext::lookup_lvalue(string var) {
+  if (this->entries.contains(var)) {
+    auto st_entry = this->entries.at(var);
+    assert(st_entry.type != VarType::CONST);
+    return EvalResult { 
+      std::nullopt, 
+      std::dynamic_pointer_cast<LValue>(
+        std::make_shared<VariableLV>(this, var)
+      )
+    };
+  }
+
+  if (this->parent != nullptr) {
+    return this->parent->lookup_lvalue(var);
+  }
+
+  std::cout << "Lookup of ide~ntifier '" << var << "' failed";
+  exit(-1);
+  return EvalResult {};
+}
+
+
+EvalResult ExecutionContext::lookup_rvalue(string var) {
+  if (this->entries.contains(var)) {
+    auto st_entry = this->entries.at(var);
+    return EvalResult { BoxedValue {st_entry.value->type, st_entry.value->value} };
+  }
+
+  // todo: make this iterative instead of recursive
+  if (this->parent != nullptr) {
+    return this->parent->lookup_rvalue(var);
+  }
+
+  // todo: better error handling
+  std::cout << "Lookup of identifier '" << var << "' failed";
+  exit(-1);
   return EvalResult {};
 }
 
@@ -289,7 +344,7 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     return eval_block(node, ec);
     break;
   case NodeType::ASSIGN_OP:
-
+    return eval_assign_op(node, ec);
     break;
   case NodeType::VAR_DECLARE:
     return eval_var_declare(node, ec);
@@ -322,7 +377,7 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
 
     break;
   case NodeType::VAR_LOOKUP:
-
+    return eval_var_lookup(node, ec, vt);
     break;
   case NodeType::EXPR_LIST:
     // not a typo, in current implementation the expr list is basically a 

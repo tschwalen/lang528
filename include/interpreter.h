@@ -14,6 +14,8 @@ using std::shared_ptr;
 using std::optional;
 using std::unordered_map;
 
+struct EvalResult;
+
 enum class ValueType {
     LVALUE,
     RVALUE
@@ -53,6 +55,9 @@ struct SymbolTable {
     // ownership is going to have to happen here.
     SymbolTable *parent = nullptr;
     unordered_map<string, SymbolTableEntry> entries;
+
+    EvalResult lookup_rvalue(string var);
+    EvalResult lookup_lvalue(string var);
 };
 
 // change this unless at some point we put things other than a symbol table in the execution context
@@ -79,7 +84,30 @@ struct BoxedValue {
     RawValue value;
 };
 
+class LValue {
+    virtual void assign(BoxedValue value) = 0;
+};
+
+class VariableLV : LValue {
+    SymbolTable* symbol_table;
+    string identifier;
+
+    void assign(BoxedValue value) override;
+};
+
+class VectorIndexLV : LValue {
+    shared_ptr<HeVec> vector;
+    BoxedValue index;
+
+    void assign(BoxedValue value) override;
+};
+
+// class FieldAccessLV: LValue {
+    
+// };
+
 struct EvalResult {
-    optional<BoxedValue> lv_result;
+    optional<BoxedValue> rv_result;
+    shared_ptr<LValue> lv_result;
     bool returned = false;
 };

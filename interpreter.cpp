@@ -7,10 +7,12 @@
 #include <variant>
 #include <vector>
 #include <iostream>
+#include <stdexcept>
 #include <unordered_map>
 
 #include "astnode.h"
 #include "interpreter.h"
+#include "nodetype.h"
 #include "runtime.h"
 #include "tokentype.h"
 
@@ -45,7 +47,7 @@ EvalResult eval_var_declare(ASTNode &node, ExecutionContext &ec) {
   auto result = eval_node(rhs,  ec);
   auto value = std::make_shared<BoxedValue>(result.rv_result.value());
 
-  ec.entries["indentifier"] = SymbolTableEntry {
+  ec.entries[identifier] = SymbolTableEntry {
     is_const ? VarType::CONST : VarType::VAR,
     value
   };
@@ -60,7 +62,7 @@ EvalResult eval_func_declare(ASTNode &node, ExecutionContext &ec) {
 
   assert(!ec.entries.contains(name));
 
-  ec.entries["name"] = SymbolTableEntry {
+  ec.entries[name] = SymbolTableEntry {
     VarType::FUNCTION,
     std::make_shared<BoxedValue>(
       DataType::FUNCTION,
@@ -86,6 +88,21 @@ EvalResult eval_assign_op(ASTNode &node, ExecutionContext &ec) {
       4. set the new value in the appropriate place
 
   */
+  const size_t LHS = 0, RHS = 1;
+  const string op_key = "op";
+  auto op = int_to_token_type(node.data.at(op_key).get<int>());
+  auto lhs = eval_node(node.children[LHS], ec, ValueType::LVALUE).lv_result;
+  auto rhs = eval_node(node.children[RHS], ec).rv_result.value();
+
+  auto new_value = rhs;
+
+  if (op != TokenType::EQUALS) {
+    auto bin_op = assign_op_to_binary_op(op);
+    new_value = apply_binary_operator(bin_op, lhs->currentValue(),  new_value);
+  }
+
+  lhs->assign(new_value);
+  return EvalResult {};
 }
 
 EvalResult eval_binary_op(ASTNode &node, ExecutionContext &ec) {
@@ -275,6 +292,17 @@ EvalResult eval_if(ASTNode &node, ExecutionContext &ec) {
   return EvalResult {};
 }
 
+EvalResult eval_var_lookup(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+  assert(node.type == NodeType::VAR_LOOKUP);
+  const string identifier_key = "identifier";
+  const string identifier = node.data.at(identifier_key).get<string>();
+
+  if (vt == ValueType::LVALUE) {
+    return ec.lookup_lvalue(identifier);
+  }
+  return ec.lookup_rvalue(identifier);
+}
+
 EvalResult ExecutionContext::lookup_lvalue(string var) {
   if (this->entries.contains(var)) {
     auto st_entry = this->entries.at(var);
@@ -291,7 +319,7 @@ EvalResult ExecutionContext::lookup_lvalue(string var) {
     return this->parent->lookup_lvalue(var);
   }
 
-  std::cout << "Lookup of ide~ntifier '" << var << "' failed";
+  std::cout << "Lookup of identifier '" << var << "' failed";
   exit(-1);
   return EvalResult {};
 }
@@ -312,6 +340,77 @@ EvalResult ExecutionContext::lookup_rvalue(string var) {
   std::cout << "Lookup of identifier '" << var << "' failed";
   exit(-1);
   return EvalResult {};
+}
+
+EvalResult eval_field_access(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+  throw std::runtime_error("This isn't implemented yet");
+}
+
+
+EvalResult eval_index_access(ASTNode &node, ExecutionContext &ec, ValueType vt) {
+  // TODO: handle strings too (and hashes later)
+
+  const size_t LHS = 0, RHS = 1;
+
+  auto lhs = eval_node(node.children[LHS], ec).rv_result.value();
+  auto rhs =  eval_node(node.children[RHS], ec).rv_result.value();
+
+  assert(lhs.type == DataType::VECTOR && rhs.type == DataType::INT);
+
+  auto hevec = std::get<shared_ptr<HeVec>>(lhs.value);
+  auto index = std::get<int>(rhs.value);
+
+  if(vt == ValueType::LVALUE) {
+    return EvalResult {
+      std::nullopt,
+      std::dynamic_pointer_cast<LValue>(
+        std::make_shared<VectorIndexLV>(
+          hevec,
+          index
+        )
+      )
+    };
+  }
+
+  auto value = hevec->at(index);
+  return EvalResult {
+    BoxedValue {
+      value->type,
+      value->value
+    }
+  };
+}
+
+void VariableLV::assign(BoxedValue value) {
+  auto id = this->identifier;
+  this->symbol_table->entries.at(id) = SymbolTableEntry {
+    VarType::VAR,
+    std::make_shared<BoxedValue>(value.type, value.value)
+  };
+}
+
+BoxedValue VariableLV::currentValue() {
+  auto id = this->identifier;
+  auto cv = this->symbol_table->entries.at(id).value;
+  return BoxedValue {
+    cv->type, cv->value
+  };
+}
+
+void VectorIndexLV::assign(BoxedValue value) {
+  auto index = std::get<int>(this->index.value);
+  this->vector->at(index) = std::make_shared<BoxedValue>(
+    value.type,
+    value.value
+  );
+}
+
+BoxedValue VectorIndexLV::currentValue() {
+  auto index = std::get<int>(this->index.value);
+  auto cv = this->vector->at(index);
+  return BoxedValue {
+    cv->type, cv->value
+  };
 }
 
 EvalResult eval_top_level(ASTNode &node) {
@@ -371,10 +470,10 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     return eval_func_call(node, ec);
     break;
   case NodeType::INDEX_ACCESS:
-
+    return eval_index_access(node, ec, vt);
     break;
   case NodeType::FIELD_ACESS:
-
+    return eval_field_access(node, ec, vt);
     break;
   case NodeType::VAR_LOOKUP:
     return eval_var_lookup(node, ec, vt);

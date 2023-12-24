@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 #include <unordered_map>
+#include <stdexcept>
 
 #include "astnode.h"
 
@@ -13,6 +14,12 @@ using std::vector;
 using std::shared_ptr;
 using std::optional;
 using std::unordered_map;
+
+class NotImplemented : public std::logic_error
+{
+public:
+    NotImplemented() : std::logic_error("Function not yet implemented") { };
+};
 
 struct EvalResult;
 
@@ -85,21 +92,32 @@ struct BoxedValue {
 };
 
 class LValue {
-    virtual void assign(BoxedValue value) = 0;
+public:
+    virtual void assign(BoxedValue value) {
+        throw NotImplemented();
+    };
+
+    virtual BoxedValue currentValue() {
+        throw NotImplemented();
+    }
 };
 
 class VariableLV : LValue {
+public:
     SymbolTable* symbol_table;
     string identifier;
 
     void assign(BoxedValue value) override;
+    BoxedValue currentValue() override;
 };
 
 class VectorIndexLV : LValue {
+public:
     shared_ptr<HeVec> vector;
     BoxedValue index;
 
     void assign(BoxedValue value) override;
+    BoxedValue currentValue() override;
 };
 
 // class FieldAccessLV: LValue {

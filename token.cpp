@@ -1,6 +1,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <stdexcept>
 
 #include <nlohmann/json.hpp>
 
@@ -120,6 +121,24 @@ bool is_assign_op(TokenType tt) {
   return tt == TokenType::EQUALS || tt == TokenType::PLUS_EQUALS ||
          tt == TokenType::MINUS_EQUALS || tt == TokenType::TIMES_EQUALS ||
          tt == TokenType::DIV_EQUALS || tt == TokenType::MOD_EQUALS;
+}
+
+TokenType assign_op_to_binary_op(TokenType tt) {
+  switch (tt) {
+    case TokenType::PLUS_EQUALS:
+      return TokenType::PLUS;
+    case TokenType::MINUS_EQUALS:
+      return TokenType::MINUS;
+    case TokenType::TIMES_EQUALS:
+      return TokenType::TIMES;
+    case TokenType::DIV_EQUALS:
+      return TokenType::DIV;
+    case TokenType::MOD_EQUALS:
+      return TokenType::MOD;
+    default: break;
+  }
+  
+  throw std::runtime_error("argument must be an assign op");
 }
 
 bool binary_precedence_test(TokenType op, TokenType lookahead) {

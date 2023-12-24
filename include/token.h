@@ -32,6 +32,8 @@ bool unary_precedence_test(TokenType op, TokenType lookahead);
 
 bool is_assign_op(TokenType tt );
 
+TokenType assign_op_to_binary_op(TokenType tt);
+
 void to_json(nlohmann::json &j, const TokenMetadata &tm);
 
 void from_json(const nlohmann::json &j, TokenMetadata &tm);

@@ -87,8 +87,12 @@ typedef std::variant<
 > RawValue;
 
 struct BoxedValue {
+public:
     DataType type;
     RawValue value;
+
+    BoxedValue(DataType _type, RawValue _value) :
+        type{_type}, value{_value} {}
 };
 
 class LValue {
@@ -102,10 +106,13 @@ public:
     }
 };
 
-class VariableLV : LValue {
+class VariableLV : public LValue {
 public:
     SymbolTable* symbol_table;
     string identifier;
+
+    VariableLV(SymbolTable* _symbol_table, string _identifier) :
+    symbol_table{_symbol_table}, identifier{_identifier} {}
 
     void assign(BoxedValue value) override;
     BoxedValue currentValue() override;
@@ -115,6 +122,9 @@ class VectorIndexLV : public LValue {
 public:
     shared_ptr<HeVec> vector;
     BoxedValue index;
+
+    VectorIndexLV(shared_ptr<HeVec> _vector, BoxedValue _index) :
+        vector{_vector}, index{_index} {}
 
     void assign(BoxedValue value) override;
     BoxedValue currentValue() override;

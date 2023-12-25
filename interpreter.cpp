@@ -9,9 +9,9 @@
 #include <unordered_map>
 
 #include "astnode.h"
-#include "interpreter.h"
 #include "nodetype.h"
 #include "runtime.h"
+#include "interpreter.h"
 #include "tokentype.h"
 
 
@@ -61,12 +61,12 @@ EvalResult eval_func_declare(ASTNode &node, ExecutionContext &ec) {
 
   ec.entries[name] = SymbolTableEntry {
     VarType::FUNCTION,
-    std::make_shared<BoxedValue>(
+      std::make_shared<BoxedValue>(
       DataType::FUNCTION,
       Function {
         name, args, body  
-      }
-    )
+      }  
+  )
   };
 
   return EvalResult {};
@@ -168,7 +168,7 @@ EvalResult eval_vec_literal(ASTNode &node, ExecutionContext &ec) {
     auto vec_value = std::make_shared<HeVec>();
     for (auto &node : child_nodes) {
         auto result = eval_node(node, ec);
-        vec_value->push_back(std::make_shared<BoxedValue>(result.rv_result->value));
+        vec_value->push_back(std::make_shared<BoxedValue>(result.rv_result.value()));
     }
     return EvalResult {
         BoxedValue {
@@ -231,12 +231,11 @@ EvalResult eval_block(ASTNode &node, ExecutionContext &ec) {
 
 EvalResult eval_while(ASTNode &node, ExecutionContext &ec) {
   const size_t CONDITION = 0, BODY = 1;
-  EvalResult result;
-  BoxedValue condition_value;
-  bool raw_condition_value;
 
 CHECK_CONDITION:
-  condition_value = eval_node(node.children[CONDITION], ec).rv_result.value();
+  bool raw_condition_value;
+  EvalResult result;
+  BoxedValue condition_value = eval_node(node.children[CONDITION], ec).rv_result.value();
   assert(condition_value.type == DataType::BOOL);
   raw_condition_value = std::get<bool>(condition_value.value);
 
@@ -306,9 +305,7 @@ EvalResult ExecutionContext::lookup_lvalue(string var) {
     assert(st_entry.type != VarType::CONST);
     return EvalResult { 
       std::nullopt, 
-      std::dynamic_pointer_cast<LValue>(
-        std::make_shared<VariableLV>(this, var)
-      )
+      std::make_shared<VariableLV>(this, var)
     };
   }
 
@@ -365,11 +362,9 @@ EvalResult eval_index_access(ASTNode &node, ExecutionContext &ec, ValueType vt) 
   if(vt == ValueType::LVALUE) {
     return EvalResult {
       std::nullopt,
-      std::dynamic_pointer_cast<LValue>(
-        std::make_shared<VectorIndexLV>(
-          hevec,
-          index
-        )
+      std::make_shared<VectorIndexLV>(
+        hevec,
+        BoxedValue {DataType::INT, index}
       )
     };
   }
@@ -385,6 +380,7 @@ EvalResult eval_index_access(ASTNode &node, ExecutionContext &ec, ValueType vt) 
 
 void VariableLV::assign(BoxedValue value) {
   auto id = this->identifier;
+
   this->symbol_table->entries.at(id) = SymbolTableEntry {
     VarType::VAR,
     std::make_shared<BoxedValue>(value.type, value.value)

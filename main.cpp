@@ -9,6 +9,7 @@
 #include "token.h"
 #include "tokentype.h"
 #include "util.h"
+#include "interpreter.h"
 #include "unittests.h"
 
 using json = nlohmann::json;
@@ -21,6 +22,7 @@ struct Options {
   bool dump_json;
   bool lex;
   bool parse;
+  bool exec;
   string input_file_path;
 };
 
@@ -30,7 +32,7 @@ Options handle_commandline_args(int argc, char **argv) {
   string input_file_path_option = "--input=";
 
   // TODO: refactor this if/as options grow. for now this works fine
-  Options options{false, false, false, false, ""};
+  Options options{false, false, false, false, false, ""};
   for (auto &string_argument : args) {
     if (string_argument == "--test") {
       options.test = true;
@@ -43,6 +45,9 @@ Options handle_commandline_args(int argc, char **argv) {
     }
     if (string_argument == "--parse") {
       options.parse = true;
+    }
+    if (string_argument == "--exec") {
+      options.exec = true;
     }
     if (string_argument.rfind(input_file_path_option) == 0) {
       options.input_file_path =
@@ -88,6 +93,15 @@ int main(int argc, char **argv) {
       json j = ast;
       std::cout << j.dump(2) << "\n";
     }
+  }
+
+  // INTERPRETER ENTRYPOINT
+  if (opts.exec && !opts.input_file_path.empty()) {
+    auto file_contents = UTIL::get_whole_file(opts.input_file_path);
+    auto tokens = lex_string(file_contents);
+    auto ast = parse_tokens(tokens);
+
+    eval_top_level(ast);
   }
 
   return 0;

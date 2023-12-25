@@ -1,11 +1,51 @@
 #pragma once
 
+#include <memory>
 #include <stdexcept>
 
 #include "interpreter.h"
 #include "tokentype.h"
 
-class ArithmeticOp {
+class ArithmeticCompBinOp {
+protected:
+    virtual bool apply_raw(int lhs, int rhs) = 0;
+    virtual bool apply_raw(int lhs, float rhs) = 0;
+    virtual bool apply_raw(float lhs, int rhs) = 0;
+    virtual bool apply_raw(float lhs, float rhs) = 0;
+
+public:
+    BoxedValue apply(BoxedValue lhs, BoxedValue rhs);
+};
+
+class Less : public ArithmeticCompBinOp {
+    bool apply_raw(int lhs, int rhs) override {return lhs < rhs;}
+    bool apply_raw(int lhs, float rhs) override {return lhs < rhs;}
+    bool apply_raw(float lhs, int rhs) override {return lhs < rhs;}
+    bool apply_raw(float lhs, float rhs) override {return lhs < rhs;}
+};
+
+class Greater : public ArithmeticCompBinOp {
+    bool apply_raw(int lhs, int rhs) override {return lhs > rhs;}
+    bool apply_raw(int lhs, float rhs) override {return lhs > rhs;}
+    bool apply_raw(float lhs, int rhs) override {return lhs > rhs;}
+    bool apply_raw(float lhs, float rhs) override {return lhs > rhs;}
+};
+
+class LessEqual : public ArithmeticCompBinOp {
+    bool apply_raw(int lhs, int rhs) override {return lhs <= rhs;}
+    bool apply_raw(int lhs, float rhs) override {return lhs <= rhs;}
+    bool apply_raw(float lhs, int rhs) override {return lhs <= rhs;}
+    bool apply_raw(float lhs, float rhs) override {return lhs <= rhs;}
+};
+
+class GreaterEqual : public ArithmeticCompBinOp {
+    bool apply_raw(int lhs, int rhs) override {return lhs >= rhs;}
+    bool apply_raw(int lhs, float rhs) override {return lhs >= rhs;}
+    bool apply_raw(float lhs, int rhs) override {return lhs >= rhs;}
+    bool apply_raw(float lhs, float rhs) override {return lhs >= rhs;}
+};
+
+class ArithmeticBinOp {
 protected:
     virtual int   apply_raw(int lhs, int rhs) = 0;
     virtual float apply_raw(int lhs, float rhs) = 0;
@@ -13,62 +53,31 @@ protected:
     virtual float apply_raw(float lhs, float rhs) = 0;
 
 public:
-    BoxedValue apply(BoxedValue lhs, BoxedValue rhs) {
-        if(lhs.type == DataType::INT) {
-            if(rhs.type == DataType::INT) {
-                return BoxedValue {
-                    DataType::INT,
-                    this->apply_raw(std::get<int>(lhs.value), std::get<int>(rhs.value))
-                };
-            }
-            if(rhs.type == DataType::FLOAT) {
-                return BoxedValue {
-                    DataType::FLOAT,
-                    this->apply_raw(std::get<int>(lhs.value), std::get<float>(rhs.value))
-                };
-            }
-        }
-        if(lhs.type == DataType::FLOAT) {
-            if(rhs.type == DataType::INT) {
-                return BoxedValue {
-                    DataType::FLOAT,
-                    this->apply_raw(std::get<float>(lhs.value), std::get<int>(rhs.value))
-                };
-            }
-            if(rhs.type == DataType::FLOAT) {
-                return BoxedValue {
-                    DataType::FLOAT,
-                    this->apply_raw(std::get<float>(lhs.value), std::get<float>(rhs.value))
-                };
-            }
-        }
-
-        throw std::runtime_error("Arithmetic Operators are only supported between numeric types");
-    }
+    BoxedValue apply(BoxedValue lhs, BoxedValue rhs);
 };
 
-class Multiply : public ArithmeticOp {
+class Multiply : public ArithmeticBinOp {
     int   apply_raw(int lhs, int rhs) override {return lhs * rhs;}
     float apply_raw(int lhs, float rhs) override {return lhs * rhs;}
     float apply_raw(float lhs, int rhs) override {return lhs * rhs;}
     float apply_raw(float lhs, float rhs) override {return lhs * rhs;}
 };
 
-class Add : public ArithmeticOp {
+class Add : public ArithmeticBinOp {
     int   apply_raw(int lhs, int rhs) override {return lhs + rhs;}
     float apply_raw(int lhs, float rhs) override {return lhs + rhs;}
     float apply_raw(float lhs, int rhs) override {return lhs + rhs;}
     float apply_raw(float lhs, float rhs) override {return lhs + rhs;}
 };
 
-class Subtract : public ArithmeticOp {
+class Subtract : public ArithmeticBinOp {
     int   apply_raw(int lhs, int rhs) override {return lhs - rhs;}
     float apply_raw(int lhs, float rhs) override {return lhs - rhs;}
     float apply_raw(float lhs, int rhs) override {return lhs - rhs;}
     float apply_raw(float lhs, float rhs) override {return lhs - rhs;}
 };
 
-class Divide : public ArithmeticOp {
+class Divide : public ArithmeticBinOp {
     int   apply_raw(int lhs, int rhs) override {return lhs / rhs;}
     float apply_raw(int lhs, float rhs) override {return lhs / rhs;}
     float apply_raw(float lhs, int rhs) override {return lhs / rhs;}
@@ -77,3 +86,5 @@ class Divide : public ArithmeticOp {
 
 BoxedValue apply_binary_operator(TokenType op, BoxedValue lhs, BoxedValue rhs);
 BoxedValue apply_unary_operator(TokenType op, BoxedValue rhs);
+
+void builtin_print(BoxedValue arg);

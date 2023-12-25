@@ -111,7 +111,7 @@ public:
     BoxedValue currentValue() override;
 };
 
-class VectorIndexLV : LValue {
+class VectorIndexLV : public LValue {
 public:
     shared_ptr<HeVec> vector;
     BoxedValue index;
@@ -129,3 +129,5 @@ struct EvalResult {
     shared_ptr<LValue> lv_result;
     bool returned = false;
 };
+
+EvalResult eval_top_level(ASTNode &node);

@@ -1,8 +1,18 @@
+#include <cstddef>
+#include <memory>
+#include <sstream>
 #include <stdexcept>
+#include <memory>
+#include <string>
+#include <iostream>
+#include <vector>
 
 #include "runtime.h"
 #include "tokentype.h"
 #include "interpreter.h"
+
+using std::shared_ptr;
+using std::string;
 
 /* 
 Binary Operator valid type defitions
@@ -37,6 +47,62 @@ static Multiply multiply;
 static Add add;
 static Subtract subtract;
 static Divide divide;
+static Less less;
+static Greater greater;
+static LessEqual lessEqual;
+static GreaterEqual greaterEqual;
+
+bool equality_comparison(BoxedValue lhs, BoxedValue rhs);
+
+string toString(BoxedValue bv) {
+    std::stringstream result;
+    switch(bv.type) {
+        case DataType::BOOL:
+            result << (std::get<bool>(bv.value) ? "true" : "false");
+            break;
+        case DataType::FLOAT:
+            result << std::get<float>(bv.value);
+            break;
+        case DataType::INT:
+            result << std::get<int>(bv.value);
+            break;
+        case DataType::STRING:
+            result << std::get<string>(bv.value);
+            break;
+        case DataType::VECTOR: {
+            auto vec = std::get<shared_ptr<HeVec>>(bv.value);
+            result << "[";
+            size_t i = 0;
+            size_t length = vec->size();
+            while(i < length) {
+                auto elem = vec->at(i);
+                result << toString(BoxedValue {elem->type, elem->value});
+                if( i != length - 1 ) {
+                    result << ", ";
+                }
+                ++i;
+            }
+            result << "]";
+            break;
+        }
+        case DataType::FUNCTION: {
+            auto function = std::get<Function>(bv.value);
+            result << "{function " << function.name << "(";
+            size_t i = 0;
+            size_t length = function.args.size();
+            while(i < length) {
+                result << function.args.at(i);
+                if( i != length - 1 ) {
+                    result << ", ";
+                }
+                ++i;
+            }
+            result << ")}";
+            break;
+        }
+    }
+    return result.str();
+}
 
 BoxedValue apply_times(BoxedValue lhs, BoxedValue rhs) {
     return multiply.apply(lhs, rhs);
@@ -52,28 +118,151 @@ BoxedValue apply_minus(BoxedValue lhs, BoxedValue rhs) {
 
 BoxedValue apply_plus(BoxedValue lhs, BoxedValue rhs) {
     if (lhs.type == DataType::STRING) {
-
+        std::stringstream new_value;
+        new_value << std::get<string>(lhs.value);
+        new_value << toString(rhs);
+        return BoxedValue {
+            DataType::STRING,
+            new_value.str()
+        };
     }
     return add.apply(lhs, rhs);
 }
 
-BoxedValue apply_mod(BoxedValue lhs, BoxedValue rhs) {}
+BoxedValue apply_mod(BoxedValue lhs, BoxedValue rhs) {
+    if (lhs.type == DataType::INT && rhs.type == DataType::INT) {
+        return BoxedValue {
+            DataType::INT,
+            std::get<int>(lhs.value) % std::get<int>(rhs.value)
+        };
+    }
+    throw std::runtime_error("Modulo operator is only supported between integer types");
+}
 
-BoxedValue apply_equals(BoxedValue lhs, BoxedValue rhs) {}
+bool vector_equality_comparison(shared_ptr<HeVec> lhs, shared_ptr<HeVec> rhs) {
+    // trivially, if vectors don't have the same size then they're not equal
+    if (lhs->size() != rhs->size()) {
+        return false;
+    }
 
-BoxedValue apply_not_equals(BoxedValue lhs, BoxedValue rhs) {}
+    // trivially, if vectors are the same size and one is empty, then both are
+    // empty and they are equal
+    if(lhs->size() == 0) {
+        return true;
+    }
 
-BoxedValue apply_less_equals(BoxedValue lhs, BoxedValue rhs) {}
+    // otherwise, do an equality comparison for every element, recursively checking
+    // any sub-vectors in the same way
+    for( size_t i = 0; i < lhs->size(); ++i) {
+        auto lhs_elem = lhs->at(i);
+        auto rhs_elem = rhs->at(i);
 
-BoxedValue apply_greater_equals(BoxedValue lhs, BoxedValue rhs) {}
+        if ( !equality_comparison(
+            BoxedValue{ lhs_elem->type, lhs_elem->value },
+            BoxedValue{ rhs_elem->type, rhs_elem->value }) 
+        ) {
+            return false;
+        }
+    }
 
-BoxedValue apply_less(BoxedValue lhs, BoxedValue rhs) {}
+    // if we've made it here, then both vectors are equal
+    return true;
+}
 
-BoxedValue apply_greater(BoxedValue lhs, BoxedValue rhs) {}
+bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
+    if( lhs.type != rhs.type ) {
+        return false;
+    }
 
-BoxedValue apply_and(BoxedValue lhs, BoxedValue rhs) {}
+    switch(lhs.type) {
+        case DataType::INT:
+            return std::get<int>(lhs.value) == std::get<int>(rhs.value);
+        case DataType::FLOAT:
+            return std::get<float>(lhs.value) == std::get<float>(rhs.value);
+        case DataType::BOOL:
+            return std::get<bool>(lhs.value) == std::get<bool>(rhs.value);
+        case DataType::STRING:
+            return std::get<string>(lhs.value) == std::get<string>(rhs.value);
+        case DataType::FUNCTION:
+            throw std::runtime_error("Equality Comparison not supported for function type");
+        case DataType::VECTOR: {
+           return vector_equality_comparison(
+            std::get<shared_ptr<HeVec>>(lhs.value),
+            std::get<shared_ptr<HeVec>>(rhs.value)
+           );
+        }
+    }
+}
 
-BoxedValue apply_or(BoxedValue lhs, BoxedValue rhs) {}
+BoxedValue apply_equals(BoxedValue lhs, BoxedValue rhs) {
+    return BoxedValue {DataType::BOOL, equality_comparison(lhs, rhs)};
+}
+
+BoxedValue apply_not_equals(BoxedValue lhs, BoxedValue rhs) {
+    return BoxedValue {DataType::BOOL, !equality_comparison(lhs, rhs)};
+}
+
+BoxedValue apply_less_equals(BoxedValue lhs, BoxedValue rhs) {
+    return lessEqual.apply(lhs, rhs);
+}
+
+BoxedValue apply_greater_equals(BoxedValue lhs, BoxedValue rhs) {
+    return greaterEqual.apply(lhs, rhs);
+}
+
+BoxedValue apply_less(BoxedValue lhs, BoxedValue rhs) {
+    return less.apply(lhs, rhs);
+}
+
+BoxedValue apply_greater(BoxedValue lhs, BoxedValue rhs) {
+    return greater.apply(lhs, rhs);
+}
+
+BoxedValue apply_and(BoxedValue lhs, BoxedValue rhs) {
+    if (lhs.type == DataType::BOOL && rhs.type == DataType::BOOL) {
+        return BoxedValue {
+            DataType::BOOL,
+            std::get<bool>(lhs.value) && std::get<bool>(rhs.value)
+        };
+    }
+    throw std::runtime_error("Boolean operators require boolean operands");
+}
+
+BoxedValue apply_or(BoxedValue lhs, BoxedValue rhs) {
+    if (lhs.type == DataType::BOOL && rhs.type == DataType::BOOL) {
+        return BoxedValue {
+            DataType::BOOL,
+            std::get<bool>(lhs.value) || std::get<bool>(rhs.value)
+        };
+    }
+    throw std::runtime_error("Boolean operators require boolean operands");
+}
+
+BoxedValue apply_unary_not(BoxedValue rhs) {
+    if(rhs.type == DataType::BOOL) {
+        return BoxedValue {
+            DataType::BOOL,
+            !std::get<bool>(rhs.value)
+        };
+    }
+    throw std::runtime_error("Unary not requires a boolean operand");
+}
+
+BoxedValue apply_unary_minus(BoxedValue rhs) {
+    if(rhs.type == DataType::FLOAT) {
+        return BoxedValue {
+            DataType::FLOAT,
+            -std::get<float>(rhs.value)
+        };
+    }
+    if(rhs.type == DataType::INT) {
+        return BoxedValue {
+            DataType::INT,
+            -std::get<int>(rhs.value)
+        };
+    }
+    throw std::runtime_error("Unary minus requires a numeric operand");
+}
 
 BoxedValue apply_binary_operator(TokenType op, BoxedValue lhs, BoxedValue rhs) {
     switch(op) {
@@ -108,4 +297,85 @@ BoxedValue apply_binary_operator(TokenType op, BoxedValue lhs, BoxedValue rhs) {
     throw std::runtime_error("TokenType argument op must be a binary operator");
 }
 
-BoxedValue apply_unary_operator(TokenType op, BoxedValue rhs);
+BoxedValue apply_unary_operator(TokenType op, BoxedValue rhs) {
+    switch(op) {
+        case TokenType::NOT: 
+            return apply_unary_not(rhs);
+            break;
+        case TokenType::MINUS:
+            return apply_unary_minus(rhs);
+            break;
+        default: break;
+    }
+    throw std::runtime_error("TokenType argument op must be a unary operator");
+}
+
+BoxedValue ArithmeticCompBinOp::apply(BoxedValue lhs, BoxedValue rhs) {
+    if(lhs.type == DataType::INT) {
+        if(rhs.type == DataType::INT) {
+            return BoxedValue {
+                DataType::BOOL,
+                this->apply_raw(std::get<int>(lhs.value), std::get<int>(rhs.value))
+            };
+        }
+        if(rhs.type == DataType::FLOAT) {
+            return BoxedValue {
+                DataType::BOOL,
+                this->apply_raw(std::get<int>(lhs.value), std::get<float>(rhs.value))
+            };
+        }
+    }
+    if(lhs.type == DataType::FLOAT) {
+        if(rhs.type == DataType::INT) {
+            return BoxedValue {
+                DataType::BOOL,
+                this->apply_raw(std::get<float>(lhs.value), std::get<int>(rhs.value))
+            };
+        }
+        if(rhs.type == DataType::FLOAT) {
+            return BoxedValue {
+                DataType::BOOL,
+                this->apply_raw(std::get<float>(lhs.value), std::get<float>(rhs.value))
+            };
+        }
+    }
+
+    throw std::runtime_error("Arithmetic Comparison Operators are only supported between numeric types");
+}
+
+BoxedValue ArithmeticBinOp::apply(BoxedValue lhs, BoxedValue rhs) {
+    if(lhs.type == DataType::INT) {
+        if(rhs.type == DataType::INT) {
+            return BoxedValue {
+                DataType::INT,
+                this->apply_raw(std::get<int>(lhs.value), std::get<int>(rhs.value))
+            };
+        }
+        if(rhs.type == DataType::FLOAT) {
+            return BoxedValue {
+                DataType::FLOAT,
+                this->apply_raw(std::get<int>(lhs.value), std::get<float>(rhs.value))
+            };
+        }
+    }
+    if(lhs.type == DataType::FLOAT) {
+        if(rhs.type == DataType::INT) {
+            return BoxedValue {
+                DataType::FLOAT,
+                this->apply_raw(std::get<float>(lhs.value), std::get<int>(rhs.value))
+            };
+        }
+        if(rhs.type == DataType::FLOAT) {
+            return BoxedValue {
+                DataType::FLOAT,
+                this->apply_raw(std::get<float>(lhs.value), std::get<float>(rhs.value))
+            };
+        }
+    }
+
+    throw std::runtime_error("Arithmetic Operators are only supported between numeric types");
+}
+
+void builtin_print(BoxedValue arg) {
+    std::cout << toString(arg) << "\n";
+}

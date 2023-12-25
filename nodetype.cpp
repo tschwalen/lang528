@@ -16,24 +16,29 @@ using std::vector;
 
 string node_type_to_string(NodeType e) {
   vector<string> values{
-      "TOP_LEVEL",    "BLOCK",       "ASSIGN_OP",     "VAR_DECLARE",
-      "FUNC_DECLARE", "IF",          "RETURN",        "WHILE",
-      "BINARY_OP",    "UNARY_OP",    "FUNC_CALL",     "INDEX_ACCESS",
-      "FIELD_ACESS",  "VAR_LOOKUP",  "EXPR_LIST",     "VEC_LITERAL",
-      "BOOL_LITERAL", "INT_LITERAL", "FLOAT_LITERAL", "STRING_LITERAL",
+      "TOP_LEVEL",      "BLOCK",        "ASSIGN_OP",   "VAR_DECLARE",
+      "FUNC_DECLARE",   "IF",           "RETURN",      "WHILE",
+      "BINARY_OP",      "UNARY_OP",     "FUNC_CALL",   "INDEX_ACCESS",
+      "FIELD_ACESS",    "VAR_LOOKUP",   "EXPR_LIST",   "BUILTIN_PRINT",
+      "VEC_LITERAL",    "BOOL_LITERAL", "INT_LITERAL", "FLOAT_LITERAL",
+      "STRING_LITERAL",
   };
   return values.at((int)e);
 }
 
 NodeType int_to_node_type(int i) {
   vector<NodeType> values{
-      NodeType::TOP_LEVEL,     NodeType::BLOCK,          NodeType::ASSIGN_OP,
-      NodeType::VAR_DECLARE,   NodeType::FUNC_DECLARE,   NodeType::IF,
-      NodeType::RETURN,        NodeType::WHILE,          NodeType::BINARY_OP,
-      NodeType::UNARY_OP,      NodeType::FUNC_CALL,      NodeType::INDEX_ACCESS,
-      NodeType::FIELD_ACESS,   NodeType::VAR_LOOKUP,     NodeType::EXPR_LIST,
-      NodeType::VEC_LITERAL,   NodeType::BOOL_LITERAL,   NodeType::INT_LITERAL,
-      NodeType::FLOAT_LITERAL, NodeType::STRING_LITERAL,
+      NodeType::TOP_LEVEL,      NodeType::BLOCK,
+      NodeType::ASSIGN_OP,      NodeType::VAR_DECLARE,
+      NodeType::FUNC_DECLARE,   NodeType::IF,
+      NodeType::RETURN,         NodeType::WHILE,
+      NodeType::BINARY_OP,      NodeType::UNARY_OP,
+      NodeType::FUNC_CALL,      NodeType::INDEX_ACCESS,
+      NodeType::FIELD_ACESS,    NodeType::VAR_LOOKUP,
+      NodeType::EXPR_LIST,      NodeType::BUILTIN_PRINT,
+      NodeType::VEC_LITERAL,    NodeType::BOOL_LITERAL,
+      NodeType::INT_LITERAL,    NodeType::FLOAT_LITERAL,
+      NodeType::STRING_LITERAL,
   };
   return values.at(i);
 }

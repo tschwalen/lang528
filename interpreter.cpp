@@ -1,5 +1,3 @@
-
-
 #include <cassert>
 #include <cstddef>
 #include <memory>
@@ -26,7 +24,6 @@ using std::vector;
 // struct BoxedValue;
 
 EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt=ValueType::RVALUE);
-
 
 EvalResult eval_var_declare(ASTNode &node, ExecutionContext &ec) {
   /*
@@ -342,10 +339,15 @@ EvalResult ExecutionContext::lookup_rvalue(string var) {
   return EvalResult {};
 }
 
+EvalResult eval_builtin_print(ASTNode &node, ExecutionContext &ec) {
+  auto lookup_er = ec.lookup_rvalue("arg");
+  builtin_print(lookup_er.rv_result.value());
+  return EvalResult {};
+}
+
 EvalResult eval_field_access(ASTNode &node, ExecutionContext &ec, ValueType vt) {
   throw std::runtime_error("This isn't implemented yet");
 }
-
 
 EvalResult eval_index_access(ASTNode &node, ExecutionContext &ec, ValueType vt) {
   // TODO: handle strings too (and hashes later)
@@ -414,8 +416,23 @@ BoxedValue VectorIndexLV::currentValue() {
 }
 
 EvalResult eval_top_level(ASTNode &node) {
+    assert(node.type == NodeType::TOP_LEVEL);
+
     // TODO: argv needs to make it in somehow
     ExecutionContext top_level_ec;
+
+    // hard code a built-in function for print
+    top_level_ec.entries["print"] = SymbolTableEntry {
+      VarType::FUNCTION,
+      std::make_shared<BoxedValue>(
+        DataType::FUNCTION,
+        Function {
+          "print", 
+          {"arg"}, 
+          ASTNode {NodeType::BUILTIN_PRINT, {}, {}, {}}
+        }
+      )
+    };
 
     for (auto &child : node.children) {
         eval_node(child, top_level_ec);
@@ -482,6 +499,9 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     // not a typo, in current implementation the expr list is basically a 
     // special case of a vector expression/literal
     return eval_vec_literal(node, ec);
+    break;
+  case NodeType::BUILTIN_PRINT:
+    return eval_builtin_print(node, ec);
     break;
   case NodeType::VEC_LITERAL:
     return eval_vec_literal(node, ec);

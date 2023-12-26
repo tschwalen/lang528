@@ -22,6 +22,7 @@ public:
 };
 
 struct EvalResult;
+struct BoxedValue;
 
 enum class ValueType {
     LVALUE,
@@ -37,7 +38,6 @@ enum class DataType {
     FUNCTION
 };
 
-struct BoxedValue;
 struct Function {
     string name;
     vector<string> args;
@@ -68,12 +68,6 @@ struct SymbolTable {
     EvalResult lookup_lvalue(string var);
 };
 
-// change this unless at some point we put things other than a symbol table in the execution context
-typedef SymbolTable ExecutionContext;
-// struct ExecutionContext {
-
-// };
-
 // HeVec = (He)terogenous (Vec)tor
 typedef vector<shared_ptr<BoxedValue>> HeVec;
 
@@ -87,7 +81,7 @@ typedef std::variant<
     Function
 > RawValue;
 
-struct BoxedValue {
+class BoxedValue {
 public:
     DataType type;
     RawValue value;
@@ -130,10 +124,6 @@ public:
     void assign(BoxedValue value) override;
     BoxedValue currentValue() override;
 };
-
-// class FieldAccessLV: LValue {
-    
-// };
 
 struct EvalResult {
     optional<BoxedValue> rv_result;

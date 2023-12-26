@@ -24,15 +24,17 @@ struct Options {
   bool parse;
   bool exec;
   string input_file_path;
+  string program_args;
 };
 
 Options handle_commandline_args(int argc, char **argv) {
   vector<string> args(argv + 1, argv + argc);
 
   string input_file_path_option = "--input=";
+  string program_args_option= "--argv=";
 
   // TODO: refactor this if/as options grow. for now this works fine
-  Options options{false, false, false, false, false, ""};
+  Options options{false, false, false, false, false, "", ""};
   for (auto &string_argument : args) {
     if (string_argument == "--test") {
       options.test = true;
@@ -52,6 +54,10 @@ Options handle_commandline_args(int argc, char **argv) {
     if (string_argument.rfind(input_file_path_option) == 0) {
       options.input_file_path =
           string_argument.substr(input_file_path_option.size());
+    }
+    if (string_argument.rfind(program_args_option) == 0) {
+      options.program_args = 
+          string_argument.substr(program_args_option.size());
     }
   }
   return options;
@@ -101,7 +107,13 @@ int main(int argc, char **argv) {
     auto tokens = lex_string(file_contents);
     auto ast = parse_tokens(tokens);
 
-    eval_top_level(ast);
+    // split program argv
+    vector<string> program_argv {};
+    if (opts.program_args.size() > 0) {
+      program_argv = UTIL::split_argv(opts.program_args);
+    }
+
+    eval_top_level(ast, program_argv);
   }
 
   return 0;

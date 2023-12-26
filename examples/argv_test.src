@@ -1,0 +1,11 @@
+function main (argv) 
+  
+  print("argv: " + argv);
+
+  # just iterate over and print each arg
+  let i = 0;
+  while i < argv.length()
+    print("Arg #" + (i + 1) + ": " + argv[i]);
+    i += 1;
+  ..
+..

@@ -460,7 +460,38 @@ BoxedValue VectorIndexLV::currentValue() {
   };
 }
 
-EvalResult eval_top_level(ASTNode &node) {
+EvalResult call_main_function(Function main_function, vector<string> argv, SymbolTable &st) {
+  SymbolTable main_function_st {&st, {}};
+
+  // vector.contains does not exist, but this line noise does the same thing
+  if ( std::find(main_function.args.begin(), main_function.args.end(), "argv")
+        != main_function.args.end() )
+  {
+    // make vector of strings out of argv
+    auto argv_hevec = std::make_shared<HeVec>();
+    for(auto &str : argv) {
+      argv_hevec->push_back(
+        std::make_shared<BoxedValue>(
+          DataType::STRING,
+          str
+        )
+      );
+    }
+
+    // place the newly created argv into the symbol table
+    main_function_st.entries["argv"] = SymbolTableEntry {
+      VarType::CONST,
+      std::make_shared<BoxedValue>(
+        DataType::VECTOR,
+        argv_hevec
+      )
+    };
+  }
+
+  return eval_node(main_function.body, main_function_st);
+}
+
+EvalResult eval_top_level(ASTNode &node, vector<string> argv) {
     assert(node.type == NodeType::TOP_LEVEL);
 
     // TODO: argv needs to make it in somehow
@@ -488,7 +519,7 @@ EvalResult eval_top_level(ASTNode &node) {
         if(main.type == VarType::FUNCTION) {
             // actually call main
             auto main_function = std::get<Function>(main.value->value);
-            return eval_node(main_function.body, top_level_st);
+            return call_main_function(main_function, argv, top_level_st);
         }
     }
 

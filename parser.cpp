@@ -190,13 +190,13 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
         ps.advance();
       }
       rhs = ASTNode::makeExprList(arg_exprs, op_token.metadata);
-    } else {
+    } 
+    else if (op == TokenType::LBRACKET) {
+      rhs = expr(ps);
+      ps.expect(TokenType::RBRACKET);
+    }
+    else {
       rhs = primary(ps);
-
-      // handle closing bracket for index expressions
-      if (op == TokenType::LBRACKET) {
-        ps.expect(TokenType::RBRACKET);
-      }
     }
 
     auto lookahead = ps.currentToken().type;

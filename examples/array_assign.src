@@ -1,0 +1,12 @@
+function main ()
+  const a = [1,2,3,4];
+
+  print(a);
+  a[1 + 1] = 77;
+  
+  print(a);
+
+  print (a[0] + a[1] + -(a[2]) * a[3]);
+
+  print(a.length());
+..

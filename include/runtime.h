@@ -88,3 +88,4 @@ BoxedValue apply_binary_operator(TokenType op, BoxedValue lhs, BoxedValue rhs);
 BoxedValue apply_unary_operator(TokenType op, BoxedValue rhs);
 
 void builtin_print(BoxedValue arg);
+BoxedValue builtin_vector_length(BoxedValue arg);

@@ -10,18 +10,13 @@ function is_array( foo )
     return true;
 ..
 
-function array_length( foo )
-    return 3;
-..
-
 function subroutine(x, y, z)
     print(GLOBAL_THING);
     let result = 0;
     if is_array(x)
         
         let index = 0;
-        #while index < x.length()
-        while index < array_length(x)
+        while index < x.length()
             result += (-y + --z) * z;
             index += 1;
         ..

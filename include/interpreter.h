@@ -37,10 +37,12 @@ enum class DataType {
     FUNCTION
 };
 
+struct BoxedValue;
 struct Function {
     string name;
     vector<string> args;
     ASTNode body;
+    shared_ptr<BoxedValue> _this = nullptr;
 };
 
 enum class VarType {
@@ -49,7 +51,6 @@ enum class VarType {
     CONST, VAR, FUNCTION
 };
 
-struct BoxedValue;
 struct SymbolTableEntry {
     VarType type;
     shared_ptr<BoxedValue> value;

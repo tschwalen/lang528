@@ -17,11 +17,24 @@
 
 using std::string;
 using std::vector;
-// using std::shared_ptr;
-// using std::optional;
-// using std::unordered_map;
+using std::unordered_map;
 
-// struct BoxedValue;
+static unordered_map<DataType, SymbolTable> builtin_type_methods {
+  {DataType::VECTOR, 
+    {nullptr, 
+      {{"length", SymbolTableEntry {
+        VarType::FUNCTION,
+        std::make_shared<BoxedValue>(
+          DataType::FUNCTION,
+          Function {
+            "length", 
+            {}, 
+            ASTNode {NodeType::BUILTIN_VECTOR_LENGTH, {}, {}, {}}
+          })
+      }}}
+    }
+  }
+};
 
 EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt=ValueType::RVALUE);
 
@@ -158,10 +171,17 @@ EvalResult eval_func_call(ASTNode &node, ExecutionContext &ec) {
       arg_value
     };
   }
+
+  // bit of a hack to propagate "this" into functions that call for it
+  if (function_rawvalue._this != nullptr) {
+    fn_ec.entries["this"] = SymbolTableEntry {
+      VarType::CONST,
+      function_rawvalue._this
+    };
+  }
   
   return eval_node(function_rawvalue.body, fn_ec);
 }
-
 
 EvalResult eval_vec_literal(ASTNode &node, ExecutionContext &ec) {
     auto child_nodes = node.children;
@@ -342,8 +362,37 @@ EvalResult eval_builtin_print(ASTNode &node, ExecutionContext &ec) {
   return EvalResult {};
 }
 
+EvalResult eval_builtin_vector_length(ASTNode &node, ExecutionContext &ec) {
+  auto lookup_er = ec.lookup_rvalue("this");
+  return EvalResult {
+    builtin_vector_length(lookup_er.rv_result.value()),
+    nullptr
+  };
+}
+
 EvalResult eval_field_access(ASTNode &node, ExecutionContext &ec, ValueType vt) {
-  throw std::runtime_error("This isn't implemented yet");
+  const size_t LHS = 0, RHS = 1;
+  auto lhs = eval_node(node.children[LHS], ec).rv_result.value();
+
+  auto field = node.children[RHS];
+
+  assert(field.type == NodeType::VAR_LOOKUP);
+  
+  const string identifier_key = "identifier";
+  const string identifier = field.data.at(identifier_key).get<string>();
+  auto lhs_symbol_table = builtin_type_methods.at(lhs.type);
+
+  if (vt == ValueType::RVALUE) {
+    auto result = lhs_symbol_table.lookup_rvalue(identifier);
+    if (result.rv_result.value().type == DataType::FUNCTION){
+      std::get<Function>(result.rv_result.value().value)._this = std::make_shared<BoxedValue>(
+        lhs.type,
+        lhs.value
+      );
+    }
+    return result;
+  }
+  return lhs_symbol_table.lookup_lvalue(identifier);
 }
 
 EvalResult eval_index_access(ASTNode &node, ExecutionContext &ec, ValueType vt) {
@@ -498,6 +547,9 @@ EvalResult eval_node(ASTNode &node, ExecutionContext &ec, ValueType vt) {
     break;
   case NodeType::BUILTIN_PRINT:
     return eval_builtin_print(node, ec);
+    break;
+  case NodeType::BUILTIN_VECTOR_LENGTH:
+    return eval_builtin_vector_length(node, ec);
     break;
   case NodeType::VEC_LITERAL:
     return eval_vec_literal(node, ec);

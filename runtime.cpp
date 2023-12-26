@@ -379,3 +379,10 @@ BoxedValue ArithmeticBinOp::apply(BoxedValue lhs, BoxedValue rhs) {
 void builtin_print(BoxedValue arg) {
     std::cout << toString(arg) << "\n";
 }
+
+BoxedValue builtin_vector_length(BoxedValue arg) {
+    auto vec = std::get<shared_ptr<HeVec>>(arg.value);
+    return BoxedValue {
+        DataType::INT, (int)vec->size()
+    };
+}

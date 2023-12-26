@@ -390,6 +390,16 @@ BoxedValue builtin_vector_length(BoxedValue arg) {
     };
 }
 
+void builtin_vector_append(BoxedValue vec, BoxedValue elem) {
+    auto raw_vec = std::get<shared_ptr<HeVec>>(vec.value);
+    raw_vec->push_back(
+        std::make_shared<BoxedValue>(
+            elem.type,
+            elem.value
+        )
+    );
+}
+
 BoxedValue builtin_string_length(BoxedValue arg) {
     auto str = std::get<string>(arg.value);
     return BoxedValue {

@@ -22,7 +22,8 @@ using std::unordered_map;
 static unordered_map<DataType, SymbolTable> builtin_type_methods {
   {DataType::VECTOR, 
     {nullptr, 
-      {{"length", SymbolTableEntry {
+      {
+        {"length", SymbolTableEntry {
         VarType::FUNCTION,
         std::make_shared<BoxedValue>(
           DataType::FUNCTION,
@@ -31,7 +32,18 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
             {}, 
             ASTNode {NodeType::BUILTIN_VECTOR_LENGTH, {}, {}, {}}
           })
-      }}}
+        }},
+        {"append", SymbolTableEntry {
+        VarType::FUNCTION,
+        std::make_shared<BoxedValue>(
+          DataType::FUNCTION,
+          Function {
+            "append", 
+            {"elem"}, 
+            ASTNode {NodeType::BUILTIN_VECTOR_APPEND, {}, {}, {}}
+          })
+        }}
+      }
     }
   },
   {DataType::STRING, 
@@ -376,6 +388,14 @@ EvalResult eval_builtin_print(ASTNode &node, SymbolTable &st) {
   return EvalResult {};
 }
 
+EvalResult eval_builtin_vector_append(ASTNode &node, SymbolTable &st) {
+  auto lookup_this = st.lookup_rvalue("this").rv_result.value();
+  auto lookup_elem = st.lookup_rvalue("elem").rv_result.value();
+
+  builtin_vector_append(lookup_this, lookup_elem);
+  return EvalResult {};
+}
+
 EvalResult eval_builtin_vector_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
@@ -571,7 +591,6 @@ EvalResult eval_top_level(ASTNode &node, vector<string> argv) {
 
 EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
   switch (node.type) {
-
   case NodeType::TOP_LEVEL:
     return eval_top_level(node);
     break;
@@ -624,6 +643,9 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
     break;
   case NodeType::BUILTIN_VECTOR_LENGTH:
     return eval_builtin_vector_length(node, st);
+    break;
+  case NodeType::BUILTIN_VECTOR_APPEND:
+    return eval_builtin_vector_append(node, st);
     break;
   case NodeType::BUILTIN_STRING_LENGTH:
     return eval_builtin_string_length(node, st);

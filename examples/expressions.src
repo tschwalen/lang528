@@ -1,5 +1,18 @@
+#
+# TODO: this example program sucks, it was only written to test parsing so it should
+# be rewritten to do something useful/testable
+#
 
 const GLOBAL_THING = "hello hello";
+
+function is_array( foo )
+    # at some point this will be a builtin
+    return true;
+..
+
+function array_length( foo )
+    return 3;
+..
 
 function subroutine(x, y, z)
     print(GLOBAL_THING);
@@ -7,8 +20,10 @@ function subroutine(x, y, z)
     if is_array(x)
         
         let index = 0;
-        while index < x.length()
+        #while index < x.length()
+        while index < array_length(x)
             result += (-y + --z) * z;
+            index += 1;
         ..
     ..
     return result;
@@ -20,5 +35,5 @@ function main ()
     const y = 5;
     const z = 6;
 
-    subroutine(x,y,z);
+    print( subroutine([x,y,z], y, z) );
 ..

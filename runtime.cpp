@@ -76,7 +76,10 @@ string toString(BoxedValue bv) {
             size_t length = vec->size();
             while(i < length) {
                 auto elem = vec->at(i);
+                auto quotes = elem->type == DataType::STRING ? "\"" : "";
+                result << quotes;
                 result << toString(BoxedValue {elem->type, elem->value});
+                result << quotes;
                 if( i != length - 1 ) {
                     result << ", ";
                 }

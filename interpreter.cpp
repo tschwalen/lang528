@@ -33,6 +33,20 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
           })
       }}}
     }
+  },
+  {DataType::STRING, 
+    {nullptr, 
+      {{"length", SymbolTableEntry {
+        VarType::FUNCTION,
+        std::make_shared<BoxedValue>(
+          DataType::FUNCTION,
+          Function {
+            "length", 
+            {}, 
+            ASTNode {NodeType::BUILTIN_STRING_LENGTH, {}, {}, {}}
+          })
+      }}}
+    }
   }
 };
 
@@ -370,6 +384,14 @@ EvalResult eval_builtin_vector_length(ASTNode &node, SymbolTable &st) {
   };
 }
 
+EvalResult eval_builtin_string_length(ASTNode &node, SymbolTable &st) {
+  auto lookup_er = st.lookup_rvalue("this");
+  return EvalResult {
+    builtin_string_length(lookup_er.rv_result.value()),
+    nullptr
+  };
+}
+
 EvalResult eval_field_access(ASTNode &node, SymbolTable &st, ValueType vt) {
   const size_t LHS = 0, RHS = 1;
   auto lhs = eval_node(node.children[LHS], st).rv_result.value();
@@ -403,28 +425,49 @@ EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
   auto lhs = eval_node(node.children[LHS], st).rv_result.value();
   auto rhs =  eval_node(node.children[RHS], st).rv_result.value();
 
-  assert(lhs.type == DataType::VECTOR && rhs.type == DataType::INT);
-
-  auto hevec = std::get<shared_ptr<HeVec>>(lhs.value);
+  assert(rhs.type == DataType::INT);
   auto index = std::get<int>(rhs.value);
 
-  if(vt == ValueType::LVALUE) {
+
+  // vector index case
+  if (lhs.type == DataType::VECTOR) {
+    auto hevec = std::get<shared_ptr<HeVec>>(lhs.value);
+
+    if(vt == ValueType::LVALUE) {
+      return EvalResult {
+        std::nullopt,
+        std::make_shared<VectorIndexLV>(
+          hevec,
+          BoxedValue {DataType::INT, index}
+        )
+      };
+    }
+
+    auto value = hevec->at(index);
     return EvalResult {
-      std::nullopt,
-      std::make_shared<VectorIndexLV>(
-        hevec,
-        BoxedValue {DataType::INT, index}
-      )
+      BoxedValue {
+        value->type,
+        value->value
+      }
     };
   }
 
-  auto value = hevec->at(index);
-  return EvalResult {
-    BoxedValue {
-      value->type,
-      value->value
+  // string index case
+  if (lhs.type == DataType::STRING) {
+    auto str = std::get<string>(lhs.value);
+    if(vt == ValueType::LVALUE) {
+      throw std::runtime_error("Assignment is not supported on string indexes.");
     }
-  };
+    string value { str.at(index) };
+    return EvalResult {
+      BoxedValue {
+        DataType::STRING,
+        value
+      }
+    };
+  }
+
+  throw std::runtime_error("Index access only supported on strings and vectors");
 }
 
 void VariableLV::assign(BoxedValue value) {
@@ -582,6 +625,9 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
   case NodeType::BUILTIN_VECTOR_LENGTH:
     return eval_builtin_vector_length(node, st);
     break;
+  case NodeType::BUILTIN_STRING_LENGTH:
+    return eval_builtin_string_length(node, st);
+    break;
   case NodeType::VEC_LITERAL:
     return eval_vec_literal(node, st);
     break;
@@ -599,4 +645,3 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
     break;
   }
 }
-

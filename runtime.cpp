@@ -389,3 +389,10 @@ BoxedValue builtin_vector_length(BoxedValue arg) {
         DataType::INT, (int)vec->size()
     };
 }
+
+BoxedValue builtin_string_length(BoxedValue arg) {
+    auto str = std::get<string>(arg.value);
+    return BoxedValue {
+        DataType::INT, (int)str.size()
+    };
+}

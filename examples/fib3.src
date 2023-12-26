@@ -1,0 +1,62 @@
+#
+# fibonacci with memoization instead of naive recursion
+#
+
+const FIB_CACHE = [0, 1];
+
+function str_to_int (str)
+    let result = 0;
+    
+    let i = 0;
+    while i < str.length()
+        result *= 10;
+        const digit = str[i];
+        if digit == "0"
+            result += 0;
+        elseif digit == "1"
+            result += 1;
+        elseif digit == "2"
+            result += 2;
+        elseif digit == "3"
+            result += 3;
+        elseif digit == "4"
+            result += 4;
+        elseif digit == "5"
+            result += 5;
+        elseif digit == "6"
+            result += 6;
+        elseif digit == "7"
+            result += 7;
+        elseif digit == "8"
+            result += 8;
+        elseif digit == "9"
+            result += 9;
+        ..
+        i += 1;
+    ..
+    return result;
+..
+
+function fibonacci ( n )
+    if n < FIB_CACHE.length()
+        return FIB_CACHE[n];
+    ..
+    
+    const calculated_fib = fibonacci(n - 1) + fibonacci(n - 2);
+    FIB_CACHE.append(calculated_fib);
+    return calculated_fib;
+..
+
+function main ( argv )
+    let limit = 12;
+
+    if argv.length() > 0
+        limit = str_to_int(argv[0]);
+    ..
+
+    let i = 0; 
+    while i < limit
+        print( fibonacci (i) );
+        i += 1;
+    ..
+..

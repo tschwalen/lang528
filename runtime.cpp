@@ -406,3 +406,9 @@ BoxedValue builtin_string_length(BoxedValue arg) {
         DataType::INT, (int)str.size()
     };
 }
+
+void runtime_assertion(bool condition, string message) {
+    if(!condition) {
+        throw std::runtime_error(message);
+    }
+}

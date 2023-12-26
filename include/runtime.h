@@ -84,6 +84,8 @@ class Divide : public ArithmeticBinOp {
     float apply_raw(float lhs, float rhs) override {return lhs / rhs;}
 };
 
+void runtime_assertion(bool condition, string message);
+
 BoxedValue apply_binary_operator(TokenType op, BoxedValue lhs, BoxedValue rhs);
 BoxedValue apply_unary_operator(TokenType op, BoxedValue rhs);
 

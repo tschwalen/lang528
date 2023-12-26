@@ -1,10 +1,12 @@
 #include <cassert>
 #include <cstddef>
+#include <exception>
 #include <memory>
 #include <optional>
 #include <variant>
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -13,7 +15,6 @@
 #include "runtime.h"
 #include "interpreter.h"
 #include "tokentype.h"
-
 
 using std::string;
 using std::vector;
@@ -75,8 +76,10 @@ EvalResult eval_var_declare(ASTNode &node, SymbolTable &st) {
   bool is_const = node.data.at("const").get<bool>();
 
   // make sure we don't declare more than once in the same scope
-  // TODO: better error handling
-  assert(!st.entries.contains(identifier));
+  runtime_assertion(
+    !st.entries.contains(identifier), 
+    "Identifiers cannot be redefined in the same scope." 
+  );
 
   // eval the right hand side of the expression (first and only child)
   auto rhs = node.children[0];
@@ -96,7 +99,11 @@ EvalResult eval_func_declare(ASTNode &node, SymbolTable &st) {
   vector<string> args = node.data.at("args").get<vector<string>>();
   auto body = node.children[0];
 
-  assert(!st.entries.contains(name));
+  runtime_assertion(
+    !st.entries.contains(name), 
+    "Function/global name already taken" 
+  );
+
 
   st.entries[name] = SymbolTableEntry {
     VarType::FUNCTION,
@@ -173,10 +180,17 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
   const size_t FUNCTION = 0, ARGS = 1;
 
   auto callee = eval_node(node.children[FUNCTION], st).rv_result.value();
-  assert(callee.type == DataType::FUNCTION);
+  runtime_assertion(
+    callee.type == DataType::FUNCTION, 
+    "Function callee value must be a function."
+  );
 
   auto args = eval_node(node.children[ARGS], st).rv_result.value();
-  assert(args.type == DataType::VECTOR);
+  runtime_assertion(
+    args.type == DataType::VECTOR,
+    
+    "Function arguments must be an expression list"
+  );
 
   auto function_rawvalue = std::get<Function>(callee.value);
   auto arg_names = function_rawvalue.args;
@@ -186,7 +200,10 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
   // prep function's symbol table
   SymbolTable fn_st {&st,{}};
 
-  assert(arg_names.size() == arg_values->size());
+  runtime_assertion(
+    arg_names.size() == arg_values->size(),
+    "Number of arguments does not match function definition."
+  );
   auto len = arg_names.size();
   for (size_t i = 0; i < len; i++) {
     auto arg_name = arg_names.at(i);
@@ -282,7 +299,10 @@ CHECK_CONDITION:
   bool raw_condition_value;
   EvalResult result;
   BoxedValue condition_value = eval_node(node.children[CONDITION], st).rv_result.value();
-  assert(condition_value.type == DataType::BOOL);
+  runtime_assertion(
+    condition_value.type == DataType::BOOL,
+    "While loop condition expression must have boolean result."
+  );
   raw_condition_value = std::get<bool>(condition_value.value);
 
   if (raw_condition_value) {
@@ -320,7 +340,10 @@ EvalResult eval_if(ASTNode &node, SymbolTable &st) {
   const size_t CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
 
   auto condition = eval_node(node.children[CONDITION], st).rv_result.value();
-  assert(condition.type == DataType::BOOL);
+  runtime_assertion(
+    condition.type == DataType::BOOL,
+    "If-statement condition expression must have boolean result."
+  );
   auto conditional_result = std::get<bool>(condition.value);
 
   if (conditional_result) {
@@ -335,7 +358,6 @@ EvalResult eval_if(ASTNode &node, SymbolTable &st) {
 }
 
 EvalResult eval_var_lookup(ASTNode &node, SymbolTable &st, ValueType vt) {
-  assert(node.type == NodeType::VAR_LOOKUP);
   const string identifier_key = "identifier";
   const string identifier = node.data.at(identifier_key).get<string>();
 
@@ -348,7 +370,10 @@ EvalResult eval_var_lookup(ASTNode &node, SymbolTable &st, ValueType vt) {
 EvalResult SymbolTable::lookup_lvalue(string var) {
   if (this->entries.contains(var)) {
     auto st_entry = this->entries.at(var);
-    assert(st_entry.type != VarType::CONST);
+    runtime_assertion(
+      st_entry.type == VarType::VAR, 
+      "Assignment is not supported on constants or functions."
+    );
     return EvalResult { 
       std::nullopt, 
       std::make_shared<VariableLV>(this, var)
@@ -358,10 +383,10 @@ EvalResult SymbolTable::lookup_lvalue(string var) {
   if (this->parent != nullptr) {
     return this->parent->lookup_lvalue(var);
   }
-
-  std::cout << "Lookup of identifier '" << var << "' failed";
-  exit(-1);
-  return EvalResult {};
+  
+  std::stringstream err;
+  err << "Lookup of identifier '" << var << "' failed";
+  throw std::runtime_error(err.str());
 }
 
 
@@ -376,10 +401,9 @@ EvalResult SymbolTable::lookup_rvalue(string var) {
     return this->parent->lookup_rvalue(var);
   }
 
-  // todo: better error handling
-  std::cout << "Lookup of identifier '" << var << "' failed";
-  exit(-1);
-  return EvalResult {};
+  std::stringstream err;
+  err << "Lookup of identifier '" << var << "' failed";
+  throw std::runtime_error(err.str());
 }
 
 EvalResult eval_builtin_print(ASTNode &node, SymbolTable &st) {
@@ -418,7 +442,10 @@ EvalResult eval_field_access(ASTNode &node, SymbolTable &st, ValueType vt) {
 
   auto field = node.children[RHS];
 
-  assert(field.type == NodeType::VAR_LOOKUP);
+  runtime_assertion(
+    field.type == NodeType::VAR_LOOKUP,
+    "Field access requires a identifier"
+  );
   
   const string identifier_key = "identifier";
   const string identifier = field.data.at(identifier_key).get<string>();
@@ -438,14 +465,16 @@ EvalResult eval_field_access(ASTNode &node, SymbolTable &st, ValueType vt) {
 }
 
 EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
-  // TODO: handle strings too (and hashes later)
+  // Handles vectors (for lvalue and rvalue) and strings (rvalue only).
+  // Later down the road there may be a builtin dict/hash type that will also need
+  // to be handled.
 
   const size_t LHS = 0, RHS = 1;
 
   auto lhs = eval_node(node.children[LHS], st).rv_result.value();
   auto rhs =  eval_node(node.children[RHS], st).rv_result.value();
 
-  assert(rhs.type == DataType::INT);
+  runtime_assertion(rhs.type == DataType::INT, "Index value must be an int.");
   auto index = std::get<int>(rhs.value);
 
 
@@ -557,7 +586,6 @@ EvalResult call_main_function(Function main_function, vector<string> argv, Symbo
 EvalResult eval_top_level(ASTNode &node, vector<string> argv) {
     assert(node.type == NodeType::TOP_LEVEL);
 
-    // TODO: argv needs to make it in somehow
     SymbolTable top_level_st;
 
     // hard code a built-in function for print
@@ -590,80 +618,90 @@ EvalResult eval_top_level(ASTNode &node, vector<string> argv) {
 }
 
 EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
-  switch (node.type) {
-  case NodeType::TOP_LEVEL:
-    return eval_top_level(node);
-    break;
-  case NodeType::BLOCK:
-    return eval_block(node, st);
-    break;
-  case NodeType::ASSIGN_OP:
-    return eval_assign_op(node, st);
-    break;
-  case NodeType::VAR_DECLARE:
-    return eval_var_declare(node, st);
-    break;
-  case NodeType::FUNC_DECLARE:
-    return eval_func_declare(node, st);
-    break;
-  case NodeType::IF:
-    return eval_if(node, st);
-    break;
-  case NodeType::RETURN:
-    return eval_return(node, st);
-    break;
-  case NodeType::WHILE:
-    return eval_while(node, st);
-    break;
-  case NodeType::BINARY_OP:
-    return eval_binary_op(node, st);
-    break;
-  case NodeType::UNARY_OP:
-    return eval_unary_op(node, st);
-    break;
-  case NodeType::FUNC_CALL:
-    return eval_func_call(node, st);
-    break;
-  case NodeType::INDEX_ACCESS:
-    return eval_index_access(node, st, vt);
-    break;
-  case NodeType::FIELD_ACESS:
-    return eval_field_access(node, st, vt);
-    break;
-  case NodeType::VAR_LOOKUP:
-    return eval_var_lookup(node, st, vt);
-    break;
-  case NodeType::EXPR_LIST:
-    // not a typo, in current implementation the expr list is basically a 
-    // special case of a vector expression/literal
-    return eval_vec_literal(node, st);
-    break;
-  case NodeType::BUILTIN_PRINT:
-    return eval_builtin_print(node, st);
-    break;
-  case NodeType::BUILTIN_VECTOR_LENGTH:
-    return eval_builtin_vector_length(node, st);
-    break;
-  case NodeType::BUILTIN_VECTOR_APPEND:
-    return eval_builtin_vector_append(node, st);
-    break;
-  case NodeType::BUILTIN_STRING_LENGTH:
-    return eval_builtin_string_length(node, st);
-    break;
-  case NodeType::VEC_LITERAL:
-    return eval_vec_literal(node, st);
-    break;
-  case NodeType::BOOL_LITERAL:
-    return eval_bool_literal(node, st);
-    break;
-  case NodeType::INT_LITERAL:
-    return eval_int_literal(node, st);
-    break;
-  case NodeType::FLOAT_LITERAL:
-    return eval_float_literal(node, st);
-    break;
-  case NodeType::STRING_LITERAL:
-    return eval_string_literal(node, st);
-    break;
+  try{
+    switch (node.type) {
+    case NodeType::TOP_LEVEL:
+      return eval_top_level(node);
+      break;
+    case NodeType::BLOCK:
+      return eval_block(node, st);
+      break;
+    case NodeType::ASSIGN_OP:
+      return eval_assign_op(node, st);
+      break;
+    case NodeType::VAR_DECLARE:
+      return eval_var_declare(node, st);
+      break;
+    case NodeType::FUNC_DECLARE:
+      return eval_func_declare(node, st);
+      break;
+    case NodeType::IF:
+      return eval_if(node, st);
+      break;
+    case NodeType::RETURN:
+      return eval_return(node, st);
+      break;
+    case NodeType::WHILE:
+      return eval_while(node, st);
+      break;
+    case NodeType::BINARY_OP:
+      return eval_binary_op(node, st);
+      break;
+    case NodeType::UNARY_OP:
+      return eval_unary_op(node, st);
+      break;
+    case NodeType::FUNC_CALL:
+      return eval_func_call(node, st);
+      break;
+    case NodeType::INDEX_ACCESS:
+      return eval_index_access(node, st, vt);
+      break;
+    case NodeType::FIELD_ACESS:
+      return eval_field_access(node, st, vt);
+      break;
+    case NodeType::VAR_LOOKUP:
+      return eval_var_lookup(node, st, vt);
+      break;
+    case NodeType::EXPR_LIST:
+      // not a typo, in current implementation the expr list is basically a 
+      // special case of a vector expression/literal
+      return eval_vec_literal(node, st);
+      break;
+    case NodeType::BUILTIN_PRINT:
+      return eval_builtin_print(node, st);
+      break;
+    case NodeType::BUILTIN_VECTOR_LENGTH:
+      return eval_builtin_vector_length(node, st);
+      break;
+    case NodeType::BUILTIN_VECTOR_APPEND:
+      return eval_builtin_vector_append(node, st);
+      break;
+    case NodeType::BUILTIN_STRING_LENGTH:
+      return eval_builtin_string_length(node, st);
+      break;
+    case NodeType::VEC_LITERAL:
+      return eval_vec_literal(node, st);
+      break;
+    case NodeType::BOOL_LITERAL:
+      return eval_bool_literal(node, st);
+      break;
+    case NodeType::INT_LITERAL:
+      return eval_int_literal(node, st);
+      break;
+    case NodeType::FLOAT_LITERAL:
+      return eval_float_literal(node, st);
+      break;
+    case NodeType::STRING_LITERAL:
+      return eval_string_literal(node, st);
+      break;
+    }
+  }
+  catch (std::exception &e) {
+    // if a runtime error occurs, report the error and report where in the source file it
+    // happens, then exit.
+    std::cerr << "Runtime error encountered at line " << (node.metadata.line + 1) 
+      << ", column " << (node.metadata.column) << ":\n"
+      << "   " << e.what() << "\n";
+    exit(-1);
   }
 }

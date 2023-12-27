@@ -1,0 +1,17 @@
+
+function f(a, b, c) ..
+
+function main()
+  const a = 11;
+  const b = 5.5;
+  const c = "Ahhhhhhhhh";
+  const d = true;
+  const e = ["some", 'thing'];
+
+  print(a);
+  print(b);
+  print(c);
+  print(d);
+  print(e);
+  print(f);
+..

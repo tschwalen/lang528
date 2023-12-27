@@ -1,0 +1,43 @@
+#
+# Test an in-language implementation of an associative array (map)
+#
+# This program reads argv and counts the number of occurances of each string
+#
+
+# given an associative array, return the numeric index of the key
+function aa_lookup(aa, key)
+    let i = 0;
+    while i < aa.length()
+        const entry = aa[i];
+
+        if entry[0] == key
+            return i;
+        ..
+        i += 1;
+    ..
+    return -1;
+..
+
+function bump_key(aa, key)
+    const index = aa_lookup(aa, key);
+
+    if index == -1
+      aa.append([key, 1]);
+    else
+      aa[index][1] += 1;
+    ..
+..
+
+function main ( argv ) 
+
+    const aa = [];
+
+    let i = 0;
+    while i < argv.length()
+      const key = argv[i];
+      bump_key(aa, key);
+      i += 1;
+    ..
+
+    print(aa);
+..

@@ -170,6 +170,7 @@ Token LexerState::handle_numeric() {
 
   // read floating point if '.' is encountered
   if (c == '.') {
+    number.append(".");
     c = this->next_char();
     while (isdigit(c)) {
       number.append(1, c);

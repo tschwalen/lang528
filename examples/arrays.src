@@ -4,9 +4,13 @@ function main ()
   const b = 3;
 
 
-  const x = [1, a, a + b];
+  const x = [1, b + 0.1, a + b];
 
+  print( x[0] );
   print( x[1] );
   print( x[2] );
-  print( x[3] );
+
+  x[1] = ["woah", "a subarray"];
+
+  print(x);
 ..

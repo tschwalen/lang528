@@ -84,7 +84,7 @@ ASTNode ASTNode::makeExprList(vector<ASTNode> arg_exprs,
 ASTNode ASTNode::makeIndexAccess(ASTNode lvalue_expr,
                                  ASTNode index_expr,
                                  TokenMetadata metadata) {
-  return ASTNode{NodeType::EXPR_LIST, {lvalue_expr, index_expr}, {}, metadata};
+  return ASTNode{NodeType::INDEX_ACCESS, {lvalue_expr, index_expr}, {}, metadata};
 }
 
 ASTNode ASTNode::makeFieldAccess(ASTNode lvalue_expr,

@@ -1,0 +1,7 @@
+function main (argv)
+    if argv.length() > 0
+        #let x = "hello" % "goodbye";
+        let x = 44;
+        x();
+    ..
+..

@@ -1,0 +1,17 @@
+function a()
+    return 2;
+..
+
+function b()
+    return 2;
+..
+
+function main() 
+    const x = 44;
+    const y = 77;
+    
+    print( --x + --y);
+    print( x < y & y == 77);
+
+    print( -a() + b() );
+..

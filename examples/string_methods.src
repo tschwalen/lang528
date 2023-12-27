@@ -1,0 +1,13 @@
+function main ()
+  const a_string = "Blah blah blah";
+
+  print("Length of that string: " + a_string.length());
+
+  print("Iterating over string and printing character one-by-one:");
+
+  let i = 0;
+  while i < a_string.length()
+    print(a_string[i]);
+    i += 1;
+  ..
+..

@@ -17,6 +17,7 @@ ASTNode expr(ParserState &ps);
 ASTNode primary(ParserState &ps);
 ASTNode block(ParserState &ps);
 ASTNode statement(ParserState &ps);
+ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0);
 
 ASTNode var_declare(ParserState &ps, TokenType type) {
   assert(type == TokenType::CONST || type == TokenType::LET);
@@ -93,9 +94,11 @@ ASTNode unary_op(ParserState &ps) {
   // current token is a unary op
   assert(is_unary_op(ps.currentToken().type));
   auto op_token = ps.advance();
-  auto expr = primary(ps);
+  // previously:
+  // auto rhs = primary(ps);
+  auto rhs = expr_helper(ps, primary(ps), unary_op_precedence(op_token.type));
 
-  return ASTNode::makeUnaryOp(op_token.type, expr, op_token.metadata);
+  return ASTNode::makeUnaryOp(op_token.type, rhs, op_token.metadata);
 }
 
 ASTNode basic_literal(ParserState &ps) {
@@ -170,7 +173,7 @@ ASTNode primary(ParserState &ps) {
   return basic_literal(ps);
 }
 
-ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
+ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence) {
 
   while (is_binary_op(ps.currentToken().type) &&
          (binary_op_precedence(ps.currentToken().type) >= min_precedence)) {
@@ -190,13 +193,13 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence = 0) {
         ps.advance();
       }
       rhs = ASTNode::makeExprList(arg_exprs, op_token.metadata);
-    } else {
+    } 
+    else if (op == TokenType::LBRACKET) {
+      rhs = expr(ps);
+      ps.expect(TokenType::RBRACKET);
+    }
+    else {
       rhs = primary(ps);
-
-      // handle closing bracket for index expressions
-      if (op == TokenType::LBRACKET) {
-        ps.expect(TokenType::RBRACKET);
-      }
     }
 
     auto lookahead = ps.currentToken().type;

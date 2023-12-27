@@ -1,0 +1,55 @@
+function d() return 7; ..
+
+function testOperatorPrecedence()
+    const a = 5;
+    const b = 3;
+    const c = 2;
+
+    # Test arithmetic operators
+    const result1 = a + b * c;
+    print("result1: " + result1 + " (should be 11)");  # Expect 11 (3 * 2 + 5)
+
+    const result2 = (a + b) * c;
+    print("result2: " + result2 + " (should be 16)");  # Expect 16 ((3 + 5) * 2)
+
+    # Test relational operators
+    const result3 = a < b == c;
+    print("result3: " + result3 + " (should be false)");  # Expect false (5 < 3 is false, false == 2 is false)
+
+    const result4 = a < (b + c);
+    print("result4: " + result4 + " (should be false)");  # Expect false (5 < 5 is false)
+
+    # Test logical operators
+    const result5 = a == a & b == b | c < b;
+    print("result5: " + result5 + " (should be true)");  # 
+
+    const result6 = (a == a & b == b) | c < b;
+    print("result6: " + result6 + " (should be true)");  #
+
+    # Test mixed operators
+    const result7 = a + b * c < a & b == c;
+    print("result7: " + result7 + " (should be false)");  # Expect false ((5 + 3 * 2) < 5 is false, false == 2 is false)
+
+    const result8 = (a + b) * [1,1,1].length() == 8 * 3;
+    print("result8: " + result8 + " (should be true)");  # Expect true,  (5 + 3) * 3 == 8 * 3
+
+    # Test function calls and unary operators
+    const result9 = -a + d() * c;
+    print("result9: " + result9 + " (should be 9)");  # Expect 9 (-(5) + 7 * 2) ~> 14 - 5 = 9 
+
+    const result10 = -a + d() * -c;
+    print("result10: " + result10 + " (should be -19)");  # Expect -19 (-5 + 7 * -2) ~? -14 - 5 = -19
+
+    const result11 = 55 - [1,2,3,54][3];
+    print("result11: " + result11 + " (should be 1)"); # Expect 1
+
+    # test storing a function in an array, grabbing it out of the index, then calling it, and negating
+    # the result 
+    const result12 = 8 - -[1,2,3,d][3]();
+    print("result12: " + result12 + " (should be 15)"); # Expect 15
+..
+
+function main ()
+    # Run the test
+    testOperatorPrecedence();
+..

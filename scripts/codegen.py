@@ -129,7 +129,7 @@ def main():
     TEMPLATE_DIR = f"{CODEGEN_DIR}/templates"
     TARGET_DIR =  f"{CODEGEN_DIR}/targets"
     HEADER_DIR = f"{ROOT_DIR}/include"
-    SOURCE_DIR = ROOT_DIR
+    SOURCE_DIR = f"{ROOT_DIR}/src"
 
     codegen_all()
     format_files()

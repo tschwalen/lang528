@@ -4,13 +4,13 @@
 
 #include <nlohmann/json.hpp>
 
+#include "interpreter.h"
 #include "lexer.h"
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"
-#include "util.h"
-#include "interpreter.h"
 #include "unittests.h"
+#include "util.h"
 
 using json = nlohmann::json;
 
@@ -31,7 +31,7 @@ Options handle_commandline_args(int argc, char **argv) {
   vector<string> args(argv + 1, argv + argc);
 
   string input_file_path_option = "--input=";
-  string program_args_option= "--argv=";
+  string program_args_option = "--argv=";
 
   // TODO: refactor this if/as options grow. for now this works fine
   Options options{false, false, false, false, false, "", ""};
@@ -56,8 +56,7 @@ Options handle_commandline_args(int argc, char **argv) {
           string_argument.substr(input_file_path_option.size());
     }
     if (string_argument.rfind(program_args_option) == 0) {
-      options.program_args = 
-          string_argument.substr(program_args_option.size());
+      options.program_args = string_argument.substr(program_args_option.size());
     }
   }
   return options;
@@ -93,12 +92,14 @@ int main(int argc, char **argv) {
     auto file_contents = UTIL::get_whole_file(opts.input_file_path);
     auto tokens = lex_string(file_contents);
     auto ast = parse_tokens(tokens);
-    // ... then parse them ... 
+    // ... then parse them ...
 
     if (opts.dump_json) {
       json j = ast;
       std::cout << j.dump(2) << "\n";
     }
+
+    return 0;
   }
 
   // INTERPRETER ENTRYPOINT
@@ -108,7 +109,7 @@ int main(int argc, char **argv) {
     auto ast = parse_tokens(tokens);
 
     // split program argv
-    vector<string> program_argv {};
+    vector<string> program_argv{};
     if (opts.program_args.size() > 0) {
       program_argv = UTIL::split_argv(opts.program_args);
     }

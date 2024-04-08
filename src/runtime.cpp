@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <sys/_types/_size_t.h>
 #include <vector>
 
 #include "runtime.h"
@@ -88,9 +89,25 @@ string toString(BoxedValue bv) {
             result << "]";
             break;
         }
+        case DataType::DICT: {
+            auto dict = std::get<shared_ptr<Dict>>(bv.value);
+            result << "{";
+            size_t i = 0;
+            size_t length = dict->size();
+            for ( const auto& [ key, value ] : *dict ){
+                // TODO: extract key without the type information
+                result << key << ": " << toString(BoxedValue {value->type, value->value});
+                if( i != length - 1 ) {
+                    result << ", ";
+                }
+                ++i;
+            }
+            result << "}";
+            break;
+        }
         case DataType::FUNCTION: {
             auto function = std::get<Function>(bv.value);
-            result << "{function " << function.name << "(";
+            result << "function:" << function.name << "(";
             size_t i = 0;
             size_t length = function.args.size();
             while(i < length) {
@@ -100,7 +117,7 @@ string toString(BoxedValue bv) {
                 }
                 ++i;
             }
-            result << ")}";
+            result << ")";
             break;
         }
     }
@@ -194,7 +211,32 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
             std::get<shared_ptr<HeVec>>(rhs.value)
            );
         }
+        case DataType::DICT:
+            std::runtime_error("Dict equality comparison not implemented yet");
+            return false;
+            break;
     }
+}
+
+string getDictKey(BoxedValue bv) {
+    switch(bv.type) {
+        case DataType::BOOL:
+            return "bool:" + toString(bv);
+            break;
+        case DataType::FLOAT:
+            return "float:" + toString(bv);
+            break;
+        break;
+        case DataType::INT:
+            return "int:" + toString(bv);
+            break;
+        case DataType::STRING:
+            return "string:" + toString(bv);
+            break;
+        default: {}
+    }
+    throw std::runtime_error("Unhashable type used for dictionary key");
+    return "";
 }
 
 BoxedValue apply_equals(BoxedValue lhs, BoxedValue rhs) {
@@ -404,6 +446,13 @@ BoxedValue builtin_string_length(BoxedValue arg) {
     auto str = std::get<string>(arg.value);
     return BoxedValue {
         DataType::INT, (int)str.size()
+    };
+}
+
+BoxedValue builtin_dict_length(BoxedValue arg) {
+    auto dict = std::get<shared_ptr<Dict>>(arg.value);
+    return BoxedValue {
+        DataType::INT, (int)dict->size()
     };
 }
 

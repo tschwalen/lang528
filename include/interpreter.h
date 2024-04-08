@@ -35,6 +35,7 @@ enum class DataType {
     INT,
     STRING,
     VECTOR,
+    DICT,
     FUNCTION
 };
 
@@ -68,6 +69,9 @@ struct SymbolTable {
     EvalResult lookup_lvalue(string var);
 };
 
+// Dictionary 
+typedef unordered_map<string, shared_ptr<BoxedValue>> Dict;
+
 // HeVec = (He)terogenous (Vec)tor
 typedef vector<shared_ptr<BoxedValue>> HeVec;
 
@@ -78,6 +82,7 @@ typedef std::variant<
     float, 
     string, 
     shared_ptr<HeVec>, 
+    shared_ptr<Dict>, 
     Function
 > RawValue;
 
@@ -120,6 +125,18 @@ public:
 
     VectorIndexLV(shared_ptr<HeVec> _vector, BoxedValue _index) :
         vector{_vector}, index{_index} {}
+
+    void assign(BoxedValue value) override;
+    BoxedValue currentValue() override;
+};
+
+class DictIndexLV : public LValue {
+public:
+    shared_ptr<Dict> dict;
+    BoxedValue key;
+
+    DictIndexLV(shared_ptr<Dict> _dict, BoxedValue _key) :
+        dict{_dict}, key{_key} {}
 
     void assign(BoxedValue value) override;
     BoxedValue currentValue() override;

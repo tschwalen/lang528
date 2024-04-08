@@ -1,6 +1,9 @@
 #include <iostream>
+#include <memory>
 #include <vector>
 
+#include "astnode.h"
+#include "interpreter.h"
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"
@@ -123,6 +126,30 @@ ASTNode basic_literal(ParserState &ps) {
   return ASTNode::nothing();
 }
 
+ASTNode dict_literal(ParserState &ps) {
+  auto first_token_metadata = ps.currentToken().metadata;
+
+  // '{'
+  ps.expect(TokenType::LBRACE);
+
+  // we're just gonna store it in one array and handle them two-by-two
+  vector<ASTNode> kv_pairs;
+  if (ps.currentTokenIsNot(TokenType::RBRACE)) {
+      do {
+        auto key = expr(ps);
+        ps.expect(TokenType::COLON);
+        auto value = expr(ps);
+        kv_pairs.push_back(key);
+        kv_pairs.push_back(value);
+    } while (ps.matchTokenType(TokenType::COMMA));
+    ps.expect(TokenType::RBRACE);
+  } else {
+    ps.advance();
+  }
+
+  return ASTNode::makeDictLiteral(kv_pairs, first_token_metadata);
+}
+
 ASTNode vector_literal(ParserState &ps) {
   auto first_token_metadata = ps.currentToken().metadata;
   // '['
@@ -162,7 +189,12 @@ ASTNode primary(ParserState &ps) {
   // vector literal
   else if (ps.currentTokenIs(TokenType::LBRACKET)) {
     return vector_literal(ps);
-  } else if (ps.currentTokenIs(TokenType::IDENTIFIER)) {
+  }
+  // dict literal
+  else if (ps.currentTokenIs(TokenType::LBRACE)) {
+    return dict_literal(ps);
+  }  
+  else if (ps.currentTokenIs(TokenType::IDENTIFIER)) {
     auto identifier = std::get<string>(current_token.value);
     auto primary = ASTNode::makeVarLookup(identifier, current_token.metadata);
     ps.advance();

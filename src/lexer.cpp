@@ -30,14 +30,11 @@ bool symbol_pair_comparator(const pair<string, TokenType> &a,
   return a.first.size() > b.first.size();
 }
 
-unordered_map<string, TokenType> KEYWORDS{{"function", TokenType::FUNCTION},
-                                          {"let", TokenType::LET},
-                                          {"const", TokenType::CONST},
-                                          {"if", TokenType::IF},
-                                          {"elseif", TokenType::ELSEIF},
-                                          {"else", TokenType::ELSE},
-                                          {"return", TokenType::RETURN},
-                                          {"while", TokenType::WHILE}};
+unordered_map<string, TokenType> KEYWORDS{
+    {"function", TokenType::FUNCTION}, {"let", TokenType::LET},
+    {"const", TokenType::CONST},       {"if", TokenType::IF},
+    {"elseif", TokenType::ELSEIF},     {"else", TokenType::ELSE},
+    {"return", TokenType::RETURN},     {"while", TokenType::WHILE}};
 
 unordered_map<char, vector<pair<string, TokenType>>> SYMBOLS{
     {'.', {{"..", TokenType::DOT_DOT}, {".", TokenType::DOT}}},
@@ -59,6 +56,7 @@ unordered_map<char, vector<pair<string, TokenType>>> SYMBOLS{
     {']', {{"]", TokenType::RBRACKET}}},
     {'{', {{"{", TokenType::LBRACE}}},
     {'}', {{"}", TokenType::RBRACE}}},
+    {':', {{":", TokenType::COLON}}},
     {';', {{";", TokenType::SEMICOLON}}},
 };
 

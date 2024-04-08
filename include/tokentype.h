@@ -48,6 +48,7 @@ enum class TokenType {
   RBRACKET,
   LBRACE,
   RBRACE,
+  COLON,
   SEMICOLON,
   BOOL_LITERAL,
   INT_LITERAL,

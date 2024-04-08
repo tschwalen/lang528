@@ -35,6 +35,8 @@ public:
                              ASTNode else_body, TokenMetadata metadata);
   static ASTNode makeVectorLiteral (vector<ASTNode> elements,
                                     TokenMetadata metadata);
+  static ASTNode makeDictLiteral (vector<ASTNode> kv_pairs,
+                                    TokenMetadata metadata);
   static ASTNode makeVarLookup (string identifier, TokenMetadata metadata);
   static ASTNode makeFunctionCall (ASTNode lvalue_expr, ASTNode arg_expr_list,
                                    TokenMetadata metadata);

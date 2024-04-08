@@ -1,0 +1,23 @@
+
+function main ()
+    const dict = {};
+
+    dict["hello"] = 123;
+
+
+    const dict2 = {
+        "x": 44,
+        "y": "asdf",
+        44: "hashable",
+        1.0000001 + 2: "still hashable",
+        "true" : "string true",
+        true: "bool true"
+    };
+
+
+    print(dict["hello"]); # should be 123
+    print(dict2["x"]); # should be 44
+    print(dict.length()); # should be 1
+    print(dict2);
+
+..

@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 
 #include "runtime.h"
@@ -61,7 +62,8 @@ string toString(BoxedValue bv) {
             result << (std::get<bool>(bv.value) ? "true" : "false");
             break;
         case DataType::FLOAT:
-            result << std::get<float>(bv.value);
+            result << std::setprecision(std::numeric_limits<float>::max_digits10)
+                << std::get<float>(bv.value);
             break;
         case DataType::INT:
             result << std::get<int>(bv.value);

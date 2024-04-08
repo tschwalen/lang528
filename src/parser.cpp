@@ -1,9 +1,7 @@
 #include <iostream>
-#include <memory>
 #include <vector>
 
 #include "astnode.h"
-#include "interpreter.h"
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"

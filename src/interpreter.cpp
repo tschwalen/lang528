@@ -533,7 +533,7 @@ EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
         std::nullopt,
         std::make_shared<DictIndexLV>(
           dict,
-          BoxedValue {rhs.type, rhs.value}
+          rhs
         )
       };
     }

@@ -5,7 +5,6 @@
 #include <memory>
 #include <string>
 #include <iostream>
-#include <sys/_types/_size_t.h>
 #include <vector>
 
 #include "runtime.h"

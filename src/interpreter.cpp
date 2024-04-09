@@ -60,6 +60,45 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
           })
       }}}
     }
+  },
+  {DataType::DICT, 
+    {nullptr, 
+      {
+        // length
+        {"length", SymbolTableEntry {
+          VarType::FUNCTION,
+          std::make_shared<BoxedValue>(
+            DataType::FUNCTION,
+            Function {
+              "length", 
+              {}, 
+              ASTNode {NodeType::BUILTIN_DICT_LENGTH, {}, {}, {}}
+          })
+        }},
+        // keys
+        {"keys", SymbolTableEntry {
+          VarType::FUNCTION,
+          std::make_shared<BoxedValue>(
+            DataType::FUNCTION,
+            Function {
+              "keys", 
+              {}, 
+              ASTNode {NodeType::BUILTIN_DICT_KEYS, {}, {}, {}}
+          })
+        }},
+        // contains
+        {"contains", SymbolTableEntry {
+          VarType::FUNCTION,
+          std::make_shared<BoxedValue>(
+            DataType::FUNCTION,
+            Function {
+              "contains", 
+              {"key"}, 
+              ASTNode {NodeType::BUILTIN_DICT_CONTAINS, {}, {}, {}}
+          })
+        }}
+      },
+    }
   }
 };
 
@@ -241,6 +280,31 @@ EvalResult eval_vec_literal(ASTNode &node, SymbolTable &st) {
     };
 }
 
+EvalResult eval_dict_literal(ASTNode &node, SymbolTable &st) {
+    auto child_nodes = node.children;
+    auto dict_value = std::make_shared<Dict>();
+
+    // iterate two at a time to simulate pairs
+    // {a: b, c: d} -> [a, b, c, d]
+    size_t v_index = 1;
+    for (size_t v_index = 1; v_index < child_nodes.size(); v_index += 2) {
+      size_t k_index = v_index - 1;
+      auto key = eval_node( child_nodes[k_index], st ).rv_result.value();
+      auto key_str = getDictKey(key);
+      auto value = std::make_shared<BoxedValue>(
+        eval_node( child_nodes[v_index], st ).rv_result.value()
+      );
+
+      dict_value->operator[](key_str) = std::make_pair(key, value);
+    }
+
+    return EvalResult {
+        BoxedValue {
+            DataType::DICT,
+            dict_value
+        }
+    };
+}
 
 EvalResult eval_string_literal(ASTNode &node, SymbolTable &st) {
     auto value = node.data.at("value").get<string>();
@@ -428,6 +492,31 @@ EvalResult eval_builtin_vector_length(ASTNode &node, SymbolTable &st) {
   };
 }
 
+EvalResult eval_builtin_dict_length(ASTNode &node, SymbolTable &st) {
+  auto lookup_er = st.lookup_rvalue("this");
+  return EvalResult {
+    builtin_dict_length(lookup_er.rv_result.value()),
+    nullptr
+  };
+}
+
+EvalResult eval_builtin_dict_keys(ASTNode &node, SymbolTable &st) {
+  auto lookup_er = st.lookup_rvalue("this");
+  return EvalResult {
+    builtin_dict_keys(lookup_er.rv_result.value()),
+    nullptr
+  };
+}
+
+EvalResult eval_builtin_dict_contains(ASTNode &node, SymbolTable &st) {
+  auto lookup_er = st.lookup_rvalue("this");
+  auto lookup_key = st.lookup_rvalue("key").rv_result.value();
+  return EvalResult {
+    builtin_dict_contains(lookup_er.rv_result.value(), lookup_key),
+    nullptr
+  };
+}
+
 EvalResult eval_builtin_string_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
@@ -474,6 +563,33 @@ EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
   auto lhs = eval_node(node.children[LHS], st).rv_result.value();
   auto rhs =  eval_node(node.children[RHS], st).rv_result.value();
 
+
+  // dict index case
+  if (lhs.type == DataType::DICT) {
+    auto dict = std::get<shared_ptr<Dict>>(lhs.value);
+
+
+    if(vt == ValueType::LVALUE) {
+      return EvalResult {
+        std::nullopt,
+        std::make_shared<DictIndexLV>(
+          dict,
+          rhs
+        )
+      };
+    }
+
+    auto key = getDictKey(rhs);
+    auto kv_pair = dict->at(key);
+    return EvalResult {
+      BoxedValue {
+        kv_pair.second->type,
+        kv_pair.second->value
+      }
+    };
+  }
+
+  // arrays and strings only support integer indexes
   runtime_assertion(rhs.type == DataType::INT, "Index value must be an int.");
   auto index = std::get<int>(rhs.value);
 
@@ -516,7 +632,7 @@ EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
     };
   }
 
-  throw std::runtime_error("Index access only supported on strings and vectors");
+  throw std::runtime_error("Index access only supported on strings, vectors, and dictionaries.");
 }
 
 void VariableLV::assign(BoxedValue value) {
@@ -549,6 +665,24 @@ BoxedValue VectorIndexLV::currentValue() {
   auto cv = this->vector->at(index);
   return BoxedValue {
     cv->type, cv->value
+  };
+}
+
+void DictIndexLV::assign(BoxedValue value) {
+  auto key = getDictKey(this->key);
+
+  this->dict->operator[](key).second = std::make_shared<BoxedValue>(
+    value.type,
+    value.value
+  );
+}
+
+BoxedValue DictIndexLV::currentValue() {
+  auto key = getDictKey(this->key);
+  auto kv_pair = this->dict->at(key);
+  auto current_value = kv_pair.second;
+  return BoxedValue {
+    current_value->type, current_value->value
   };
 }
 
@@ -679,8 +813,20 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
     case NodeType::BUILTIN_STRING_LENGTH:
       return eval_builtin_string_length(node, st);
       break;
+    case NodeType::BUILTIN_DICT_LENGTH:
+      return eval_builtin_dict_length(node, st);
+      break;
+    case NodeType::BUILTIN_DICT_KEYS:
+      return eval_builtin_dict_keys(node, st);
+      break;
+    case NodeType::BUILTIN_DICT_CONTAINS:
+      return eval_builtin_dict_contains(node, st);
+      break;
     case NodeType::VEC_LITERAL:
       return eval_vec_literal(node, st);
+      break;
+    case NodeType::DICT_LITERAL:
+      return eval_dict_literal(node, st);
       break;
     case NodeType::BOOL_LITERAL:
       return eval_bool_literal(node, st);

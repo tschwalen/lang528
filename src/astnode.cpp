@@ -64,6 +64,11 @@ ASTNode ASTNode::makeVectorLiteral(vector<ASTNode> elements,
   return ASTNode{NodeType::VEC_LITERAL, elements, {}, metadata};
 }
 
+ASTNode ASTNode::makeDictLiteral(vector<ASTNode> kv_pairs,
+                                   TokenMetadata metadata) {
+  return ASTNode{NodeType::DICT_LITERAL, kv_pairs, {}, metadata};
+}
+
 ASTNode ASTNode::makeVarLookup(string identifier, TokenMetadata metadata) {
   return ASTNode{
       NodeType::VAR_LOOKUP, {}, {{"identifier", identifier}}, metadata};

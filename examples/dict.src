@@ -1,0 +1,31 @@
+
+function main ()
+    const dict = {};
+
+    dict["hello"] = 123;
+
+    const dict2 = {
+        "x": 44,
+        "y": "asdf",
+        44: "hashable",
+        1.0000002 + 2: "still hashable",
+        "true" : "string true",
+        true: "bool true"
+    };
+
+    print(dict["hello"]); # should be 123
+    print(dict2["x"]); # should be 44
+    print(dict.length()); # should be 1
+    print(dict2);
+
+    # we want a "keys()" and "contains()" function
+    print("test contains: " + dict2.contains("x"));
+
+    print("test keys: " + dict2.keys());
+
+    # test some equality comparisons
+    print({} == {}); # should be true
+    print({"a": 1} == {} ); # should be false
+    print({"a": {}} == {"a": {}}); # should be true
+    print({} != {}); # should be false
+..

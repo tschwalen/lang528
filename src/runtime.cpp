@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 
 #include "runtime.h"
@@ -61,7 +62,8 @@ string toString(BoxedValue bv) {
             result << (std::get<bool>(bv.value) ? "true" : "false");
             break;
         case DataType::FLOAT:
-            result << std::get<float>(bv.value);
+            result << std::setprecision(std::numeric_limits<float>::max_digits10)
+                << std::get<float>(bv.value);
             break;
         case DataType::INT:
             result << std::get<int>(bv.value);
@@ -88,9 +90,29 @@ string toString(BoxedValue bv) {
             result << "]";
             break;
         }
+        case DataType::DICT: {
+            auto dict = std::get<shared_ptr<Dict>>(bv.value);
+            result << "{";
+            size_t i = 0;
+            size_t length = dict->size();
+            for ( const auto& [ _raw_key, kv_pair ] : *dict ){
+                auto key = kv_pair.first;
+                auto quotes = key.type == DataType::STRING ? "\"" : "";
+
+                auto value = kv_pair.second;
+                result << quotes << toString(key) << quotes << ": " 
+                    << toString(BoxedValue {value->type, value->value});
+                if( i != length - 1 ) {
+                    result << ", ";
+                }
+                ++i;
+            }
+            result << "}";
+            break;
+        }
         case DataType::FUNCTION: {
             auto function = std::get<Function>(bv.value);
-            result << "{function " << function.name << "(";
+            result << "function:" << function.name << "(";
             size_t i = 0;
             size_t length = function.args.size();
             while(i < length) {
@@ -100,7 +122,7 @@ string toString(BoxedValue bv) {
                 }
                 ++i;
             }
-            result << ")}";
+            result << ")";
             break;
         }
     }
@@ -172,6 +194,45 @@ bool vector_equality_comparison(shared_ptr<HeVec> lhs, shared_ptr<HeVec> rhs) {
     return true;
 }
 
+bool dict_equality_comparison(shared_ptr<Dict> lhs, shared_ptr<Dict> rhs) {
+    // trivially, if dicts don't have the same size then they're not equal
+    if (lhs->size() != rhs->size()) {
+        return false;
+    }
+
+    // trivially, if dicts are the same size and one is empty, then both are
+    // empty and they are equal
+    if(lhs->size() == 0) {
+        return true;
+    }
+
+    // otherwise, check that each key-value pair in the left dict matches 
+    // the right dict. Since we checked the sizes, if we don't fail any 
+    // equality checks then they're equal.
+    for ( const auto& [ _raw_key, kv_pair ] : *lhs ) {
+        auto str_key = getDictKey(kv_pair.first);
+
+        // if the lhs key isn't in the rhs dict, then we already know
+        // they're not equal
+        if (! rhs->contains(str_key)) {
+            return false;
+        }
+
+        // compare the values of each
+        auto lhs_value = kv_pair.second;
+        auto rhs_value = rhs->at(str_key).second;
+        if ( !equality_comparison(
+            BoxedValue{ lhs_value->type, lhs_value->value },
+            BoxedValue{ rhs_value->type, rhs_value->value }) 
+        ) {
+            return false;
+        }
+    }
+
+    // if we've made it here, then both dicts are equal
+    return true;
+}
+
 bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
     if( lhs.type != rhs.type ) {
         return false;
@@ -194,7 +255,33 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
             std::get<shared_ptr<HeVec>>(rhs.value)
            );
         }
+        case DataType::DICT:
+            return dict_equality_comparison(
+                std::get<shared_ptr<Dict>>(lhs.value),
+                std::get<shared_ptr<Dict>>(rhs.value)
+            );
     }
+}
+
+string getDictKey(BoxedValue bv) {
+    switch(bv.type) {
+        case DataType::BOOL:
+            return "bool:" + toString(bv);
+            break;
+        case DataType::FLOAT:
+            return "float:" + toString(bv);
+            break;
+        break;
+        case DataType::INT:
+            return "int:" + toString(bv);
+            break;
+        case DataType::STRING:
+            return "string:" + toString(bv);
+            break;
+        default: {}
+    }
+    throw std::runtime_error("Unhashable type used for dictionary key");
+    return "";
 }
 
 BoxedValue apply_equals(BoxedValue lhs, BoxedValue rhs) {
@@ -404,6 +491,35 @@ BoxedValue builtin_string_length(BoxedValue arg) {
     auto str = std::get<string>(arg.value);
     return BoxedValue {
         DataType::INT, (int)str.size()
+    };
+}
+
+BoxedValue builtin_dict_length(BoxedValue arg) {
+    auto dict = std::get<shared_ptr<Dict>>(arg.value);
+    return BoxedValue {
+        DataType::INT, (int)dict->size()
+    };
+}
+
+BoxedValue builtin_dict_keys(BoxedValue arg) {
+    auto dict = std::get<shared_ptr<Dict>>(arg.value);
+    auto keys = std::make_shared<HeVec>();
+    for ( const auto& [ _, kv_pair ] : *dict ){
+        keys->push_back(
+            std::make_shared<BoxedValue>(kv_pair.first.type, kv_pair.first.value)
+        );
+    }
+
+    return BoxedValue {
+        DataType::VECTOR, keys
+    };
+}
+
+BoxedValue builtin_dict_contains(BoxedValue arg, BoxedValue key) {
+    auto dict = std::get<shared_ptr<Dict>>(arg.value);
+    auto contains = dict->contains(getDictKey(key));
+    return BoxedValue {
+        DataType::BOOL, contains
     };
 }
 

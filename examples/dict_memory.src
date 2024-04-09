@@ -1,0 +1,26 @@
+
+
+function modify_dict(dict)
+    dict["y"] = "something";
+..
+
+function main()
+
+    # make an empty dictionary and empty vector
+    const my_dict = {};
+    const my_vec = [];
+
+    # insert vector into dict
+    my_dict["x"] = my_vec;
+
+    # modify the original dict
+    my_vec.append(1);
+    my_vec.append(2);
+    my_vec.append(3);
+
+    # we should see these modifications here because it's the same object in memory
+    print(my_dict["x"]);
+
+    modify_dict(my_dict);
+    print(my_dict);
+..

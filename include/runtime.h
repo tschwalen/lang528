@@ -88,8 +88,12 @@ void runtime_assertion(bool condition, string message);
 
 BoxedValue apply_binary_operator(TokenType op, BoxedValue lhs, BoxedValue rhs);
 BoxedValue apply_unary_operator(TokenType op, BoxedValue rhs);
+string getDictKey(BoxedValue bv) ;
 
 void builtin_print(BoxedValue arg);
 BoxedValue builtin_vector_length(BoxedValue arg);
 BoxedValue builtin_string_length(BoxedValue arg);
+BoxedValue builtin_dict_length(BoxedValue arg);
+BoxedValue builtin_dict_keys(BoxedValue arg);
+BoxedValue builtin_dict_contains(BoxedValue arg, BoxedValue key);
 void builtin_vector_append(BoxedValue vec, BoxedValue elem);

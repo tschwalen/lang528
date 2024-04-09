@@ -63,16 +63,41 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
   },
   {DataType::DICT, 
     {nullptr, 
-      {{"length", SymbolTableEntry {
-        VarType::FUNCTION,
-        std::make_shared<BoxedValue>(
-          DataType::FUNCTION,
-          Function {
-            "length", 
-            {}, 
-            ASTNode {NodeType::BUILTIN_DICT_LENGTH, {}, {}, {}}
+      {
+        // length
+        {"length", SymbolTableEntry {
+          VarType::FUNCTION,
+          std::make_shared<BoxedValue>(
+            DataType::FUNCTION,
+            Function {
+              "length", 
+              {}, 
+              ASTNode {NodeType::BUILTIN_DICT_LENGTH, {}, {}, {}}
           })
-      }}}
+        }},
+        // keys
+        {"keys", SymbolTableEntry {
+          VarType::FUNCTION,
+          std::make_shared<BoxedValue>(
+            DataType::FUNCTION,
+            Function {
+              "keys", 
+              {}, 
+              ASTNode {NodeType::BUILTIN_DICT_KEYS, {}, {}, {}}
+          })
+        }},
+        // contains
+        {"contains", SymbolTableEntry {
+          VarType::FUNCTION,
+          std::make_shared<BoxedValue>(
+            DataType::FUNCTION,
+            Function {
+              "contains", 
+              {"key"}, 
+              ASTNode {NodeType::BUILTIN_DICT_CONTAINS, {}, {}, {}}
+          })
+        }}
+      },
     }
   }
 };
@@ -475,6 +500,23 @@ EvalResult eval_builtin_dict_length(ASTNode &node, SymbolTable &st) {
   };
 }
 
+EvalResult eval_builtin_dict_keys(ASTNode &node, SymbolTable &st) {
+  auto lookup_er = st.lookup_rvalue("this");
+  return EvalResult {
+    builtin_dict_keys(lookup_er.rv_result.value()),
+    nullptr
+  };
+}
+
+EvalResult eval_builtin_dict_contains(ASTNode &node, SymbolTable &st) {
+  auto lookup_er = st.lookup_rvalue("this");
+  auto lookup_key = st.lookup_rvalue("key").rv_result.value();
+  return EvalResult {
+    builtin_dict_contains(lookup_er.rv_result.value(), lookup_key),
+    nullptr
+  };
+}
+
 EvalResult eval_builtin_string_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
@@ -773,6 +815,12 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
       break;
     case NodeType::BUILTIN_DICT_LENGTH:
       return eval_builtin_dict_length(node, st);
+      break;
+    case NodeType::BUILTIN_DICT_KEYS:
+      return eval_builtin_dict_keys(node, st);
+      break;
+    case NodeType::BUILTIN_DICT_CONTAINS:
+      return eval_builtin_dict_contains(node, st);
       break;
     case NodeType::VEC_LITERAL:
       return eval_vec_literal(node, st);

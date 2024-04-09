@@ -94,4 +94,6 @@ void builtin_print(BoxedValue arg);
 BoxedValue builtin_vector_length(BoxedValue arg);
 BoxedValue builtin_string_length(BoxedValue arg);
 BoxedValue builtin_dict_length(BoxedValue arg);
+BoxedValue builtin_dict_keys(BoxedValue arg);
+BoxedValue builtin_dict_contains(BoxedValue arg, BoxedValue key);
 void builtin_vector_append(BoxedValue vec, BoxedValue elem);

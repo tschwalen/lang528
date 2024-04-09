@@ -461,6 +461,28 @@ BoxedValue builtin_dict_length(BoxedValue arg) {
     };
 }
 
+BoxedValue builtin_dict_keys(BoxedValue arg) {
+    auto dict = std::get<shared_ptr<Dict>>(arg.value);
+    auto keys = std::make_shared<HeVec>();
+    for ( const auto& [ _, kv_pair ] : *dict ){
+        keys->push_back(
+            std::make_shared<BoxedValue>(kv_pair.first.type, kv_pair.first.value)
+        );
+    }
+
+    return BoxedValue {
+        DataType::VECTOR, keys
+    };
+}
+
+BoxedValue builtin_dict_contains(BoxedValue arg, BoxedValue key) {
+    auto dict = std::get<shared_ptr<Dict>>(arg.value);
+    auto contains = dict->contains(getDictKey(key));
+    return BoxedValue {
+        DataType::BOOL, contains
+    };
+}
+
 void runtime_assertion(bool condition, string message) {
     if(!condition) {
         throw std::runtime_error(message);

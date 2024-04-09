@@ -18,4 +18,8 @@ function main ()
     print(dict.length()); # should be 1
     print(dict2);
 
+    # we want a "keys()" and "contains()" function
+    print("test contains: " + dict2.contains("x"));
+
+    print("test keys: " + dict2.keys());
 ..

@@ -27,5 +27,5 @@ function main ()
     print({} == {}); # should be true
     print({"a": 1} == {} ); # should be false
     print({"a": {}} == {"a": {}}); # should be true
-
+    print({} != {}); # should be false
 ..

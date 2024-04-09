@@ -22,4 +22,10 @@ function main ()
     print("test contains: " + dict2.contains("x"));
 
     print("test keys: " + dict2.keys());
+
+    # test some equality comparisons
+    print({} == {}); # should be true
+    print({"a": 1} == {} ); # should be false
+    print({"a": {}} == {"a": {}}); # should be true
+
 ..

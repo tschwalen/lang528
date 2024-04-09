@@ -194,6 +194,45 @@ bool vector_equality_comparison(shared_ptr<HeVec> lhs, shared_ptr<HeVec> rhs) {
     return true;
 }
 
+bool dict_equality_comparison(shared_ptr<Dict> lhs, shared_ptr<Dict> rhs) {
+    // trivially, if dicts don't have the same size then they're not equal
+    if (lhs->size() != rhs->size()) {
+        return false;
+    }
+
+    // trivially, if dicts are the same size and one is empty, then both are
+    // empty and they are equal
+    if(lhs->size() == 0) {
+        return true;
+    }
+
+    // otherwise, check that each key-value pair in the left dict matches 
+    // the right dict. Since we checked the sizes, if we don't fail any 
+    // equality checks then they're equal.
+    for ( const auto& [ _raw_key, kv_pair ] : *lhs ) {
+        auto str_key = getDictKey(kv_pair.first);
+
+        // if the lhs key isn't in the rhs dict, then we already know
+        // they're not equal
+        if (! rhs->contains(str_key)) {
+            return false;
+        }
+
+        // compare the values of each
+        auto lhs_value = kv_pair.second;
+        auto rhs_value = rhs->at(str_key).second;
+        if ( !equality_comparison(
+            BoxedValue{ lhs_value->type, lhs_value->value },
+            BoxedValue{ rhs_value->type, rhs_value->value }) 
+        ) {
+            return false;
+        }
+    }
+
+    // if we've made it here, then both dicts are equal
+    return true;
+}
+
 bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
     if( lhs.type != rhs.type ) {
         return false;
@@ -217,9 +256,10 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
            );
         }
         case DataType::DICT:
-            std::runtime_error("Dict equality comparison not implemented yet");
-            return false;
-            break;
+            return dict_equality_comparison(
+                std::get<shared_ptr<Dict>>(lhs.value),
+                std::get<shared_ptr<Dict>>(rhs.value)
+            );
     }
 }
 

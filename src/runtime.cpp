@@ -95,9 +95,13 @@ string toString(BoxedValue bv) {
             result << "{";
             size_t i = 0;
             size_t length = dict->size();
-            for ( const auto& [ key, value ] : *dict ){
-                // TODO: extract key without the type information
-                result << key << ": " << toString(BoxedValue {value->type, value->value});
+            for ( const auto& [ _raw_key, kv_pair ] : *dict ){
+                auto key = kv_pair.first;
+                auto quotes = key.type == DataType::STRING ? "\"" : "";
+
+                auto value = kv_pair.second;
+                result << quotes << toString(key) << quotes << ": " 
+                    << toString(BoxedValue {value->type, value->value});
                 if( i != length - 1 ) {
                     result << ", ";
                 }

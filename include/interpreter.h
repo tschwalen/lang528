@@ -70,7 +70,7 @@ struct SymbolTable {
 };
 
 // Dictionary 
-typedef unordered_map<string, shared_ptr<BoxedValue>> Dict;
+typedef unordered_map<string, std::pair<BoxedValue, shared_ptr<BoxedValue>>> Dict;
 
 // HeVec = (He)terogenous (Vec)tor
 typedef vector<shared_ptr<BoxedValue>> HeVec;
@@ -90,6 +90,9 @@ class BoxedValue {
 public:
     DataType type;
     RawValue value;
+
+    // Default constructor
+    BoxedValue() : type{}, value{} {} 
 
     BoxedValue(DataType _type, RawValue _value) :
         type{_type}, value{_value} {}

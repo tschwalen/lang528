@@ -264,14 +264,13 @@ EvalResult eval_dict_literal(ASTNode &node, SymbolTable &st) {
     size_t v_index = 1;
     for (size_t v_index = 1; v_index < child_nodes.size(); v_index += 2) {
       size_t k_index = v_index - 1;
-      auto key = getDictKey(
-        eval_node( child_nodes[k_index], st ).rv_result.value()
-      );
+      auto key = eval_node( child_nodes[k_index], st ).rv_result.value();
+      auto key_str = getDictKey(key);
       auto value = std::make_shared<BoxedValue>(
         eval_node( child_nodes[v_index], st ).rv_result.value()
       );
 
-      dict_value->operator[](key) = value;
+      dict_value->operator[](key_str) = std::make_pair(key, value);
     }
 
     return EvalResult {
@@ -539,11 +538,11 @@ EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
     }
 
     auto key = getDictKey(rhs);
-    auto value = dict->at(key);
+    auto kv_pair = dict->at(key);
     return EvalResult {
       BoxedValue {
-        value->type,
-        value->value
+        kv_pair.second->type,
+        kv_pair.second->value
       }
     };
   }
@@ -630,7 +629,7 @@ BoxedValue VectorIndexLV::currentValue() {
 void DictIndexLV::assign(BoxedValue value) {
   auto key = getDictKey(this->key);
 
-  this->dict->operator[](key) = std::make_shared<BoxedValue>(
+  this->dict->operator[](key).second = std::make_shared<BoxedValue>(
     value.type,
     value.value
   );
@@ -638,9 +637,10 @@ void DictIndexLV::assign(BoxedValue value) {
 
 BoxedValue DictIndexLV::currentValue() {
   auto key = getDictKey(this->key);
-  auto cv = this->dict->at(key);
+  auto kv_pair = this->dict->at(key);
+  auto current_value = kv_pair.second;
   return BoxedValue {
-    cv->type, cv->value
+    current_value->type, current_value->value
   };
 }
 

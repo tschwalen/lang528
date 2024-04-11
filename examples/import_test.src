@@ -1,0 +1,5 @@
+import "module.src";
+
+function main ()
+    module_function();
+..

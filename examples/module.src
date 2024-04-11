@@ -1,0 +1,8 @@
+function other_function()
+    print("Hello from other function");
+..
+
+function module_function()
+    other_function();
+    print("I was imported");
+..

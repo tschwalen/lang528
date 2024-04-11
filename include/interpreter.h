@@ -63,6 +63,7 @@ struct SymbolTable {
     // But if closures are ever implemented, some kind of 
     // ownership is going to have to happen here.
     SymbolTable *parent = nullptr;
+    vector<SymbolTable*> module_symbol_tables;
     unordered_map<string, SymbolTableEntry> entries;
 
     EvalResult lookup_rvalue(string var);
@@ -152,3 +153,4 @@ struct EvalResult {
 };
 
 EvalResult eval_top_level(ASTNode &node, vector<string> argv = {});
+EvalResult eval_top_level(ASTNode &node, string module_wd, vector<string> argv = {});

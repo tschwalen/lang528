@@ -1,8 +1,10 @@
 #include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <exception>
 #include <memory>
 #include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 #include <iostream>
@@ -15,14 +17,17 @@
 #include "runtime.h"
 #include "interpreter.h"
 #include "tokentype.h"
+#include "util.h"
 
 using std::string;
 using std::vector;
 using std::unordered_map;
 
+static string WORKING_DIRECTORY = std::getenv("PWD");
+
 static unordered_map<DataType, SymbolTable> builtin_type_methods {
   {DataType::VECTOR, 
-    {nullptr, 
+    {nullptr, {}, 
       {
         {"length", SymbolTableEntry {
         VarType::FUNCTION,
@@ -48,7 +53,7 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
     }
   },
   {DataType::STRING, 
-    {nullptr, 
+    {nullptr, {}, 
       {{"length", SymbolTableEntry {
         VarType::FUNCTION,
         std::make_shared<BoxedValue>(
@@ -62,7 +67,7 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
     }
   },
   {DataType::DICT, 
-    {nullptr, 
+    {nullptr, {},  
       {
         // length
         {"length", SymbolTableEntry {
@@ -129,6 +134,40 @@ EvalResult eval_var_declare(ASTNode &node, SymbolTable &st) {
     is_const ? VarType::CONST : VarType::VAR,
     value
   };
+
+  return EvalResult {};
+}
+
+EvalResult eval_module_import(ASTNode &node, SymbolTable &st) {
+  string module_path = node.data.at("module_path").get<string>();
+
+  string path = WORKING_DIRECTORY + "/" + module_path;
+  
+  // read the file at path if it exists, load its contents as AST
+  auto module_nodes = UTIL::load_module(path);\
+  
+  // AST root should always be TOP_LEVEL
+  runtime_assertion(
+    module_nodes.type == NodeType::TOP_LEVEL, 
+    "Malformed module: " + path
+  );
+
+  // using raw pointers like this doesn't feel great. This should be revisited
+  // at some point.
+  auto module_st = new SymbolTable {&st, {}, {}};
+  st.module_symbol_tables.push_back(module_st);
+
+  // interpret every node in the AST
+  for (auto &child : module_nodes.children) {
+      eval_node(child, *module_st);
+  }
+
+  // merge all symbol table entries except for
+  for ( const auto& [ id, entry ] : module_st->entries ) {
+    if(id != "main") {
+      st.entries[id] = entry;
+    }
+  }
 
   return EvalResult {};
 }
@@ -717,6 +756,11 @@ EvalResult call_main_function(Function main_function, vector<string> argv, Symbo
   return eval_node(main_function.body, main_function_st);
 }
 
+EvalResult eval_top_level(ASTNode &node, string module_wd, vector<string> argv) {
+  WORKING_DIRECTORY = module_wd;
+  return eval_top_level(node, argv);
+}
+
 EvalResult eval_top_level(ASTNode &node, vector<string> argv) {
     assert(node.type == NodeType::TOP_LEVEL);
 
@@ -768,6 +812,9 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
       break;
     case NodeType::FUNC_DECLARE:
       return eval_func_declare(node, st);
+      break;
+    case NodeType::MODULE_IMPORT:
+      return eval_module_import(node, st);
       break;
     case NodeType::IF:
       return eval_if(node, st);

@@ -104,9 +104,13 @@ int main(int argc, char **argv) {
 
   // INTERPRETER ENTRYPOINT
   if (opts.exec && !opts.input_file_path.empty()) {
-    auto file_contents = UTIL::get_whole_file(opts.input_file_path);
+    auto file_path = opts.input_file_path;
+    auto file_contents = UTIL::get_whole_file(file_path);
     auto tokens = lex_string(file_contents);
     auto ast = parse_tokens(tokens);
+
+    // get CWD relative to source file we're running
+    auto module_wd = UTIL::get_file_path_directory(file_path);
 
     // split program argv
     vector<string> program_argv{};
@@ -114,7 +118,7 @@ int main(int argc, char **argv) {
       program_argv = UTIL::split_argv(opts.program_args);
     }
 
-    eval_top_level(ast, program_argv);
+    eval_top_level(ast, module_wd, program_argv);
   }
 
   return 0;

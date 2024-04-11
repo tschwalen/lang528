@@ -1,5 +1,6 @@
 enum TokenType
 FUNCTION
+IMPORT
 LET
 CONST
 IF

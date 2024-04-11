@@ -328,6 +328,16 @@ ASTNode block(ParserState &ps) {
   return ASTNode::makeBlock(statements, first_token_metadata);
 }
 
+ASTNode module_import(ParserState &ps) {
+  auto first_token_metadata = ps.expect(TokenType::IMPORT).metadata;
+
+  auto module_path  = std::get<string>(ps.expect(TokenType::STRING_LITERAL).value);
+
+  ps.expect(TokenType::SEMICOLON);
+
+  return ASTNode::makeModuleImport(module_path, first_token_metadata);
+}
+
 ASTNode function_declare(ParserState &ps) {
   // 'function' keyword
   auto first_token_metadata = ps.expect(TokenType::FUNCTION).metadata;
@@ -383,6 +393,10 @@ ASTNode top_level(ParserState &ps) {
     }
     case TokenType::FUNCTION: {
       child = function_declare(ps);
+      break;
+    }
+    case TokenType::IMPORT: {
+      child = module_import(ps);
       break;
     }
     default: {

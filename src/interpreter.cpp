@@ -162,7 +162,7 @@ EvalResult eval_module_import(ASTNode &node, SymbolTable &st) {
       eval_node(child, *module_st);
   }
 
-  // merge all symbol table entries except for
+  // merge all symbol table entries except for main
   for ( const auto& [ id, entry ] : module_st->entries ) {
     if(id != "main") {
       st.entries[id] = entry;

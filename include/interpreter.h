@@ -23,6 +23,7 @@ public:
 
 struct EvalResult;
 struct BoxedValue;
+struct SymbolTable;
 
 enum class ValueType {
     LVALUE,
@@ -36,6 +37,7 @@ enum class DataType {
     STRING,
     VECTOR,
     DICT,
+    MODULE,
     FUNCTION
 };
 
@@ -44,6 +46,12 @@ struct Function {
     vector<string> args;
     ASTNode body;
     shared_ptr<BoxedValue> _this = nullptr;
+    shared_ptr<SymbolTable> module_st = nullptr;
+};
+
+struct Module {
+    string name;
+    shared_ptr<SymbolTable> symbol_table;
 };
 
 enum class VarType {
@@ -57,7 +65,6 @@ struct SymbolTableEntry {
     shared_ptr<BoxedValue> value;
 };
 
-struct SymbolTable;
 struct SymbolTable {
     // this is fine, I guess. 
     // But if closures are ever implemented, some kind of 
@@ -83,7 +90,8 @@ typedef std::variant<
     float, 
     string, 
     shared_ptr<HeVec>, 
-    shared_ptr<Dict>, 
+    shared_ptr<Dict>,
+    Module, 
     Function
 > RawValue;
 

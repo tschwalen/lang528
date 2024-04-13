@@ -18,6 +18,7 @@ string token_type_to_string(TokenType e) {
   vector<string> values{
       "FUNCTION",
       "IMPORT",
+      "AS",
       "LET",
       "CONST",
       "IF",
@@ -71,6 +72,7 @@ TokenType int_to_token_type(int i) {
   vector<TokenType> values{
       TokenType::FUNCTION,
       TokenType::IMPORT,
+      TokenType::AS,
       TokenType::LET,
       TokenType::CONST,
       TokenType::IF,

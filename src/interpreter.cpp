@@ -139,12 +139,18 @@ EvalResult eval_var_declare(ASTNode &node, SymbolTable &st) {
 }
 
 EvalResult eval_module_import(ASTNode &node, SymbolTable &st) {
+  /**
+    TODO: should non-named imports just get evaluated directly with the passed 
+    symbol table's context? Is there even any need to make a module symbol table
+    in this case? Think about this question and refactor this method if so.
+  */
+
   string module_path = node.data.at("module_path").get<string>();
 
   string path = WORKING_DIRECTORY + "/" + module_path;
   
   // read the file at path if it exists, load its contents as AST
-  auto module_nodes = UTIL::load_module(path);\
+  auto module_nodes = UTIL::load_module(path);
   
   // AST root should always be TOP_LEVEL
   runtime_assertion(
@@ -162,10 +168,26 @@ EvalResult eval_module_import(ASTNode &node, SymbolTable &st) {
       eval_node(child, *module_st);
   }
 
-  // merge all symbol table entries except for main
-  for ( const auto& [ id, entry ] : module_st->entries ) {
-    if(id != "main") {
-      st.entries[id] = entry;
+  // if this is a named import, create a module object and place it in the symbol table
+  if ( node.data.contains("module_name") ) {
+    auto module_name = node.data.at("module_name").get<string>();
+    st.entries[module_name] = SymbolTableEntry {
+      VarType::CONST,
+      std::make_shared<BoxedValue>(
+        DataType::MODULE,
+        Module {
+          module_name,
+          module_st
+        }
+      )
+    };
+  }
+  // otherwise merge all symbol table entries except for main
+  else {
+    for ( const auto& [ id, entry ] : module_st->entries ) {
+      if(id != "main") {
+        st.entries[id] = entry;
+      }
     }
   }
 
@@ -276,7 +298,13 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
   auto arg_values = std::get<shared_ptr<HeVec>>(args.value);
 
   // prep function's symbol table
-  SymbolTable fn_st {&st,{}};
+  SymbolTable fn_st;
+  if (function_rawvalue.module_st == nullptr) {
+    fn_st = SymbolTable {&st,{}};
+  }
+  else {
+    fn_st = SymbolTable{ function_rawvalue.module_st.get(), {} };
+  }
 
   runtime_assertion(
     arg_names.size() == arg_values->size(),
@@ -577,19 +605,38 @@ EvalResult eval_field_access(ASTNode &node, SymbolTable &st, ValueType vt) {
   
   const string identifier_key = "identifier";
   const string identifier = field.data.at(identifier_key).get<string>();
-  auto lhs_symbol_table = builtin_type_methods.at(lhs.type);
+
+  bool is_module = false;
+  SymbolTable* lhs_symbol_table;
+
+  if (lhs.type == DataType::MODULE) {
+    is_module = true;
+    lhs_symbol_table = std::get<Module>(lhs.value).symbol_table.get();
+  }
+  else {
+    lhs_symbol_table = &builtin_type_methods.at(lhs.type);
+  }
+
 
   if (vt == ValueType::RVALUE) {
-    auto result = lhs_symbol_table.lookup_rvalue(identifier);
-    if (result.rv_result.value().type == DataType::FUNCTION){
+    auto result = lhs_symbol_table->lookup_rvalue(identifier);
+    if (result.rv_result.value().type == DataType::FUNCTION) {
+
+      // inject "this" so the built in functions work like object instance methods
       std::get<Function>(result.rv_result.value().value)._this = std::make_shared<BoxedValue>(
         lhs.type,
         lhs.value
       );
+
+      // inject the module symbol table so variable lookups inside them work correctly
+      if(is_module) {
+        std::get<Function>(result.rv_result.value().value).module_st = 
+          std::get<Module>(lhs.value).symbol_table;
+      }
     }
     return result;
   }
-  return lhs_symbol_table.lookup_lvalue(identifier);
+  return lhs_symbol_table->lookup_lvalue(identifier);
 }
 
 EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {

@@ -41,6 +41,11 @@ ASTNode ASTNode::makeModuleImport(string module_path, TokenMetadata metadata) {
   return ASTNode{NodeType::MODULE_IMPORT, {}, {{"module_path", module_path}}, metadata};
 }
 
+ASTNode ASTNode::makeModuleImport(string module_path, string module_name, TokenMetadata metadata) {
+  return ASTNode{
+    NodeType::MODULE_IMPORT, {}, {{"module_path", module_path}, {"module_name", module_name}}, metadata};
+}
+
 ASTNode ASTNode::makeBlock(vector<ASTNode> statements, TokenMetadata metadata) {
   return ASTNode{NodeType::BLOCK, statements, {}, metadata};
 }

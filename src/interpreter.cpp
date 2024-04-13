@@ -152,9 +152,9 @@ EvalResult eval_module_import(ASTNode &node, SymbolTable &st) {
     "Malformed module: " + path
   );
 
-  // using raw pointers like this doesn't feel great. This should be revisited
-  // at some point.
-  auto module_st = new SymbolTable {&st, {}, {}};
+  // this is still a hack, but works for now
+  SymbolTable t {&st, {}, {}};
+  auto module_st = std::make_shared<SymbolTable>(t);
   st.module_symbol_tables.push_back(module_st);
 
   // interpret every node in the AST
@@ -726,7 +726,7 @@ BoxedValue DictIndexLV::currentValue() {
 }
 
 EvalResult call_main_function(Function main_function, vector<string> argv, SymbolTable &st) {
-  SymbolTable main_function_st {&st, {}};
+  SymbolTable main_function_st {&st, {}, {}};
 
   // vector.contains does not exist, but this line noise does the same thing
   if ( std::find(main_function.args.begin(), main_function.args.end(), "argv")

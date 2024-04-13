@@ -63,7 +63,7 @@ struct SymbolTable {
     // But if closures are ever implemented, some kind of 
     // ownership is going to have to happen here.
     SymbolTable *parent = nullptr;
-    vector<SymbolTable*> module_symbol_tables;
+    vector<shared_ptr<SymbolTable>> module_symbol_tables;
     unordered_map<string, SymbolTableEntry> entries;
 
     EvalResult lookup_rvalue(string var);

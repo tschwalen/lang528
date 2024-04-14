@@ -19,6 +19,7 @@ def run_e2e_test(directory: str, file: str):
     stderr = res.stderr.decode("utf-8")
     retcode = res.returncode
 
+    failure_expected = False
     for output_line in stdout.split("\n"):
         if output_line.startswith("#"):
             parts = output_line.split("#")
@@ -27,7 +28,10 @@ def run_e2e_test(directory: str, file: str):
 
             if macro == "PASS":
                 print("\033[32m - Passed check" + f": \"{msg}\"" if msg != "" else "" + "\033[0m")
-
+            elif macro == "EXPECT":
+                pass
+            elif macro == "FAIL":
+                pass
     
 
 

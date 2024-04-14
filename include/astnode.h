@@ -25,6 +25,8 @@ public:
                                       ASTNode body, TokenMetadata metadata);
   static ASTNode makeVarDeclare(string name, ASTNode rhs, 
                                 bool is_const, TokenMetadata metadata);
+  static ASTNode makeModuleImport(string module_path, TokenMetadata metadata);
+  static ASTNode makeModuleImport(string module_path, string module_name, TokenMetadata metadata);
   static ASTNode makeBlock (vector<ASTNode> statements,
                             TokenMetadata metadata);
   static ASTNode makeWhile (ASTNode condition, ASTNode body,

@@ -328,6 +328,26 @@ ASTNode block(ParserState &ps) {
   return ASTNode::makeBlock(statements, first_token_metadata);
 }
 
+ASTNode module_import(ParserState &ps) {
+  auto first_token_metadata = ps.expect(TokenType::IMPORT).metadata;
+
+  auto module_path  = std::get<string>(ps.expect(TokenType::STRING_LITERAL).value);
+
+  ASTNode result;
+
+  // handle optional named import (e.g. import "x" as y; )
+  if (ps.matchTokenType(TokenType::AS)) {
+    auto module_name = std::get<string>(ps.expect(TokenType::IDENTIFIER).value);
+    result = ASTNode::makeModuleImport(module_path, module_name, first_token_metadata);
+  }
+  else {
+    result = ASTNode::makeModuleImport(module_path, first_token_metadata);
+  }
+
+  ps.expect(TokenType::SEMICOLON);
+  return result;
+}
+
 ASTNode function_declare(ParserState &ps) {
   // 'function' keyword
   auto first_token_metadata = ps.expect(TokenType::FUNCTION).metadata;
@@ -383,6 +403,10 @@ ASTNode top_level(ParserState &ps) {
     }
     case TokenType::FUNCTION: {
       child = function_declare(ps);
+      break;
+    }
+    case TokenType::IMPORT: {
+      child = module_import(ps);
       break;
     }
     default: {

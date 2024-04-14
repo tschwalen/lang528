@@ -23,6 +23,7 @@ public:
 
 struct EvalResult;
 struct BoxedValue;
+struct SymbolTable;
 
 enum class ValueType {
     LVALUE,
@@ -36,6 +37,7 @@ enum class DataType {
     STRING,
     VECTOR,
     DICT,
+    MODULE,
     FUNCTION
 };
 
@@ -43,7 +45,23 @@ struct Function {
     string name;
     vector<string> args;
     ASTNode body;
+
+    // some built-in functions need the "this" value, which refers to the actual
+    // instance of the object that the function is being called on, e.g. .length()
+    // for vec, string, and dict
     shared_ptr<BoxedValue> _this = nullptr;
+
+    // when we call a function from a module context, e.g. module.function(), the
+    // module's symbol table needs to be set because the function may refer to symbols
+    // that only exist in the module's symbol table.
+    //
+    // if functions become closures later, this will be unnecessary
+    shared_ptr<SymbolTable> module_st = nullptr;
+};
+
+struct Module {
+    string name;
+    shared_ptr<SymbolTable> symbol_table;
 };
 
 enum class VarType {
@@ -57,12 +75,12 @@ struct SymbolTableEntry {
     shared_ptr<BoxedValue> value;
 };
 
-struct SymbolTable;
 struct SymbolTable {
     // this is fine, I guess. 
     // But if closures are ever implemented, some kind of 
     // ownership is going to have to happen here.
     SymbolTable *parent = nullptr;
+    vector<shared_ptr<SymbolTable>> module_symbol_tables;
     unordered_map<string, SymbolTableEntry> entries;
 
     EvalResult lookup_rvalue(string var);
@@ -82,7 +100,8 @@ typedef std::variant<
     float, 
     string, 
     shared_ptr<HeVec>, 
-    shared_ptr<Dict>, 
+    shared_ptr<Dict>,
+    Module, 
     Function
 > RawValue;
 
@@ -152,3 +171,4 @@ struct EvalResult {
 };
 
 EvalResult eval_top_level(ASTNode &node, vector<string> argv = {});
+EvalResult eval_top_level(ASTNode &node, string module_wd, vector<string> argv = {});

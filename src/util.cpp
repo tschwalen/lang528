@@ -4,7 +4,9 @@
 #include <vector>
 #include <string>
 
-
+#include "lexer.h"
+#include "parser.h"
+#include "astnode.h"
 #include "util.h"
 
 using std::vector;
@@ -48,4 +50,20 @@ vector<string> UTIL::split_argv(string argv_raw) {
   }
 
   return argv;
+}
+
+string UTIL::get_file_path_directory(const string& fname) {
+     size_t pos = fname.find_last_of("\\/");
+     return (std::string::npos == pos)
+         ? ""
+         : fname.substr(0, pos);
+}
+
+
+ASTNode UTIL::load_module(string path) {
+  return parse_tokens(
+    lex_string(
+      get_whole_file(path)
+    )
+  );
 }

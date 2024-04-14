@@ -110,6 +110,11 @@ string toString(BoxedValue bv) {
             result << "}";
             break;
         }
+        case DataType::MODULE: {
+            auto module = std::get<Module>(bv.value);
+            result << "module:" << module.name;
+            break;
+        }
         case DataType::FUNCTION: {
             auto function = std::get<Function>(bv.value);
             result << "function:" << function.name << "(";
@@ -249,6 +254,8 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
             return std::get<string>(lhs.value) == std::get<string>(rhs.value);
         case DataType::FUNCTION:
             throw std::runtime_error("Equality Comparison not supported for function type");
+        case DataType::MODULE:
+            throw std::runtime_error("Equality Comparison not supported for module type");
         case DataType::VECTOR: {
            return vector_equality_comparison(
             std::get<shared_ptr<HeVec>>(lhs.value),

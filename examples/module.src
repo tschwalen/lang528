@@ -1,0 +1,10 @@
+let module_data = "something";
+
+function other_function()
+    print("Hello from other function");
+..
+
+function module_function()
+    print("I was imported");
+    other_function();
+..

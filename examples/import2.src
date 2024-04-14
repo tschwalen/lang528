@@ -1,0 +1,11 @@
+import "module.src" as my_mod;
+
+function main ()
+    my_mod.module_function();
+    print(my_mod.module_data);
+
+    my_mod.module_data = 2 + 2;
+
+    print(my_mod.module_data);
+
+..

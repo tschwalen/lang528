@@ -34,7 +34,8 @@ unordered_map<string, TokenType> KEYWORDS{
     {"function", TokenType::FUNCTION}, {"let", TokenType::LET},
     {"const", TokenType::CONST},       {"if", TokenType::IF},
     {"elseif", TokenType::ELSEIF},     {"else", TokenType::ELSE},
-    {"return", TokenType::RETURN},     {"while", TokenType::WHILE}};
+    {"return", TokenType::RETURN},     {"while", TokenType::WHILE},
+    {"import", TokenType::IMPORT},     {"as", TokenType::AS}};
 
 unordered_map<char, vector<pair<string, TokenType>>> SYMBOLS{
     {'.', {{"..", TokenType::DOT_DOT}, {".", TokenType::DOT}}},

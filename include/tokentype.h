@@ -11,6 +11,8 @@
 
 enum class TokenType {
   FUNCTION,
+  IMPORT,
+  AS,
   LET,
   CONST,
   IF,

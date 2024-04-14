@@ -1,6 +1,7 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
+#include "astnode.h"
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"
@@ -34,6 +35,15 @@ ASTNode ASTNode::makeFunctionDeclare(string name,
 ASTNode ASTNode::makeVarDeclare(string name, ASTNode rhs, bool is_const, TokenMetadata metadata) {
   return ASTNode{NodeType::VAR_DECLARE, {rhs}, {{"identifier", name}, {"const", is_const}}, metadata};
 
+}
+
+ASTNode ASTNode::makeModuleImport(string module_path, TokenMetadata metadata) {
+  return ASTNode{NodeType::MODULE_IMPORT, {}, {{"module_path", module_path}}, metadata};
+}
+
+ASTNode ASTNode::makeModuleImport(string module_path, string module_name, TokenMetadata metadata) {
+  return ASTNode{
+    NodeType::MODULE_IMPORT, {}, {{"module_path", module_path}, {"module_name", module_name}}, metadata};
 }
 
 ASTNode ASTNode::makeBlock(vector<ASTNode> statements, TokenMetadata metadata) {

@@ -1,8 +1,10 @@
 #include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <exception>
 #include <memory>
 #include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 #include <iostream>
@@ -15,14 +17,17 @@
 #include "runtime.h"
 #include "interpreter.h"
 #include "tokentype.h"
+#include "util.h"
 
 using std::string;
 using std::vector;
 using std::unordered_map;
 
+static string WORKING_DIRECTORY = std::getenv("PWD");
+
 static unordered_map<DataType, SymbolTable> builtin_type_methods {
   {DataType::VECTOR, 
-    {nullptr, 
+    {nullptr, {}, 
       {
         {"length", SymbolTableEntry {
         VarType::FUNCTION,
@@ -48,7 +53,7 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
     }
   },
   {DataType::STRING, 
-    {nullptr, 
+    {nullptr, {}, 
       {{"length", SymbolTableEntry {
         VarType::FUNCTION,
         std::make_shared<BoxedValue>(
@@ -62,7 +67,7 @@ static unordered_map<DataType, SymbolTable> builtin_type_methods {
     }
   },
   {DataType::DICT, 
-    {nullptr, 
+    {nullptr, {},  
       {
         // length
         {"length", SymbolTableEntry {
@@ -129,6 +134,65 @@ EvalResult eval_var_declare(ASTNode &node, SymbolTable &st) {
     is_const ? VarType::CONST : VarType::VAR,
     value
   };
+
+  return EvalResult {};
+}
+
+EvalResult eval_module_import(ASTNode &node, SymbolTable &st) {
+  /**
+    TODO: should non-named imports just get evaluated directly with the passed 
+    symbol table's context? Is there even any need to make a module symbol table
+    in this case? Think about this question and refactor this method if so.
+
+    No, unless we have a way for the interpreter to know we're in a module context
+    so that main() can be skipped.
+  */
+
+  string module_path = node.data.at("module_path").get<string>();
+
+  string path = WORKING_DIRECTORY + "/" + module_path;
+  
+  // read the file at path if it exists, load its contents as AST
+  auto module_nodes = UTIL::load_module(path);
+  
+  // AST root should always be TOP_LEVEL
+  runtime_assertion(
+    module_nodes.type == NodeType::TOP_LEVEL, 
+    "Malformed module: " + path
+  );
+
+  // this is still a hack, but works for now
+  SymbolTable t {&st, {}, {}};
+  auto module_st = std::make_shared<SymbolTable>(t);
+  st.module_symbol_tables.push_back(module_st);
+
+  // interpret every node in the AST
+  for (auto &child : module_nodes.children) {
+      eval_node(child, *module_st);
+  }
+
+  // if this is a named import, create a module object and place it in the symbol table
+  if ( node.data.contains("module_name") ) {
+    auto module_name = node.data.at("module_name").get<string>();
+    st.entries[module_name] = SymbolTableEntry {
+      VarType::CONST,
+      std::make_shared<BoxedValue>(
+        DataType::MODULE,
+        Module {
+          module_name,
+          module_st
+        }
+      )
+    };
+  }
+  // otherwise merge all symbol table entries except for main
+  else {
+    for ( const auto& [ id, entry ] : module_st->entries ) {
+      if(id != "main") {
+        st.entries[id] = entry;
+      }
+    }
+  }
 
   return EvalResult {};
 }
@@ -237,7 +301,13 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
   auto arg_values = std::get<shared_ptr<HeVec>>(args.value);
 
   // prep function's symbol table
-  SymbolTable fn_st {&st,{}};
+  SymbolTable fn_st;
+  if (function_rawvalue.module_st == nullptr) {
+    fn_st = SymbolTable {&st,{}};
+  }
+  else {
+    fn_st = SymbolTable{ function_rawvalue.module_st.get(), {} };
+  }
 
   runtime_assertion(
     arg_names.size() == arg_values->size(),
@@ -538,19 +608,38 @@ EvalResult eval_field_access(ASTNode &node, SymbolTable &st, ValueType vt) {
   
   const string identifier_key = "identifier";
   const string identifier = field.data.at(identifier_key).get<string>();
-  auto lhs_symbol_table = builtin_type_methods.at(lhs.type);
+
+  bool is_module = false;
+  SymbolTable* lhs_symbol_table;
+
+  if (lhs.type == DataType::MODULE) {
+    is_module = true;
+    lhs_symbol_table = std::get<Module>(lhs.value).symbol_table.get();
+  }
+  else {
+    lhs_symbol_table = &builtin_type_methods.at(lhs.type);
+  }
+
 
   if (vt == ValueType::RVALUE) {
-    auto result = lhs_symbol_table.lookup_rvalue(identifier);
-    if (result.rv_result.value().type == DataType::FUNCTION){
+    auto result = lhs_symbol_table->lookup_rvalue(identifier);
+    if (result.rv_result.value().type == DataType::FUNCTION) {
+
+      // inject "this" so the built in functions work like object instance methods
       std::get<Function>(result.rv_result.value().value)._this = std::make_shared<BoxedValue>(
         lhs.type,
         lhs.value
       );
+
+      // inject the module symbol table so variable lookups inside them work correctly
+      if(is_module) {
+        std::get<Function>(result.rv_result.value().value).module_st = 
+          std::get<Module>(lhs.value).symbol_table;
+      }
     }
     return result;
   }
-  return lhs_symbol_table.lookup_lvalue(identifier);
+  return lhs_symbol_table->lookup_lvalue(identifier);
 }
 
 EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
@@ -687,7 +776,7 @@ BoxedValue DictIndexLV::currentValue() {
 }
 
 EvalResult call_main_function(Function main_function, vector<string> argv, SymbolTable &st) {
-  SymbolTable main_function_st {&st, {}};
+  SymbolTable main_function_st {&st, {}, {}};
 
   // vector.contains does not exist, but this line noise does the same thing
   if ( std::find(main_function.args.begin(), main_function.args.end(), "argv")
@@ -715,6 +804,11 @@ EvalResult call_main_function(Function main_function, vector<string> argv, Symbo
   }
 
   return eval_node(main_function.body, main_function_st);
+}
+
+EvalResult eval_top_level(ASTNode &node, string module_wd, vector<string> argv) {
+  WORKING_DIRECTORY = module_wd;
+  return eval_top_level(node, argv);
 }
 
 EvalResult eval_top_level(ASTNode &node, vector<string> argv) {
@@ -768,6 +862,9 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
       break;
     case NodeType::FUNC_DECLARE:
       return eval_func_declare(node, st);
+      break;
+    case NodeType::MODULE_IMPORT:
+      return eval_module_import(node, st);
       break;
     case NodeType::IF:
       return eval_if(node, st);

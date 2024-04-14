@@ -15,6 +15,7 @@ enum class NodeType {
   ASSIGN_OP,
   VAR_DECLARE,
   FUNC_DECLARE,
+  MODULE_IMPORT,
   IF,
   RETURN,
   WHILE,

@@ -143,6 +143,9 @@ EvalResult eval_module_import(ASTNode &node, SymbolTable &st) {
     TODO: should non-named imports just get evaluated directly with the passed 
     symbol table's context? Is there even any need to make a module symbol table
     in this case? Think about this question and refactor this method if so.
+
+    No, unless we have a way for the interpreter to know we're in a module context
+    so that main() can be skipped.
   */
 
   string module_path = node.data.at("module_path").get<string>();

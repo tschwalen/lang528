@@ -45,7 +45,17 @@ struct Function {
     string name;
     vector<string> args;
     ASTNode body;
+
+    // some built-in functions need the "this" value, which refers to the actual
+    // instance of the object that the function is being called on, e.g. .length()
+    // for vec, string, and dict
     shared_ptr<BoxedValue> _this = nullptr;
+
+    // when we call a function from a module context, e.g. module.function(), the
+    // module's symbol table needs to be set because the function may refer to symbols
+    // that only exist in the module's symbol table.
+    //
+    // if functions become closures later, this will be unnecessary
     shared_ptr<SymbolTable> module_st = nullptr;
 };
 

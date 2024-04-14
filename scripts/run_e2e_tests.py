@@ -27,13 +27,21 @@ def run_e2e_test(directory: str, file: str):
             msg = parts[2].strip()
 
             if macro == "PASS":
-                print("\033[32m - Passed check" + f": \"{msg}\"" if msg != "" else "" + "\033[0m")
+                print("\033[32m - Passed check" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
             elif macro == "EXPECT":
-                pass
+                # very basic, if this macro is encountered we expect a non-zero exit code
+                # this runs into an issue where the test might fail in ways other than we
+                # expected, but it works ok for now
+                failure_expected = True
+                if retcode != 0:
+                    print("\033[32m - Passed expect" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
+                else:
+                    print("\033[31m - Failed expect" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
             elif macro == "FAIL":
-                pass
-    
+                print("\033[31m - Failed check" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
 
+    if not failure_expected and retcode !=0:
+        print("\033[31m - Unexpected nonzero exit code\033[0m")
 
 
 

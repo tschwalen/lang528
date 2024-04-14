@@ -1,0 +1,18 @@
+#
+# baseline test
+#
+
+function main ()
+    print("#PASS# main method called");
+
+    const a = "hello";
+    const b = 1;
+    const c = true;
+    const d = 5.5;
+    const e = [1,2,3,4];
+    const f = {"key1": a, "key2": b, "key3": c};
+
+    print("#PASS# variable declarations work");
+
+    
+..

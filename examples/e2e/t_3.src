@@ -1,0 +1,10 @@
+#
+# test that named module imports work
+#
+import "testutils.src" as testutils;
+
+function main()
+    print("#PASS# named import succeded without error");
+
+    testutils.assert(true, "imported function works");
+..

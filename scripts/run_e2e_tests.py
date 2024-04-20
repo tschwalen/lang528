@@ -52,8 +52,9 @@ def main():
     EXECUTABLE_PATH = f"{root_dir}/{EXECUTABLE_NAME}"
     e2e_test_dir = f"{root_dir}/examples/e2e"
 
-    for e2e_test in os.listdir(e2e_test_dir):
-        run_e2e_test(e2e_test_dir, e2e_test)
+    for filename in os.listdir(e2e_test_dir):
+        if filename.startswith("t_"):
+            run_e2e_test(e2e_test_dir, filename)
     
 
 if __name__ == "__main__":

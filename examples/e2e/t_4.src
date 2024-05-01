@@ -1,0 +1,65 @@
+#
+# test assignment and expressions 
+#
+import "testutils.src"; 
+import "example_module.src" as exmod;
+
+function f() return -10; ..
+function b() return -6; ..
+function z() return [1,2,3,4]; ..
+
+function test_assign_ops_int() 
+    let localvar = 0;
+    
+    # should still be zero
+    assert(localvar == 0, "declaration");
+    
+    # 0 + 5 = 5
+    localvar += 5; 
+    assert(localvar == 5, "plusequals");
+
+
+    # 5 - 1 = 4 
+    localvar -= 1; 
+    assert(localvar == 4, "minusequals");
+
+
+    # 4 * 4 = 16
+    localvar *= localvar;
+    assert(localvar == 16, "timesequals");
+
+    # 16 / 2 = 8
+    localvar /= 2; 
+    assert(localvar == 8, "divequals");
+
+    # 8 % 5 = 3
+    localvar %= 5; 
+    assert(localvar == 3, "modequals");
+
+    # all done, report success
+    print("#PASS# all assign op int tests");
+..
+
+function test_assoc()
+
+    assert( 5 - 5 - 5 == -5, "correct subtract assoc");
+
+    assert( 5 ----------- 5 == 0, "many chained unary minuses");
+
+    assert (-5 + -5 == -10, "unary minus on both sides of a binary op");
+
+    # see function declarations above
+    # -(-10) + -(-6) = 16
+    assert (-f() + -b() == 16, "unary minus prefixing fn calls");
+
+    assert (-z()[3] * -4 == 16, "unary minus prefixing complex expr");
+    # see module declaration. 
+    # exmod.module_fn() -> [1,2,3,4]
+    #                              |-> [3] -> 4
+    assert (-exmod.module_fn()[3] * -4 == 16, "unary minus prefixing more complex expr");
+..
+
+function main()
+    test_assoc();
+    test_assign_ops_int();
+..

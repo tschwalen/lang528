@@ -1,0 +1,7 @@
+const MODULE_CONSTANT = 55645;
+let module_variable = "reassign me";
+
+function module_fn() 
+  return [1,2,3,4];
+..
+

@@ -238,8 +238,8 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence) {
     while lookahead is a binary operator whose precedence is greater than op's,
         or a right-associative operator whose precedence is equal to op's */
     auto binop_case = binary_precedence_test(op, lookahead);
-    auto unop_case = unary_precedence_test(op, lookahead);
-    while (binop_case || unop_case) {
+    //auto unop_case = unary_precedence_test(op, lookahead);
+    while (binop_case /* || unop_case*/) {
       // rhs := parse_expression_1 (rhs, precedence of op + (1 if lookahead
       // precedence is greater, else 0))
       auto new_precedence = (binop_case ? binary_op_precedence(op) + 1 : 0);
@@ -249,7 +249,7 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence) {
       lookahead = ps.currentToken().type;
 
       binop_case = binary_precedence_test(op, lookahead);
-      unop_case = unary_precedence_test(op, lookahead);
+      //unop_case = unary_precedence_test(op, lookahead);
     }
 
     // just have "make binary op" handle the function call and index access

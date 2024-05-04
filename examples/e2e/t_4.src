@@ -7,6 +7,7 @@ import "example_module.src" as exmod;
 function f() return -10; ..
 function b() return -6; ..
 function z() return [1,2,3,4]; ..
+function returns_false() return false; ..
 
 function test_assign_ops_int() 
     let localvar = 0;
@@ -18,11 +19,9 @@ function test_assign_ops_int()
     localvar += 5; 
     assert(localvar == 5, "plusequals");
 
-
     # 5 - 1 = 4 
     localvar -= 1; 
     assert(localvar == 4, "minusequals");
-
 
     # 4 * 4 = 16
     localvar *= localvar;
@@ -37,26 +36,31 @@ function test_assign_ops_int()
     assert(localvar == 3, "modequals");
 
     # all done, report success
-    print("#PASS# all assign op int tests");
+    print("#PASS# Passed all assign op int tests");
 ..
 
 function test_assoc()
 
     assert( 5 - 5 - 5 == -5, "correct subtract assoc");
-
     assert( 5 ----------- 5 == 0, "many chained unary minuses");
+    assert(-5 + -5 == -10, "unary minus on both sides of a binary op");
 
-    assert (-5 + -5 == -10, "unary minus on both sides of a binary op");
+    assert(!true | !false, "unary not");
+    assert(!returns_false(), "unary not prefixing function call");
 
     # see function declarations above
     # -(-10) + -(-6) = 16
-    assert (-f() + -b() == 16, "unary minus prefixing fn calls");
+    assert (-f() + -b() == 16, "unary minus prefixing function calls");
 
     assert (-z()[3] * -4 == 16, "unary minus prefixing complex expr");
     # see module declaration. 
     # exmod.module_fn() -> [1,2,3,4]
     #                              |-> [3] -> 4
     assert (-exmod.module_fn()[3] * -4 == 16, "unary minus prefixing more complex expr");
+
+    assert ( 8 / 4 / 2 == 1, "correct division associativity");
+    assert ( 8 / 4 * 5 / 2 == 5, "correct division associativity mixed with other operators");
+    assert ( 8 / 4 * 5 / 2 % 2 == 1, "correct division associativity mixed with other operators 2");
 ..
 
 function test_str_cat()
@@ -89,22 +93,63 @@ function zxcv() return f; ..
 function test_fn_first_classness()
     assert( zxcv()() * 0 == 0, "function returned from function is callable");
 
-
     const fns = [f, b, z];
     let i = 0;
     while i < fns.length()
         fns[i]();	
-
         i += 1; 
     ..
     print("#PASS# Functions stored in arrays are callable");
     
 ..
 
+function test_expressions()
+    assert( 0.5 + 2 > 2, "mixing float and int");
+    assert( false | true & true, "boolean sanity check");
+    assert( 4 > 5 | 5.5 >= -1 & "test" != "@", "mixed boolean expressions");
+    assert( 4 * 4 * 4 - 1 == 63, "arithmetic operator precedence test");
+    assert( 3 / 2 == 1, "int div when two ints");
+    assert( 3.0 / 2 == 1.5, "float div when float");
+    assert( exmod.mod_vec.length() == 5, "chained field access");
+    assert( -[1,2,3,4][2] * 2 / b() == 1, "complex parse 1");
+    assert( '1' + -z()[b() / -2] / 4 * -1 == "11", "complex parse 2");
+    assert( [3,2,1+100][2] - {"a":50,"b":-99998,"c":"earwig"}["a"] * 2 == 1, "vec/dict literals in expr");
+..
+
+function early_return_helper()
+    const a = [1,2,3,4,5,6,7,8];
+    let i = 0;
+    while i < a.length()
+        if true
+            if true
+                if true
+                    if a[i] == 5
+                        while true
+                            return true;
+                        ..
+                    .. 
+                ..
+            ..
+        ..
+        i += 1;
+    ..
+    return false;
+..
+
+function test_early_returns()
+    assert( early_return_helper(), "return breaks out of loops correctly even with deep nesting");
+..
+
+function test_dictionaries()
+    # TODO
+..
 
 function main()
     test_assoc();
     test_assign_ops_int();
     test_str_cat();
     test_fn_first_classness();
+    test_expressions();
+    test_early_returns();
+    test_dictionaries();
 ..

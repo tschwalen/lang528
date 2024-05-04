@@ -1,6 +1,10 @@
 #
-# baseline test
+# baseline test 
 #
+
+function my_fn() 
+    return "#PASS# function declare and call";
+..
 
 function main ()
     print("#PASS# main method");
@@ -59,4 +63,6 @@ function main ()
         print("#PASS# while");
         i += 1;
     ..
+
+    print(my_fn());
 ..

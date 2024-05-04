@@ -332,7 +332,8 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
     };
   }
   
-  return eval_node(function_rawvalue.body, fn_st);
+  auto result = eval_node(function_rawvalue.body, fn_st);
+  return EvalResult {result.rv_result, result.lv_result};
 }
 
 EvalResult eval_vec_literal(ASTNode &node, SymbolTable &st) {

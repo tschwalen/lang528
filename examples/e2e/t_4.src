@@ -59,7 +59,52 @@ function test_assoc()
     assert (-exmod.module_fn()[3] * -4 == 16, "unary minus prefixing more complex expr");
 ..
 
+function test_str_cat()
+    
+    # test for simple string concat
+    assert( "a" + "a" == "aa", "simple string concat works");
+
+
+    # test for plus equals
+    const astr = "this is a string";
+    let str2 = 'this is a string as well';
+
+    str2 += astr; 
+
+    assert( 
+      str2 == "this is a string as wellthis is a string",
+      "string plusequals works"
+    );
+
+    
+    # TODO: rewrite this test once float tostring is better
+    let strcat = "a" + 1 + 2.0 + true + [] + {};
+    assert(strcat == "a12true[]{}", "strcat converts everything to string"); 
+..
+
+
+# function that returns a function
+function zxcv() return f; ..
+
+function test_fn_first_classness()
+    assert( zxcv()() * 0 == 0, "function returned from function is callable");
+
+
+    const fns = [f, b, z];
+    let i = 0;
+    while i < fns.length()
+        fns[i]();	
+
+        i += 1; 
+    ..
+    print("#PASS# Functions stored in arrays are callable");
+    
+..
+
+
 function main()
     test_assoc();
     test_assign_ops_int();
+    test_str_cat();
+    test_fn_first_classness();
 ..

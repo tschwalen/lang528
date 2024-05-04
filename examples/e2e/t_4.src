@@ -113,7 +113,7 @@ function test_expressions()
     assert( exmod.mod_vec.length() == 5, "chained field access");
     assert( -[1,2,3,4][2] * 2 / b() == 1, "complex parse 1");
     assert( '1' + -z()[b() / -2] / 4 * -1 == "11", "complex parse 2");
-    assert( [3,2,1+100][2] - {"a":50,"b":-99998,"c":"earwig"}["a"] * 2 == 1, "vec/dict literals in expr");
+    assert( [3,2,1+100][2] - {"a":50,"b":-99998,"c":"e"}["a"] * 2 == 1, "vec/dict literals in expr");
 ..
 
 function early_return_helper()
@@ -141,7 +141,23 @@ function test_early_returns()
 ..
 
 function test_dictionaries()
-    # TODO
+    let d1 = {};
+    let d2 = {};
+    assert( d1 == d2, "empty dict equals");
+    d1['a'] = 'yyyyy';
+    d2['b'] = 44;
+    assert( d1['a'] != d2['b'], "comparing values in dicts" );
+    assert( d2 != d1, "dict not equals");
+    d1['b'] = d2['b'];
+    d2['a'] = d1['a'];
+    assert( d2 == d1, "dict equals");
+    assert ({'a': {'b': 'c'}} == {'a': {'b': 'c'}}, "nested dict equals");
+
+    d1['c'] = d2;
+    d2['c'] = d1;
+    # this should break stuff right?
+    # this crashes in modern python2, so I suppose it's ok that it crashes this baby interpreter
+    # assert( d2 == d1, "dict equals");
 ..
 
 function main()

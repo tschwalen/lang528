@@ -759,9 +759,10 @@ BoxedValue VectorIndexLV::currentValue() {
 }
 
 void DictIndexLV::assign(BoxedValue value) {
-  auto key = getDictKey(this->key);
+  auto str_key = getDictKey(this->key);
 
-  this->dict->operator[](key).second = std::make_shared<BoxedValue>(
+  this->dict->operator[](str_key).first = this->key;
+  this->dict->operator[](str_key).second = std::make_shared<BoxedValue>(
     value.type,
     value.value
   );

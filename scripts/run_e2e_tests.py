@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from util import get_project_root_directory
+from util import get_project_root_directory, printred, printgreen
 
 import os
 import subprocess
@@ -27,21 +27,21 @@ def run_e2e_test(directory: str, file: str):
             msg = parts[2].strip()
 
             if macro == "PASS":
-                print("\033[32m - Passed check" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
+                printgreen("- Passed check" + (f": \"{msg}\"" if msg != "" else ""))
             elif macro == "EXPECT":
                 # very basic, if this macro is encountered we expect a non-zero exit code
                 # this runs into an issue where the test might fail in ways other than we
                 # expected, but it works ok for now
                 failure_expected = True
                 if retcode != 0:
-                    print("\033[32m - Passed expect" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
+                    printgreen("- Passed expect" + (f": \"{msg}\"" if msg != "" else ""))
                 else:
-                    print("\033[31m - Failed expect" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
+                    printred("- Failed expect" + (f": \"{msg}\"" if msg != "" else ""))
             elif macro == "FAIL":
-                print("\033[31m - Failed check" + (f": \"{msg}\"" if msg != "" else "") + "\033[0m")
+                printred("- Failed check" + (f": \"{msg}\"" if msg != "" else "")) 
 
     if not failure_expected and retcode !=0:
-        print("\033[31m - Unexpected nonzero exit code\033[0m")
+        printred("- Unexpected nonzero exit code")
 
 
 

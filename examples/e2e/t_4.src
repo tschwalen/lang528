@@ -104,6 +104,8 @@ function test_fn_first_classness()
 ..
 
 function test_expressions()
+    const a = 4;
+    const bb = -0.08;
     assert( 0.5 + 2 > 2, "mixing float and int");
     assert( false | true & true, "boolean sanity check");
     assert( 4 > 5 | 5.5 >= -1 & "test" != "@", "mixed boolean expressions");
@@ -113,7 +115,18 @@ function test_expressions()
     assert( exmod.mod_vec.length() == 5, "chained field access");
     assert( -[1,2,3,4][2] * 2 / b() == 1, "complex parse 1");
     assert( '1' + -z()[b() / -2] / 4 * -1 == "11", "complex parse 2");
-    assert( [3,2,1+100][2] - {"a":50,"b":-99998,"c":"e"}["a"] * 2 == 1, "vec/dict literals in expr");
+    assert( a+bb*bb / a > a - (1.0/2) * a, "longer arith expr"); 
+    assert( -f() * b() * -1 == 60, "function calls in expressions");
+    assert( 1 + 1.0 + 0.4 <= 3, "less equals (less)");
+    assert( 4 + 1 - 2 <= 3, "less equals (equals)");
+    assert(
+      !(bb * bb + bb - bb / bb / bb > bb & a * a - a / (a-1) < a | ! ("a" == 'a')),
+      "much longer arith expr"
+    );
+    assert(
+       [3,2,1+100][2] - {"a":50,"b":-99998,"c":"e"}["a"] * 2 == 1,
+       "vec/dict literals in expr"
+    );
 ..
 
 function early_return_helper()
@@ -137,7 +150,30 @@ function early_return_helper()
 ..
 
 function test_early_returns()
-    assert( early_return_helper(), "return breaks out of loops correctly even with deep nesting");
+    assert( 
+      early_return_helper(), 
+      "return breaks out of loops correctly even with deep nesting"
+    );
+..
+
+function test_vectors()
+    let v1 = [[],[],[]];
+    let v2 = [[],[],[]];
+    assert(v1 == v2, "vector eq test w/ nested empty vectors");
+    v1[0].append(44);
+    assert(v1 != v2, "vector neq test w/ nested empty ");
+
+    # reset V1
+    v1 = [];                # 0
+    v1.append(1);           # 1 (integer)
+    v1.append(0.7777);      # 2 (float)
+    v1.append(true);        # 3 (bool)
+    v1.append("yup");       # 4 (string)
+    v1.append([7,7]);       # 5 (vector)
+    v1.append({'z':'x'});   # 6 (dict)
+    v1.append(exmod);       # 7 (module)
+    v1.append(f);           # 8 (function)
+    assert(v1.length() == 8, "vector append supports all types");
 ..
 
 function test_dictionaries()
@@ -156,7 +192,7 @@ function test_dictionaries()
     d1['c'] = d2;
     d2['c'] = d1;
     # this should break stuff right?
-    # this crashes in modern python2, so I suppose it's ok that it crashes this baby interpreter
+    # this crashes in modern python, so I suppose it's ok that it crashes this baby interpreter
     # assert( d2 == d1, "dict equals");
 ..
 
@@ -168,4 +204,5 @@ function main()
     test_expressions();
     test_early_returns();
     test_dictionaries();
+    test_vectors();
 ..

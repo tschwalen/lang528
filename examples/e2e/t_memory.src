@@ -1,0 +1,96 @@
+#
+# Testing the expected behavior of different memory operations.
+#
+import "testutils.src"; 
+
+function produce_vector()
+  return [7,8,9];
+..
+
+function append_to_vector(v)
+  v.append(34);
+..
+
+
+function produce_dict()
+  return {
+    "a": 1, "b": 2
+  };
+..
+
+function insert_to_dict(d,k,v)
+  d[k] = v;
+..
+
+function vector_reassign_trickery(v)
+  let v2 = v;
+  v2 = [8,8,8,8];
+..
+
+function dict_reassign_trickery(d)
+  let d2 = d;
+  d2 = {"six": "foot", "seven": "foot"};
+..
+
+function use_vector_as_pointer(v)
+  v[0] = "canary";
+..
+
+function use_dict_as_pointer(d)
+  d["val"] = "canary";
+..
+
+
+#
+# Actual test cases go here
+#
+function main()
+  #
+  # VECTORS
+  #
+
+  # step 1: show that data structures produced within and returned from 
+  #         functions are preserved.
+  const my_vector = produce_vector(); 
+  assert(my_vector.length() != 0, "got vector from function");
+
+
+  # step 2: show that the same vector gets mutated from within a function
+  let old_length = my_vector.length();
+  append_to_vector(my_vector);
+  assert(
+    my_vector.length() == old_length + 1 & my_vector[my_vector.length() - 1] == 34,
+    "vector was mutated inside function call"
+  );
+
+  # step 3: show that re-assignment does not mutate
+  vector_reassign_trickery(my_vector);
+  assert(my_vector[0] != 8, "assigning to vector in function call does not mutate");
+  
+  # step 4: show that vectors don't deep copy when inserted into data structures 
+  const p_vec = ["something"];
+  const nest_vec = [p_vec];
+  use_vector_as_pointer(p_vec);
+  assert(nest_vec[0][0] == "canary", "vectors behave like references");
+
+  #
+  # DICTIONARIES 
+  #
+  const my_dict = produce_dict();
+  assert(!my_dict.contains("c"), "got dict from function");
+
+  insert_to_dict(my_dict, "c", "cool");
+  assert(my_dict["c"] == "cool", "dict was mutated inside function call");
+
+  dict_reassign_trickery(my_dict);
+  assert(
+    !my_dict.contains("six") & !my_dict.contains("seven"),
+    "assigning to dict in function call does not mutate"
+  );
+
+  const p_dict = {};
+  const nest_dict = {'nest': p_dict};
+  use_dict_as_pointer(p_dict);
+  assert(nest_dict['nest']['val'] == "canary", "dicts behave like references");
+..
+

@@ -196,6 +196,12 @@ function test_dictionaries()
     # assert( d2 == d1, "dict equals");
 ..
 
+function test_module_behavior()
+    const original_value = exmod.module_variable;
+    exmod.module_variable = 77777;
+    assert(exmod.module_variable != original_value, "Module variable reassignment");
+..
+
 function main()
     test_assoc();
     test_assign_ops_int();
@@ -205,4 +211,5 @@ function main()
     test_early_returns();
     test_dictionaries();
     test_vectors();
+    test_module_behavior();
 ..

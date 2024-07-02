@@ -949,4 +949,6 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
       << "   " << e.what() << "\n";
     exit(-1);
   }
+  // Return value that we never reach, put here to satisfy warnings
+  return EvalResult {};
 }

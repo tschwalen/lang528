@@ -161,7 +161,10 @@ function test_vectors()
     let v2 = [[],[],[]];
     assert(v1 == v2, "vector eq test w/ nested empty vectors");
     v1[0].append(44);
-    assert(v1 != v2, "vector neq test w/ nested empty ");
+    assert(v1 != v2, "vector neq test w/ nested empty");
+    v2[0] = v1[0];
+    assert(v1 == v2, "vector eq test after modification");
+
 
     # reset V1
     v1 = [];                # 0

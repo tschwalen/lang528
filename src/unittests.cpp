@@ -97,17 +97,6 @@ void test_that_token_serializes_from_json_as_expected() {
 }
 
 void test_token_json_methods() {
-  // Token t1{
-  //     TokenType::STRING_LITERAL,
-  //     "this is the string",
-  //     {44, 15},
-  // };
-
-  // vector<Token> toks = {t1, t1};
-
-  // json j = toks;
-
-  // std::cout << j.dump(2) << "\n";
   test_that_token_serializes_to_json_as_expected();
   test_that_token_serializes_from_json_as_expected();
 }

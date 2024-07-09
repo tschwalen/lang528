@@ -15,11 +15,13 @@ def main():
     # rudimentary parser integration test
     total = 0
     errors = 0
-    for example_program in os.listdir(example_dir):
+    for example_program in os.scandir(example_dir):
+        if example_program.is_dir():
+            continue
         res = subprocess.run(
             [executable_path, 
             "--parse",
-            f"--input={example_dir}/{example_program}"]
+            f"--input={example_program.path}"]
         )
         total += 1
         if res.returncode != 0:

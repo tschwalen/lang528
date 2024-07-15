@@ -1,5 +1,15 @@
 import "testutils.src"; 
 
+#
+# A collection of tests that use the language to accomplish some "actual" task,
+# as opposed to directly testing some language feature.
+#
+# Mostly inspired by rosettacode or leetcode style problems.
+#
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# sum_of_squares, basic array & arithmetic
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 function sum_of_squares(
     vec # array of integers
 )
@@ -16,9 +26,137 @@ function sum_of_squares(
 function test_sum_of_squares()
     assert(sum_of_squares([]) == 0, "zero case");
     assert(sum_of_squares([3, 1, 4, 1, 5, 9]) == 133, "real case");
+    assert(sum_of_squares([7, -7, 8]) == 162, "real case 2");
+..
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# is_palindrome, basic string processing
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+function is_palindrome( 
+    word # string
+)
+    const wlen = word.length();
+    if wlen <= 1
+        return true;
+    ..
+
+    let low = 0;
+    let high = wlen - 1;
+    while low < high
+        if word[low] != word[high]
+            return false;
+        ..
+        low += 1;
+        high -= 1;
+    ..
+    return true;
+..
+
+function test_is_palindrome()
+    assert(is_palindrome("") == true, "palindrome trivial case 1");
+    assert(is_palindrome("a") == true, "palindrome trivial case 2");
+    assert(is_palindrome("ab") == false, "palindrome case 1");
+    assert(is_palindrome("aba") == true, "palindrome case 2");
+    assert(is_palindrome("zxzzyyzzxz") == true, "palindrome case 3");
+    assert(is_palindrome("                ") == true, "palindrome case 4");
+    assert(is_palindrome("    5            ") == false, "palindrome case 5");
+..
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# dot_product and matmul_2d, slightly more advanced array & arithmetic
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+function dot_product(
+    va, # array of numbers, of length N
+    vb  # array of numbers, of length N
+)
+    if va.length() != vb.length()
+        return "dot product dimension mismatch";
+    ..
+
+    let idx = 0;
+    let product = 0;
+    while idx < va.length()
+        product += va[idx] * vb[idx];
+        idx += 1;
+    ..
+    return product;
+..
+
+function test_dot_product()
+    assert(dot_product([], [1]) == "dot product dimension mismatch", "dot_product error checking");
+    assert(dot_product([-4, 5],[-2, 4]) == 28, "dot product with integers");
+    assert(dot_product([0.4, 7.8, -3.33],[4, 77, -0.9]) == 605.197, "dot product with floating point");
+..
+
+function matmul_2d(
+    m1, # matrix (array of arrays) with dimensions M x N
+    m2  # matrix with dimensions N x P
+) # -> the cross product of m1 x m2 with dimensions M x P
+
+    # validate dimensions
+    const wrong_dim_err_msg = "cross product dimension mismatch";
+    const M = m1.length();
+    if M < 1
+        return wrong_dim_err_msg;
+    ..
+
+    const m1_N = m1[0].length();
+    const m2_N = m2.length();
+
+    if m1_N != m2_N
+        return wrong_dim_err_msg;
+    ..
+
+    const N = m1_N;
+    const P = m2[0].length();
+
+    const result = [];
+
+    let i_m = 0;
+    while i_m < M
+        const row = [];
+
+        let i_p = 0;
+        while i_p < P 
+            let sum = 0;
+
+            let i_n = 0;
+            while i_n < N
+                sum += m1[i_m][i_n] * m2[i_n][i_p];
+                i_n += 1;
+            ..
+            row.append(sum);
+            i_p += 1;
+        ..
+        result.append(row);
+        i_m += 1;
+    ..
+
+    return result;
+..
+
+function test_matmul_2d()
+    const M1 = [[1, 2, 3], 
+                [4, 5, 6]];
+    const M2 = [[7,   8],
+                [9,  10],
+                [11, 12]];
+    const M3 = [[58,   64],
+                [139, 154]];
+    const M4 = [[39, 54, 69], 
+                [49, 68, 87], 
+                [59, 82, 105]];
+
+    assert(matmul_2d(M1, M2) == M3, "matrix multiplication 1");
+    assert(matmul_2d(M2, M1) == M4,  "matrix multiplication 2");
+    assert(matmul_2d(M1, M3) == "cross product dimension mismatch" ,  "dimension mismatch");
 ..
 
 # run all tests
 function main()
     test_sum_of_squares();
+    test_is_palindrome();
+    test_dot_product();
+    test_matmul_2d();
 ..

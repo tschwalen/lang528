@@ -1,0 +1,9 @@
+const MODULE_CONSTANT = 55645;
+let module_variable = "reassign me";
+
+let mod_vec = [5,4,3,2,1];
+
+function module_fn() 
+  return [1,2,3,4];
+..
+

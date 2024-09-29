@@ -1,0 +1,7 @@
+function assert(condition, message)
+    if condition
+        print("#PASS# " + message);
+    else
+        print("#FAIL# " + message);
+    ..
+..

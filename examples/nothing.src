@@ -1,0 +1,11 @@
+function returns_nothing ()
+..
+
+function main ()
+    returns_nothing();
+
+    # what happens if we do this? Answer: bad_optional_access
+    # we need a "Nothing" type to handle this
+    const x = returns_nothing();
+
+..

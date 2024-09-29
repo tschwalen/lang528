@@ -1,0 +1,11 @@
+function main()
+
+  let w = 5 + 5 + 5 == -15; 
+  #
+  # so the expected parse here is:
+  #(== 
+  #  (- (- 5 5) 5)
+  #  (-u 5)
+  #)
+  let x = 5 - 5 - 5 == -5;
+..

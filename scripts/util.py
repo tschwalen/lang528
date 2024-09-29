@@ -10,3 +10,9 @@ def get_project_root_directory():
     )
     stdout, _ = process.communicate()
     return stdout.decode("utf-8").strip()
+
+def printred(content: str):
+    print(f"\033[31m{content}\033[0m") 
+
+def printgreen(content: str):
+    print(f"\033[32m{content}\033[0m") 

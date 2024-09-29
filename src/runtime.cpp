@@ -267,6 +267,8 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
                 std::get<shared_ptr<Dict>>(lhs.value),
                 std::get<shared_ptr<Dict>>(rhs.value)
             );
+	default:
+	    return false;
     }
 }
 

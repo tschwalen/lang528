@@ -332,7 +332,8 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
     };
   }
   
-  return eval_node(function_rawvalue.body, fn_st);
+  auto result = eval_node(function_rawvalue.body, fn_st);
+  return EvalResult {result.rv_result, result.lv_result};
 }
 
 EvalResult eval_vec_literal(ASTNode &node, SymbolTable &st) {
@@ -758,9 +759,10 @@ BoxedValue VectorIndexLV::currentValue() {
 }
 
 void DictIndexLV::assign(BoxedValue value) {
-  auto key = getDictKey(this->key);
+  auto str_key = getDictKey(this->key);
 
-  this->dict->operator[](key).second = std::make_shared<BoxedValue>(
+  this->dict->operator[](str_key).first = this->key;
+  this->dict->operator[](str_key).second = std::make_shared<BoxedValue>(
     value.type,
     value.value
   );
@@ -947,4 +949,6 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
       << "   " << e.what() << "\n";
     exit(-1);
   }
+  // Return value that we never reach, put here to satisfy warnings
+  return EvalResult {};
 }

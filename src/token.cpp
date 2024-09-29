@@ -153,6 +153,7 @@ bool unary_precedence_test(TokenType op, TokenType lookahead) {
 
 // TODO: replace these magic numbers with a better system for
 //        setting op precedence in one place
+// TODO2: consider if unary not needs a different precendence.
 int unary_op_precedence(TokenType tt) {
   return is_unary_op(tt) ? 11 : -1;
 }

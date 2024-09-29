@@ -1,0 +1,10 @@
+#
+# test that anon module imports work
+#
+import "testutils.src";
+
+function main()
+    print("#PASS# anon import succeded without error");
+
+    assert(true, "imported function works");
+..

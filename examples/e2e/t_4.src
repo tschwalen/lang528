@@ -1,0 +1,218 @@
+#
+# test assignment and expressions 
+#
+import "testutils.src"; 
+import "example_module.src" as exmod;
+
+function f() return -10; ..
+function b() return -6; ..
+function z() return [1,2,3,4]; ..
+function returns_false() return false; ..
+
+function test_assign_ops_int() 
+    let localvar = 0;
+    
+    # should still be zero
+    assert(localvar == 0, "declaration");
+    
+    # 0 + 5 = 5
+    localvar += 5; 
+    assert(localvar == 5, "plusequals");
+
+    # 5 - 1 = 4 
+    localvar -= 1; 
+    assert(localvar == 4, "minusequals");
+
+    # 4 * 4 = 16
+    localvar *= localvar;
+    assert(localvar == 16, "timesequals");
+
+    # 16 / 2 = 8
+    localvar /= 2; 
+    assert(localvar == 8, "divequals");
+
+    # 8 % 5 = 3
+    localvar %= 5; 
+    assert(localvar == 3, "modequals");
+
+    # all done, report success
+    print("#PASS# Passed all assign op int tests");
+..
+
+function test_assoc()
+
+    assert( 5 - 5 - 5 == -5, "correct subtract assoc");
+    assert( 5 ----------- 5 == 0, "many chained unary minuses");
+    assert(-5 + -5 == -10, "unary minus on both sides of a binary op");
+
+    assert(!true | !false, "unary not");
+    assert(!returns_false(), "unary not prefixing function call");
+
+    # see function declarations above
+    # -(-10) + -(-6) = 16
+    assert (-f() + -b() == 16, "unary minus prefixing function calls");
+
+    assert (-z()[3] * -4 == 16, "unary minus prefixing complex expr");
+    # see module declaration. 
+    # exmod.module_fn() -> [1,2,3,4]
+    #                              |-> [3] -> 4
+    assert (-exmod.module_fn()[3] * -4 == 16, "unary minus prefixing more complex expr");
+
+    assert ( 8 / 4 / 2 == 1, "correct division associativity");
+    assert ( 8 / 4 * 5 / 2 == 5, "correct division associativity mixed with other operators");
+    assert ( 8 / 4 * 5 / 2 % 2 == 1, "correct division associativity mixed with other operators 2");
+..
+
+function test_str_cat()
+    
+    # test for simple string concat
+    assert( "a" + "a" == "aa", "simple string concat works");
+
+
+    # test for plus equals
+    const astr = "this is a string";
+    let str2 = 'this is a string as well';
+
+    str2 += astr; 
+
+    assert( 
+      str2 == "this is a string as wellthis is a string",
+      "string plusequals works"
+    );
+
+    
+    # TODO: rewrite this test once float tostring is better
+    let strcat = "a" + 1 + 2.0 + true + [] + {};
+    assert(strcat == "a12true[]{}", "strcat converts everything to string"); 
+..
+
+
+# function that returns a function
+function zxcv() return f; ..
+
+function test_fn_first_classness()
+    assert( zxcv()() * 0 == 0, "function returned from function is callable");
+
+    const fns = [f, b, z];
+    let i = 0;
+    while i < fns.length()
+        fns[i]();	
+        i += 1; 
+    ..
+    print("#PASS# Functions stored in arrays are callable");
+    
+..
+
+function test_expressions()
+    const a = 4;
+    const bb = -0.08;
+    assert( 0.5 + 2 > 2, "mixing float and int");
+    assert( false | true & true, "boolean sanity check");
+    assert( 4 > 5 | 5.5 >= -1 & "test" != "@", "mixed boolean expressions");
+    assert( 4 * 4 * 4 - 1 == 63, "arithmetic operator precedence test");
+    assert( 3 / 2 == 1, "int div when two ints");
+    assert( 3.0 / 2 == 1.5, "float div when float");
+    assert( exmod.mod_vec.length() == 5, "chained field access");
+    assert( -[1,2,3,4][2] * 2 / b() == 1, "complex parse 1");
+    assert( '1' + -z()[b() / -2] / 4 * -1 == "11", "complex parse 2");
+    assert( a+bb*bb / a > a - (1.0/2) * a, "longer arith expr"); 
+    assert( -f() * b() * -1 == 60, "function calls in expressions");
+    assert( 1 + 1.0 + 0.4 <= 3, "less equals (less)");
+    assert( 4 + 1 - 2 <= 3, "less equals (equals)");
+    assert(
+      !(bb * bb + bb - bb / bb / bb > bb & a * a - a / (a-1) < a | ! ("a" == 'a')),
+      "much longer arith expr"
+    );
+    assert(
+       [3,2,1+100][2] - {"a":50,"b":-99998,"c":"e"}["a"] * 2 == 1,
+       "vec/dict literals in expr"
+    );
+..
+
+function early_return_helper()
+    const a = [1,2,3,4,5,6,7,8];
+    let i = 0;
+    while i < a.length()
+        if true
+            if true
+                if true
+                    if a[i] == 5
+                        while true
+                            return true;
+                        ..
+                    .. 
+                ..
+            ..
+        ..
+        i += 1;
+    ..
+    return false;
+..
+
+function test_early_returns()
+    assert( 
+      early_return_helper(), 
+      "return breaks out of loops correctly even with deep nesting"
+    );
+..
+
+function test_vectors()
+    let v1 = [[],[],[]];
+    let v2 = [[],[],[]];
+    assert(v1 == v2, "vector eq test w/ nested empty vectors");
+    v1[0].append(44);
+    assert(v1 != v2, "vector neq test w/ nested empty");
+    v2[0] = v1[0];
+    assert(v1 == v2, "vector eq test after modification");
+
+
+    # reset V1
+    v1 = [];                # 0
+    v1.append(1);           # 1 (integer)
+    v1.append(0.7777);      # 2 (float)
+    v1.append(true);        # 3 (bool)
+    v1.append("yup");       # 4 (string)
+    v1.append([7,7]);       # 5 (vector)
+    v1.append({'z':'x'});   # 6 (dict)
+    v1.append(exmod);       # 7 (module)
+    v1.append(f);           # 8 (function)
+    assert(v1.length() == 8, "vector append supports all types");
+..
+
+function test_dictionaries()
+    let d1 = {};
+    let d2 = {};
+    assert( d1 == d2, "empty dict equals");
+    d1['a'] = 'yyyyy';
+    d2['b'] = 44;
+    assert( d1['a'] != d2['b'], "comparing values in dicts" );
+    assert( d2 != d1, "dict not equals");
+    d1['b'] = d2['b'];
+    d2['a'] = d1['a'];
+    assert( d2 == d1, "dict equals");
+    assert ({'a': {'b': 'c'}} == {'a': {'b': 'c'}}, "nested dict equals");
+
+    d1['c'] = d2;
+    d2['c'] = d1;
+    # this should break stuff right?
+    # this crashes in modern python, so I suppose it's ok that it crashes this baby interpreter
+    # assert( d2 == d1, "dict equals");
+..
+
+function test_module_behavior()
+    const original_value = exmod.module_variable;
+    exmod.module_variable = 77777;
+    assert(exmod.module_variable != original_value, "Module variable reassignment");
+..
+
+function main()
+    test_assoc();
+    test_assign_ops_int();
+    test_str_cat();
+    test_fn_first_classness();
+    test_expressions();
+    test_early_returns();
+    test_dictionaries();
+    test_vectors();
+    test_module_behavior();
+..

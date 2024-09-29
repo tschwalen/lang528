@@ -67,7 +67,6 @@ def run_e2e_test(directory: str, file: str):
         ANY_FAILED = True
 
 
-
 def main():
     global EXECUTABLE_PATH, VERBOSE
 

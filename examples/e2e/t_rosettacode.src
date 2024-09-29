@@ -153,10 +153,37 @@ function test_matmul_2d()
     assert(matmul_2d(M1, M3) == "cross product dimension mismatch" ,  "dimension mismatch");
 ..
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# jensen's device
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+function harmonic_sum(i, lo, hi, term)
+    # term is passed by-name, and so is i
+    let temp = 0;
+    i[0] = lo;
+    while i[0] <= hi  # Python "for" loop creates a distinct which
+        temp += term(); # would not be shared with the passed "i"
+        i[0] += 1;   # Here the actual passed "i" is incremented.
+    ..
+    return temp;
+..
+
+# no nested functions or closures, so this will have to do
+let i = [0];
+function term()
+   return 1.0 / i[0];
+..
+
+function test_jensens_device()
+    const harmonic_sum_100 = harmonic_sum(i, 1, 100, term);
+    assert(harmonic_sum_100 * 1000 > 5187, "harmonic sum correctly calculated");
+..
+
 # run all tests
 function main()
     test_sum_of_squares();
     test_is_palindrome();
     test_dot_product();
     test_matmul_2d();
+    test_jensens_device();
 ..

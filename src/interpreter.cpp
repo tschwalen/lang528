@@ -466,7 +466,7 @@ CHECK_CONDITION:
     SymbolTable block_st {&st, {}};
     result = eval_node(node.children[BODY], block_st);
 
-    // exit early and propate return value if we returned from block
+    // exit early and propagate return value if we returned from block
     if (result.returned) {
       return result;
     }
@@ -800,6 +800,12 @@ void DictIndexLV::assign(BoxedValue value) {
 
 BoxedValue DictIndexLV::currentValue() {
   auto key = getDictKey(this->key);
+  if (!this->dict->contains(key)) {
+    return BoxedValue {
+      DataType::NOTHING,
+      0
+    };
+  }
   auto kv_pair = this->dict->at(key);
   auto current_value = kv_pair.second;
   return BoxedValue {

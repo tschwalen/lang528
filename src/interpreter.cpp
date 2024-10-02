@@ -333,6 +333,17 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
   }
   
   auto result = eval_node(function_rawvalue.body, fn_st);
+
+  // if no explicit return value, add the implicit "nothing" return
+  if(!result.returned) {
+    return EvalResult {
+      BoxedValue {
+        DataType::NOTHING,
+        0
+      }
+    };
+  }
+
   return EvalResult {result.rv_result, result.lv_result};
 }
 
@@ -415,6 +426,15 @@ EvalResult eval_bool_literal(ASTNode &node, SymbolTable &st) {
             value
         }
     };
+}
+
+EvalResult eval_nothing_literal(ASTNode &node, SymbolTable &st) {
+  return EvalResult {
+    BoxedValue {
+      DataType::NOTHING,
+      0
+    }
+  };
 }
 
 EvalResult eval_block(ASTNode &node, SymbolTable &st) {
@@ -559,7 +579,8 @@ EvalResult eval_builtin_vector_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_vector_length(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -567,7 +588,8 @@ EvalResult eval_builtin_dict_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_dict_length(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -575,7 +597,8 @@ EvalResult eval_builtin_dict_keys(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_dict_keys(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -584,7 +607,8 @@ EvalResult eval_builtin_dict_contains(ASTNode &node, SymbolTable &st) {
   auto lookup_key = st.lookup_rvalue("key").rv_result.value();
   return EvalResult {
     builtin_dict_contains(lookup_er.rv_result.value(), lookup_key),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -592,7 +616,8 @@ EvalResult eval_builtin_string_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_string_length(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -938,6 +963,9 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
       break;
     case NodeType::STRING_LITERAL:
       return eval_string_literal(node, st);
+      break;
+    case NodeType::NOTHING_LITERAL:
+      return eval_nothing_literal(node, st);
       break;
     }
   }

@@ -62,6 +62,7 @@ string token_type_to_string(TokenType e) {
       "INT_LITERAL",
       "FLOAT_LITERAL",
       "STRING_LITERAL",
+      "NOTHING_LITERAL",
       "END_OF_FILE",
       "NULL_TOKEN",
   };
@@ -116,6 +117,7 @@ TokenType int_to_token_type(int i) {
       TokenType::INT_LITERAL,
       TokenType::FLOAT_LITERAL,
       TokenType::STRING_LITERAL,
+      TokenType::NOTHING_LITERAL,
       TokenType::END_OF_FILE,
       TokenType::NULL_TOKEN,
   };

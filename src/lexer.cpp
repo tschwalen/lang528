@@ -153,6 +153,11 @@ Token LexerState::handle_wordlike() {
     return Token{TokenType::BOOL_LITERAL, bool_value, metadata};
   }
 
+  // check for the nothing literal
+  if (word == "nothing") {
+    return Token{TokenType::NOTHING_LITERAL, 0, metadata};
+  }
+
   // otherwise, it's an identifier
   return Token{TokenType::IDENTIFIER, word, metadata};
 }

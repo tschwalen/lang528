@@ -58,6 +58,9 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs);
 string toString(BoxedValue bv) {
     std::stringstream result;
     switch(bv.type) {
+        case DataType::NOTHING:
+            result << "nothing";
+            break;
         case DataType::BOOL:
             result << (std::get<bool>(bv.value) ? "true" : "false");
             break;
@@ -244,6 +247,8 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
     }
 
     switch(lhs.type) {
+        case DataType::NOTHING:
+            return true;
         case DataType::INT:
             return std::get<int>(lhs.value) == std::get<int>(rhs.value);
         case DataType::FLOAT:

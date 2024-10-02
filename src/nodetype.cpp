@@ -45,6 +45,7 @@ string node_type_to_string(NodeType e) {
       "INT_LITERAL",
       "FLOAT_LITERAL",
       "STRING_LITERAL",
+      "NOTHING_LITERAL",
   };
   return values.at((int)e);
 }
@@ -80,6 +81,7 @@ NodeType int_to_node_type(int i) {
       NodeType::INT_LITERAL,
       NodeType::FLOAT_LITERAL,
       NodeType::STRING_LITERAL,
+      NodeType::NOTHING_LITERAL,
   };
   return values.at(i);
 }

@@ -1,0 +1,15 @@
+import "testutils.src"; 
+
+function main ()
+  # should be able to assign to "nothing" -- like "null" or "nil" or "undefined"
+  let x = nothing;
+  print(x);
+
+  assert(x == like_a_void(), "Nothing type works");
+..
+
+function like_a_void ()
+  print("function called");
+
+  # no explicit return - so return "nothing"
+..

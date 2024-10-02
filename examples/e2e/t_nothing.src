@@ -5,7 +5,20 @@ function main ()
   let x = nothing;
   print(x);
 
-  assert(x == like_a_void(), "Nothing type works");
+  assert(x == nothing, "nothing type works");
+  assert(x == like_a_void(), "implicit nothing return from function");
+
+  if nothing
+    assert(false, "nothing is truthy (shouldn't happen)");
+  else 
+    assert(true, "nothing is falsey");
+  ..
+
+  let y = true;
+  while y
+    y = nothing;
+  ..
+  assert(true, "nothing is falsey when terminating loops");
 ..
 
 function like_a_void ()

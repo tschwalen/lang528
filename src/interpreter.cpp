@@ -478,7 +478,6 @@ EvalResult eval_return(ASTNode &node, SymbolTable &st) {
   return return_value;
 }
 
-
 EvalResult eval_if(ASTNode &node, SymbolTable &st) {
   /*
       node.children[0] => conditional
@@ -532,7 +531,6 @@ EvalResult SymbolTable::lookup_lvalue(string var) {
   err << "Lookup of identifier '" << var << "' failed";
   throw std::runtime_error(err.str());
 }
-
 
 EvalResult SymbolTable::lookup_rvalue(string var) {
   if (this->entries.contains(var)) {

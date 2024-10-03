@@ -117,6 +117,8 @@ ASTNode basic_literal(ParserState &ps) {
   case TokenType::STRING_LITERAL:
     return ASTNode::makeLiteral(std::get<string>(current_token.value),
                                 current_token.metadata);
+  case TokenType::NOTHING_LITERAL:
+    return ASTNode::makeNothingLiteral(current_token.metadata);
   default:
     break;
   }

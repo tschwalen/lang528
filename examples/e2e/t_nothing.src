@@ -1,0 +1,32 @@
+import "testutils.src"; 
+
+function main ()
+  # should be able to assign to "nothing" -- like "null" or "nil" or "undefined"
+  let x = nothing;
+  print(x);
+
+  assert(x == nothing, "nothing type works");
+  assert(x == like_a_void(), "implicit nothing return from function");
+
+  if nothing
+    assert(false, "nothing is truthy (shouldn't happen)");
+  else 
+    assert(true, "nothing is falsey");
+  ..
+
+  let y = true;
+  while y
+    y = nothing;
+  ..
+  assert(true, "nothing is falsey when terminating loops");
+
+  # might remove this logic at some point
+  const dictionary = {};
+  assert(dictionary["nonexistent_key"] == nothing, "dict lookup failures produce nothing");
+..
+
+function like_a_void ()
+  print("function called");
+
+  # no explicit return - so return "nothing"
+..

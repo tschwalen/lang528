@@ -176,6 +176,10 @@ ASTNode ASTNode::makeLiteral(bool value, TokenMetadata metadata) {
   return ASTNode{NodeType::BOOL_LITERAL, {}, {{"value", value}}, metadata};
 }
 
+ASTNode ASTNode::makeNothingLiteral(TokenMetadata metadata) {
+  return ASTNode{NodeType::NOTHING_LITERAL, {}, {}, metadata};
+}
+
 ASTNode ASTNode::nothing() {
   return ASTNode{};
 }

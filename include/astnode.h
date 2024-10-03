@@ -59,6 +59,7 @@ public:
   static ASTNode makeLiteral (int value, TokenMetadata metadata);
   static ASTNode makeLiteral (float value, TokenMetadata metadata);
   static ASTNode makeLiteral (bool value, TokenMetadata metadata);
+  static ASTNode makeNothingLiteral(TokenMetadata metadata);
   static ASTNode nothing ();
 };
 

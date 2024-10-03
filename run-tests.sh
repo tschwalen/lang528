@@ -22,6 +22,6 @@ echo "Running unit tests..."
 
 echo "Running integration tests..."
 ./scripts/run_parser_test.py
-./scripts/run_e2e_tests.py
+./scripts/run_e2e_tests.py $@
 
 echo "Finished running tests."

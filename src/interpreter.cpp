@@ -333,6 +333,17 @@ EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
   }
   
   auto result = eval_node(function_rawvalue.body, fn_st);
+
+  // if no explicit return value, add the implicit "nothing" return
+  if(!result.returned) {
+    return EvalResult {
+      BoxedValue {
+        DataType::NOTHING,
+        0
+      }
+    };
+  }
+
   return EvalResult {result.rv_result, result.lv_result};
 }
 
@@ -417,6 +428,15 @@ EvalResult eval_bool_literal(ASTNode &node, SymbolTable &st) {
     };
 }
 
+EvalResult eval_nothing_literal(ASTNode &node, SymbolTable &st) {
+  return EvalResult {
+    BoxedValue {
+      DataType::NOTHING,
+      0
+    }
+  };
+}
+
 EvalResult eval_block(ASTNode &node, SymbolTable &st) {
     for (auto &child : node.children) {
         auto result = eval_node(child, st);
@@ -431,20 +451,14 @@ EvalResult eval_while(ASTNode &node, SymbolTable &st) {
   const size_t CONDITION = 0, BODY = 1;
 
 CHECK_CONDITION:
-  bool raw_condition_value;
   EvalResult result;
   BoxedValue condition_value = eval_node(node.children[CONDITION], st).rv_result.value();
-  runtime_assertion(
-    condition_value.type == DataType::BOOL,
-    "While loop condition expression must have boolean result."
-  );
-  raw_condition_value = std::get<bool>(condition_value.value);
 
-  if (raw_condition_value) {
+  if (get_conditional_result(condition_value)) {
     SymbolTable block_st {&st, {}};
     result = eval_node(node.children[BODY], block_st);
 
-    // exit early and propate return value if we returned from block
+    // exit early and propagate return value if we returned from block
     if (result.returned) {
       return result;
     }
@@ -464,7 +478,6 @@ EvalResult eval_return(ASTNode &node, SymbolTable &st) {
   return return_value;
 }
 
-
 EvalResult eval_if(ASTNode &node, SymbolTable &st) {
   /*
       node.children[0] => conditional
@@ -475,13 +488,8 @@ EvalResult eval_if(ASTNode &node, SymbolTable &st) {
   const size_t CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
 
   auto condition = eval_node(node.children[CONDITION], st).rv_result.value();
-  runtime_assertion(
-    condition.type == DataType::BOOL,
-    "If-statement condition expression must have boolean result."
-  );
-  auto conditional_result = std::get<bool>(condition.value);
 
-  if (conditional_result) {
+  if (get_conditional_result(condition)) {
     SymbolTable if_block_st {&st, {}};
     return eval_node(node.children[IF_BODY], if_block_st);
   }
@@ -524,7 +532,6 @@ EvalResult SymbolTable::lookup_lvalue(string var) {
   throw std::runtime_error(err.str());
 }
 
-
 EvalResult SymbolTable::lookup_rvalue(string var) {
   if (this->entries.contains(var)) {
     auto st_entry = this->entries.at(var);
@@ -559,7 +566,8 @@ EvalResult eval_builtin_vector_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_vector_length(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -567,7 +575,8 @@ EvalResult eval_builtin_dict_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_dict_length(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -575,7 +584,8 @@ EvalResult eval_builtin_dict_keys(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_dict_keys(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -584,7 +594,8 @@ EvalResult eval_builtin_dict_contains(ASTNode &node, SymbolTable &st) {
   auto lookup_key = st.lookup_rvalue("key").rv_result.value();
   return EvalResult {
     builtin_dict_contains(lookup_er.rv_result.value(), lookup_key),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -592,7 +603,8 @@ EvalResult eval_builtin_string_length(ASTNode &node, SymbolTable &st) {
   auto lookup_er = st.lookup_rvalue("this");
   return EvalResult {
     builtin_string_length(lookup_er.rv_result.value()),
-    nullptr
+    nullptr,
+    true
   };
 }
 
@@ -670,6 +682,15 @@ EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
     }
 
     auto key = getDictKey(rhs);
+    // Return nothing if the key isn't present
+    if (!dict->contains(key)) {
+      return EvalResult{ 
+        BoxedValue {
+        DataType::NOTHING,
+        0
+        }
+      };
+    }
     auto kv_pair = dict->at(key);
     return EvalResult {
       BoxedValue {
@@ -938,6 +959,9 @@ EvalResult eval_node(ASTNode &node, SymbolTable &st, ValueType vt) {
       break;
     case NodeType::STRING_LITERAL:
       return eval_string_literal(node, st);
+      break;
+    case NodeType::NOTHING_LITERAL:
+      return eval_nothing_literal(node, st);
       break;
     }
   }

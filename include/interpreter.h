@@ -31,6 +31,7 @@ enum class ValueType {
 };
 
 enum class DataType {
+    NOTHING,
     BOOL,
     FLOAT,
     INT,

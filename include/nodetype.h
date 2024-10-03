@@ -39,6 +39,7 @@ enum class NodeType {
   INT_LITERAL,
   FLOAT_LITERAL,
   STRING_LITERAL,
+  NOTHING_LITERAL,
 };
 
 std::string node_type_to_string(NodeType e);

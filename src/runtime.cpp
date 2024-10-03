@@ -58,6 +58,9 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs);
 string toString(BoxedValue bv) {
     std::stringstream result;
     switch(bv.type) {
+        case DataType::NOTHING:
+            result << "nothing";
+            break;
         case DataType::BOOL:
             result << (std::get<bool>(bv.value) ? "true" : "false");
             break;
@@ -244,6 +247,8 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
     }
 
     switch(lhs.type) {
+        case DataType::NOTHING:
+            return true;
         case DataType::INT:
             return std::get<int>(lhs.value) == std::get<int>(rhs.value);
         case DataType::FLOAT:
@@ -291,6 +296,17 @@ string getDictKey(BoxedValue bv) {
     }
     throw std::runtime_error("Unhashable type used for dictionary key");
     return "";
+}
+
+bool get_conditional_result(BoxedValue bv) {
+    // "nothing" is falsey
+    if (bv.type == DataType::NOTHING) {
+        return false;
+    }
+    if (bv.type == DataType::BOOL) {
+        return std::get<bool>(bv.value);
+    }
+    throw std::runtime_error("Conditional expression must have boolean or nothing result.");
 }
 
 BoxedValue apply_equals(BoxedValue lhs, BoxedValue rhs) {

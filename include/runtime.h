@@ -88,7 +88,9 @@ void runtime_assertion(bool condition, string message);
 
 BoxedValue apply_binary_operator(TokenType op, BoxedValue lhs, BoxedValue rhs);
 BoxedValue apply_unary_operator(TokenType op, BoxedValue rhs);
-string getDictKey(BoxedValue bv) ;
+string getDictKey(BoxedValue bv);
+bool get_conditional_result(BoxedValue bv);
+
 
 void builtin_print(BoxedValue arg);
 BoxedValue builtin_vector_length(BoxedValue arg);

@@ -451,18 +451,10 @@ EvalResult eval_while(ASTNode &node, SymbolTable &st) {
   const size_t CONDITION = 0, BODY = 1;
 
 CHECK_CONDITION:
-  bool raw_condition_value = false;
   EvalResult result;
   BoxedValue condition_value = eval_node(node.children[CONDITION], st).rv_result.value();
 
-  if(condition_value.type == DataType::BOOL) {
-    raw_condition_value = std::get<bool>(condition_value.value);
-  }
-  else if (condition_value.type != DataType::NOTHING) {
-    throw std::runtime_error("While loop condition expression must have boolean or nothing result.");
-  }
-
-  if (raw_condition_value) {
+  if (get_conditional_result(condition_value)) {
     SymbolTable block_st {&st, {}};
     result = eval_node(node.children[BODY], block_st);
 
@@ -497,16 +489,8 @@ EvalResult eval_if(ASTNode &node, SymbolTable &st) {
   const size_t CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
 
   auto condition = eval_node(node.children[CONDITION], st).rv_result.value();
-  auto conditional_result = false;
-  if(condition.type == DataType::BOOL) {
-    conditional_result = std::get<bool>(condition.value);
-  }
-  else if (condition.type != DataType::NOTHING) {
-    throw std::runtime_error("If-statement condition expression must have boolean or nothing result.");
-  }
 
-
-  if (conditional_result) {
+  if (get_conditional_result(condition)) {
     SymbolTable if_block_st {&st, {}};
     return eval_node(node.children[IF_BODY], if_block_st);
   }

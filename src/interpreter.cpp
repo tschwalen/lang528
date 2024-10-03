@@ -700,6 +700,15 @@ EvalResult eval_index_access(ASTNode &node, SymbolTable &st, ValueType vt) {
     }
 
     auto key = getDictKey(rhs);
+    // Return nothing if the key isn't present
+    if (!dict->contains(key)) {
+      return EvalResult{ 
+        BoxedValue {
+        DataType::NOTHING,
+        0
+        }
+      };
+    }
     auto kv_pair = dict->at(key);
     return EvalResult {
       BoxedValue {
@@ -800,12 +809,6 @@ void DictIndexLV::assign(BoxedValue value) {
 
 BoxedValue DictIndexLV::currentValue() {
   auto key = getDictKey(this->key);
-  if (!this->dict->contains(key)) {
-    return BoxedValue {
-      DataType::NOTHING,
-      0
-    };
-  }
   auto kv_pair = this->dict->at(key);
   auto current_value = kv_pair.second;
   return BoxedValue {

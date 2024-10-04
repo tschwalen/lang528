@@ -17,6 +17,8 @@ _deps
 
 # executable name
 output
+runtime_exec
+libruntime.a
 
 # temporary stuff
 tmp.json

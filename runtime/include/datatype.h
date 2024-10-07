@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+typedef struct RuntimeObject RuntimeObject;
+
 enum DataType {
     T_NOTHING,
     T_BOOL,
@@ -13,16 +15,35 @@ enum DataType {
     T_FUNCTION
 };
 
-typedef struct String {
+typedef struct {
     size_t length;
     char* contents;
 } String;
 
-typedef struct RuntimeObject {
+typedef struct {
+    size_t size;
+    size_t internal_size;
+    RuntimeObject* contents; 
+} Vector;
+
+typedef struct {
+    String key;
+    RuntimeObject* value;
+} DictEntry;
+
+typedef struct {
+    DictEntry* entries;
+    size_t capacity;
+    size_t size;
+} Dict;
+
+struct RuntimeObject {
     enum DataType type;
     union {
         int64_t v_int;
         double  v_float;
         String* v_str;
+        Vector* v_vec;
+        Dict*   v_dict;
     } value;
-} RuntimeObject;
+};

@@ -1,5 +1,7 @@
+#pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef struct RuntimeObject RuntimeObject;
 
@@ -40,6 +42,7 @@ typedef struct {
 struct RuntimeObject {
     enum DataType type;
     union {
+        bool    v_bool;
         int64_t v_int;
         double  v_float;
         String* v_str;

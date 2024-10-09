@@ -3,6 +3,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+
+#define VEC_INITIAL_SIZE 4
+#define DICT_INITIAL_SIZE 16
+
 typedef struct RuntimeObject RuntimeObject;
 
 enum DataType {

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "datatype.h"
 
@@ -48,6 +49,16 @@ RuntimeObject* make_float(double value) {
     RuntimeObject* obj = malloc(sizeof(RuntimeObject));
     obj->type = T_FLOAT;
     obj->value.v_float = value;
+    return obj;
+}
+
+RuntimeObject* make_string(char* value) {
+    RuntimeObject* obj = malloc(sizeof(RuntimeObject));
+    obj->type = T_STRING;
+    String* str = malloc(sizeof(String));
+    str->length = strlen(value);
+    str->contents = strdup(value);
+    obj->value.v_str = str;
     return obj;
 }
 

@@ -17,8 +17,8 @@ enum DataType {
     T_STRING,
     T_VECTOR,
     T_DICT,
-    T_MODULE,
-    T_FUNCTION
+    T_MODULE,  // TBD
+    T_FUNCTION // TBD
 };
 
 typedef struct {

@@ -4,6 +4,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "codegen.h"
 #include "interpreter.h"
 #include "lexer.h"
 #include "parser.h"
@@ -23,6 +24,7 @@ struct Options {
   bool lex;
   bool parse;
   bool exec;
+  bool comp;
   string input_file_path;
   string program_args;
 };
@@ -34,7 +36,7 @@ Options handle_commandline_args(int argc, char **argv) {
   string program_args_option = "--argv=";
 
   // TODO: refactor this if/as options grow. for now this works fine
-  Options options{false, false, false, false, false, "", ""};
+  Options options{false, false, false, false, false, false, "", ""};
   for (auto &string_argument : args) {
     if (string_argument == "--test") {
       options.test = true;
@@ -50,6 +52,9 @@ Options handle_commandline_args(int argc, char **argv) {
     }
     if (string_argument == "--exec") {
       options.exec = true;
+    }
+    if (string_argument == "--comp") {
+      options.comp = true;
     }
     if (string_argument.rfind(input_file_path_option) == 0) {
       options.input_file_path =
@@ -119,6 +124,17 @@ int main(int argc, char **argv) {
     }
 
     eval_top_level(ast, module_wd, program_argv);
+    return 0;
+  }
+
+  if (opts.exec && !opts.input_file_path.empty()) {
+      auto file_path = opts.input_file_path;
+      auto file_contents = UTIL::get_whole_file(file_path);
+      auto tokens = lex_string(file_contents);
+      auto ast = parse_tokens(tokens);
+
+      gen_node(ast);
+      return 0;
   }
 
   return 0;

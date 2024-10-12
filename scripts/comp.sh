@@ -12,15 +12,17 @@ rm -rf $WORKDIR
 mkdir "$WORKDIR"
 cd $WORKDIR
 
-cat << 'EOF' > "$WORKDIR/dummyprog.c"
-#include <stdio.h>
-#include "runtime.h"
+# cat << 'EOF' > "$WORKDIR/dummyprog.c"
+# #include <stdio.h>
+# #include "runtime.h"
 
-int main(int argc, char* argv[]) {
-    printf("%d\n", placeholder(3));
-    return 0;
-}
-EOF
+# int main(int argc, char* argv[]) {
+#     printf("%d\n", placeholder(3));
+#     return 0;
+# }
+# EOF
+
+$PROJECT_ROOT/output --comp --input="$PROJECT_ROOT/examples/test1.src" > "$WORKDIR/dummyprog.c"
 
 INCLUDE_PATH="$PROJECT_ROOT/runtime/include"
 LIB_PATH="$PROJECT_ROOT/runtime"

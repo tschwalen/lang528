@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if (opts.exec && !opts.input_file_path.empty()) {
+  if (opts.comp && !opts.input_file_path.empty()) {
       auto file_path = opts.input_file_path;
       auto file_contents = UTIL::get_whole_file(file_path);
       auto tokens = lex_string(file_contents);

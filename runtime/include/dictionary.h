@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 
 #include "datatype.h"
 
@@ -8,6 +7,6 @@
 
 // static uint64_t hash_key(const char* key);
 
-RuntimeObject* dict_get(Dict* dict, const char* key);
+RuntimeObject *dict_get(Dict *dict, const char *key);
 
-const char* dict_set(Dict* dict, const char* key, RuntimeObject* value);
+const char *dict_set(Dict *dict, const char *key, RuntimeObject *value);

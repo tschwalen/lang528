@@ -8,7 +8,7 @@ set -e
 
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 WORKDIR="$PROJECT_ROOT/.work"
-rm -rf $WORKDIR
+rm -r "$WORKDIR"
 mkdir "$WORKDIR"
 cd $WORKDIR
 
@@ -22,7 +22,7 @@ cd $WORKDIR
 # }
 # EOF
 
-$PROJECT_ROOT/output --comp --input="$PROJECT_ROOT/examples/test1.src" > "$WORKDIR/dummyprog.c"
+"$PROJECT_ROOT/output" --comp --input="$PROJECT_ROOT/examples/test1.src" > "$WORKDIR/dummyprog.c"
 
 INCLUDE_PATH="$PROJECT_ROOT/runtime/include"
 LIB_PATH="$PROJECT_ROOT/runtime"

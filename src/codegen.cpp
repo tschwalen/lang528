@@ -9,6 +9,7 @@
 #include "astnode.h"
 #include "codegen.h"
 #include "nodetype.h"
+#include "tokentype.h"
 
 using std::string;
 using std::unordered_map;
@@ -24,15 +25,16 @@ struct CompSymbolTable {
   unordered_set<string> functions;
   unordered_set<string> builtins;
   int locals;
+  int intermediates;
 };
 
-static CompSymbolTable SYMBOLS{nullptr, {}, {}, {"print"}, 0};
+static CompSymbolTable SYMBOLS{nullptr, {}, {}, {"print"}, 0, 0};
 
 void emit(string &s) { std::cout << s; }
 
 void emit(const char *s) { std::cout << s; }
 
-void gen_top_level(ASTNode &node) {
+CompNodeResult gen_top_level(ASTNode &node) {
   emit("#include \"runtime.h\"\n");
 
   for (auto &child : node.children) {
@@ -45,9 +47,11 @@ void gen_top_level(ASTNode &node) {
     L528_main(); \n\
     return 0; \n\
 }\n");
+
+  return CompNodeResult{};
 }
 
-void gen_function_declare(ASTNode &node) {
+CompNodeResult gen_function_declare(ASTNode &node) {
   string name = node.data.at("function_name").get<string>();
   vector<string> args = node.data.at("args").get<vector<string>>();
   auto body = node.children[0];
@@ -78,9 +82,10 @@ void gen_function_declare(ASTNode &node) {
   emit("){\n");
   gen_node(body);
   emit("}");
+  return CompNodeResult{};
 }
 
-void gen_block(ASTNode &node) {
+CompNodeResult gen_block(ASTNode &node) {
   for (auto &child : node.children) {
     gen_node(child);
     emit(";\n");
@@ -89,14 +94,14 @@ void gen_block(ASTNode &node) {
     //   return result;
     // }
   }
+  return CompNodeResult{};
 }
 
-void gen_var_declare(ASTNode &node) {
+CompNodeResult gen_var_declare(ASTNode &node) {
   string identifier = node.data.at("identifier").get<string>();
   bool is_const = node.data.at("const").get<bool>();
 
   // TODO: check if taken
-
   std::stringstream declare_stmt;
   if (is_const) {
     declare_stmt << "const ";
@@ -107,52 +112,62 @@ void gen_var_declare(ASTNode &node) {
   std::stringstream local_id;
   local_id << "local" << SYMBOLS.locals;
   SYMBOLS.locals++;
-
   SYMBOLS.variables[identifier] = local_id.str();
 
-  declare_stmt << local_id.str() << " = ";
+  // eval rhs
+  auto rhs = node.children[0];
+  auto rhs_result = gen_node(rhs);
 
+  declare_stmt << local_id.str() << " = " << rhs_result.result_loc.value()
+               << ";";
   auto s = declare_stmt.str();
   emit(s);
-  auto rhs = node.children[0];
-  gen_node(rhs);
+
+  return CompNodeResult{local_id.str()};
 }
 
-void gen_bool_literal(ASTNode &node) {
+CompNodeResult gen_bool_literal(ASTNode &node) {
   auto value = node.data.at("value").get<bool>();
   std::stringstream ss;
   ss << "make_bool(" << value << ")";
   auto s = ss.str();
-  emit(s);
+  //   emit(s);
+  return CompNodeResult{s};
 }
 
-void gen_int_literal(ASTNode &node) {
+CompNodeResult gen_int_literal(ASTNode &node) {
   auto value = node.data.at("value").get<int>();
   std::stringstream ss;
   ss << "make_int(" << value << ")";
   auto s = ss.str();
-  emit(s);
+  //   emit(s);
+  return CompNodeResult{s};
 }
 
-void gen_float_literal(ASTNode &node) {
+CompNodeResult gen_float_literal(ASTNode &node) {
   auto value = node.data.at("value").get<float>();
   std::stringstream ss;
   ss << "make_float(" << value << ")";
   auto s = ss.str();
-  emit(s);
+  //   emit(s);
+  return CompNodeResult{s};
 }
 
-void gen_string_literal(ASTNode &node) {
+CompNodeResult gen_string_literal(ASTNode &node) {
   auto value = node.data.at("value").get<string>();
   std::stringstream ss;
   ss << "make_string(\"" << value << "\")";
   auto s = ss.str();
-  emit(s);
+  //   emit(s);
+  return CompNodeResult{s};
 }
 
-void gen_nothing_literal(ASTNode &node) { emit("make_nothing()"); }
+CompNodeResult gen_nothing_literal(ASTNode &node) {
+  //   emit("make_nothing()");
+  return CompNodeResult{"make_nothing()"};
+}
 
-void gen_function_call(ASTNode &node) {
+CompNodeResult gen_function_call(ASTNode &node) {
   const size_t FUNCTION = 0, ARGS = 1;
 
   // TODO: rigid, won't work everywhere
@@ -178,15 +193,17 @@ void gen_function_call(ASTNode &node) {
 
   auto rhs = node.children[ARGS];
   gen_node(rhs);
+  return CompNodeResult{};
 }
 
-void gen_var_lookup(ASTNode &node) {
+CompNodeResult gen_var_lookup(ASTNode &node) {
   const string identifier = node.data.at("identifier").get<string>();
   auto var = SYMBOLS.variables.at(identifier);
   emit(var);
+  return CompNodeResult{};
 }
 
-void gen_expr_list(ASTNode &node) {
+CompNodeResult gen_expr_list(ASTNode &node) {
   emit("(");
   auto child_nodes = node.children;
   for (size_t i = 0; i < child_nodes.size(); ++i) {
@@ -197,45 +214,73 @@ void gen_expr_list(ASTNode &node) {
     }
   }
   emit(")");
+
+  return CompNodeResult{};
 }
 
-void gen_node(ASTNode &node) {
+CompNodeResult gen_binary_op(ASTNode &node) {
+  const size_t LHS = 0, RHS = 1;
+  const string op_key = "op";
+  auto op = int_to_token_type(node.data.at(op_key).get<int>());
+
+  assert(op == TokenType::PLUS);
+
+  std::stringstream intmdt;
+  intmdt << "_intmdt" << SYMBOLS.intermediates;
+  SYMBOLS.intermediates++;
+  auto lhs = gen_node(node.children[LHS]);
+  auto rhs = gen_node(node.children[RHS]);
+
+  auto intmdt_str = intmdt.str();
+  emit("RuntimeObject* ");
+  emit(intmdt_str);
+  emit(" = ");
+  std::stringstream add;
+  add << "op_add(" << lhs.result_loc.value() << ", " << rhs.result_loc.value()
+      << ");\n";
+  auto s = add.str();
+  emit(s);
+
+  return CompNodeResult{intmdt_str};
+}
+
+CompNodeResult gen_node(ASTNode &node) {
   switch (node.type) {
   case NodeType::TOP_LEVEL:
-    gen_top_level(node);
+    return gen_top_level(node);
     break;
   case NodeType::BLOCK:
-    gen_block(node);
+    return gen_block(node);
     break;
     //   case NodeType::ASSIGN_OP:
     //     return eval_assign_op(node, st);
     //     break;
   case NodeType::VAR_DECLARE:
-    gen_var_declare(node);
+    return gen_var_declare(node);
     break;
   case NodeType::FUNC_DECLARE:
-    gen_function_declare(node);
+    return gen_function_declare(node);
     break;
-    // case NodeType::MODULE_IMPORT:
-    //   return eval_module_import(node, st);
-    //   break;
-    // case NodeType::IF:
-    //   return eval_if(node, st);
-    //   break;
-    // case NodeType::RETURN:
-    //   return eval_return(node, st);
-    //   break;
-    // case NodeType::WHILE:
-    //   return eval_while(node, st);
-    //   break;
-    // case NodeType::BINARY_OP:
-    //   return eval_binary_op(node, st);
-    //   break;
+  // case NodeType::MODULE_IMPORT:
+  //   return eval_module_import(node, st);
+  //   break;
+  // case NodeType::IF:
+  //   return eval_if(node, st);
+  //   break;
+  // case NodeType::RETURN:
+  //   return eval_return(node, st);
+  //   break;
+  // case NodeType::WHILE:
+  //   return eval_while(node, st);
+  //   break;
+  case NodeType::BINARY_OP:
+    return gen_binary_op(node);
+    break;
     // case NodeType::UNARY_OP:
     //   return eval_unary_op(node, st);
     //   break;
   case NodeType::FUNC_CALL:
-    gen_function_call(node);
+    return gen_function_call(node);
     break;
     // case NodeType::INDEX_ACCESS:
     //   return eval_index_access(node, st, vt);
@@ -244,10 +289,10 @@ void gen_node(ASTNode &node) {
     //   return eval_field_access(node, st, vt);
     //   break;
   case NodeType::VAR_LOOKUP:
-    gen_var_lookup(node);
+    return gen_var_lookup(node);
     break;
   case NodeType::EXPR_LIST:
-    gen_expr_list(node);
+    return gen_expr_list(node);
     break;
   // case NodeType::VEC_LITERAL:
   //   return eval_vec_literal(node, st);
@@ -259,16 +304,16 @@ void gen_node(ASTNode &node) {
     return gen_bool_literal(node);
     break;
   case NodeType::INT_LITERAL:
-    gen_int_literal(node);
+    return gen_int_literal(node);
     break;
   case NodeType::FLOAT_LITERAL:
-    gen_float_literal(node);
+    return gen_float_literal(node);
     break;
   case NodeType::STRING_LITERAL:
-    gen_string_literal(node);
+    return gen_string_literal(node);
     break;
   case NodeType::NOTHING_LITERAL:
-    gen_nothing_literal(node);
+    return gen_nothing_literal(node);
     break;
 
   default:

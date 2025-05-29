@@ -22,7 +22,10 @@ cd $WORKDIR
 # }
 # EOF
 
-"$PROJECT_ROOT/output" --comp --input="$PROJECT_ROOT/examples/test1.src" > "$WORKDIR/dummyprog.c"
+# test_program="test1.src"
+test_program="floats.src"
+
+"$PROJECT_ROOT/output" --comp --input="$PROJECT_ROOT/examples/$test_program" > "$WORKDIR/dummyprog.c"
 
 INCLUDE_PATH="$PROJECT_ROOT/runtime/include"
 LIB_PATH="$PROJECT_ROOT/runtime"

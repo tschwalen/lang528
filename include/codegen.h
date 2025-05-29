@@ -1,4 +1,8 @@
 #pragma once
 #include "astnode.h"
 
-void gen_node(ASTNode &node);
+struct CompNodeResult {
+  std::optional<string> result_loc;
+};
+
+CompNodeResult gen_node(ASTNode &node);

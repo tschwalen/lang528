@@ -128,13 +128,13 @@ int main(int argc, char **argv) {
   }
 
   if (opts.comp && !opts.input_file_path.empty()) {
-      auto file_path = opts.input_file_path;
-      auto file_contents = UTIL::get_whole_file(file_path);
-      auto tokens = lex_string(file_contents);
-      auto ast = parse_tokens(tokens);
+    auto file_path = opts.input_file_path;
+    auto file_contents = UTIL::get_whole_file(file_path);
+    auto tokens = lex_string(file_contents);
+    auto ast = parse_tokens(tokens);
 
-      gen_node(ast);
-      return 0;
+    gen_node(ast);
+    return 0;
   }
 
   return 0;

@@ -118,8 +118,7 @@ CompNodeResult gen_var_declare(ASTNode &node) {
   auto rhs = node.children[0];
   auto rhs_result = gen_node(rhs);
 
-  declare_stmt << local_id.str() << " = " << rhs_result.result_loc.value()
-               << ";";
+  declare_stmt << local_id.str() << " = " << rhs_result.result_loc.value();
   auto s = declare_stmt.str();
   emit(s);
 
@@ -174,8 +173,10 @@ CompNodeResult gen_function_call(ASTNode &node) {
   auto lhs = node.children[FUNCTION];
   assert(lhs.type == NodeType::VAR_LOOKUP);
 
+  auto rhs = node.children[ARGS];
+  auto rhs_result = gen_node(rhs);
+  // build function name
   std::stringstream fn_name;
-
   auto identifier = lhs.data.at("identifier").get<string>();
   if (SYMBOLS.builtins.contains(identifier)) {
     fn_name << "builtin_";
@@ -184,38 +185,39 @@ CompNodeResult gen_function_call(ASTNode &node) {
   } else {
     throw std::runtime_error("Bad function name lookup");
   }
-
   fn_name << identifier;
 
   // TODO: some kind of arg matching?
   auto s = fn_name.str();
   emit(s);
-
-  auto rhs = node.children[ARGS];
-  gen_node(rhs);
+  emit("(");
+  emit(rhs_result.result_loc.value());
+  emit(")");
   return CompNodeResult{};
 }
 
 CompNodeResult gen_var_lookup(ASTNode &node) {
   const string identifier = node.data.at("identifier").get<string>();
   auto var = SYMBOLS.variables.at(identifier);
-  emit(var);
-  return CompNodeResult{};
+  return CompNodeResult{var};
 }
 
 CompNodeResult gen_expr_list(ASTNode &node) {
-  emit("(");
-  auto child_nodes = node.children;
-  for (size_t i = 0; i < child_nodes.size(); ++i) {
-    auto this_node = child_nodes[i];
-    gen_node(this_node);
-    if (i != child_nodes.size() - 1) {
-      emit(",");
+
+  vector<string> results;
+  for (auto &node : node.children) {
+    auto result = gen_node(node);
+    results.push_back(result.result_loc.value());
+  }
+  std::stringstream expr_list;
+  for (size_t i = 0; i < results.size(); ++i) {
+    expr_list << results[i];
+    if (i != results.size() - 1) {
+      expr_list << ',';
     }
   }
-  emit(")");
 
-  return CompNodeResult{};
+  return CompNodeResult{expr_list.str()};
 }
 
 CompNodeResult gen_binary_op(ASTNode &node) {
@@ -245,6 +247,10 @@ CompNodeResult gen_binary_op(ASTNode &node) {
 }
 
 CompNodeResult gen_node(ASTNode &node) {
+  //   std::cerr << "right here : " << node_type_to_string(node.type) << ", "
+  //             << "line: " << node.metadata.line
+  //             << ", column: " << node.metadata.column << " \n";
+
   switch (node.type) {
   case NodeType::TOP_LEVEL:
     return gen_top_level(node);

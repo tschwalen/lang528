@@ -8,8 +8,6 @@
 #include "interpreter.h"
 #include "lexer.h"
 #include "parser.h"
-#include "token.h"
-#include "tokentype.h"
 #include "unittests.h"
 #include "util.h"
 

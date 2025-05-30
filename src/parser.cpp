@@ -1,18 +1,15 @@
-#include <iostream>
 #include <vector>
 
 #include "astnode.h"
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"
-#include "nodetype.h"
 
 #include <nlohmann/json.hpp>
 
 using std::string;
 using std::vector;
 using json = nlohmann::json;
-
 
 ASTNode expr(ParserState &ps);
 ASTNode primary(ParserState &ps);
@@ -30,7 +27,8 @@ ASTNode var_declare(ParserState &ps, TokenType type) {
   auto rhs = expr(ps);
   ps.expect(TokenType::SEMICOLON);
 
-  return ASTNode::makeVarDeclare(id_name, rhs, type == TokenType::CONST, metadata);
+  return ASTNode::makeVarDeclare(id_name, rhs, type == TokenType::CONST,
+                                 metadata);
 }
 
 ASTNode if_block(ParserState &ps) {
@@ -135,12 +133,12 @@ ASTNode dict_literal(ParserState &ps) {
   // we're just gonna store it in one array and handle them two-by-two
   vector<ASTNode> kv_pairs;
   if (ps.currentTokenIsNot(TokenType::RBRACE)) {
-      do {
-        auto key = expr(ps);
-        ps.expect(TokenType::COLON);
-        auto value = expr(ps);
-        kv_pairs.push_back(key);
-        kv_pairs.push_back(value);
+    do {
+      auto key = expr(ps);
+      ps.expect(TokenType::COLON);
+      auto value = expr(ps);
+      kv_pairs.push_back(key);
+      kv_pairs.push_back(value);
     } while (ps.matchTokenType(TokenType::COMMA));
     ps.expect(TokenType::RBRACE);
   } else {
@@ -193,8 +191,7 @@ ASTNode primary(ParserState &ps) {
   // dict literal
   else if (ps.currentTokenIs(TokenType::LBRACE)) {
     return dict_literal(ps);
-  }  
-  else if (ps.currentTokenIs(TokenType::IDENTIFIER)) {
+  } else if (ps.currentTokenIs(TokenType::IDENTIFIER)) {
     auto identifier = std::get<string>(current_token.value);
     auto primary = ASTNode::makeVarLookup(identifier, current_token.metadata);
     ps.advance();
@@ -225,12 +222,10 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence) {
         ps.advance();
       }
       rhs = ASTNode::makeExprList(arg_exprs, op_token.metadata);
-    } 
-    else if (op == TokenType::LBRACKET) {
+    } else if (op == TokenType::LBRACKET) {
       rhs = expr(ps);
       ps.expect(TokenType::RBRACKET);
-    }
-    else {
+    } else {
       rhs = primary(ps);
     }
 
@@ -242,7 +237,7 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence) {
     while (binary_precedence_test(op, lookahead)) {
       // rhs := parse_expression_1 (rhs, precedence of op + (1 if lookahead
       // precedence is greater, else 0))
-      auto new_precedence= binary_op_precedence(op) + 1;
+      auto new_precedence = binary_op_precedence(op) + 1;
       rhs = expr_helper(ps, rhs, new_precedence);
 
       lookahead = ps.currentToken().type;
@@ -327,16 +322,17 @@ ASTNode block(ParserState &ps) {
 ASTNode module_import(ParserState &ps) {
   auto first_token_metadata = ps.expect(TokenType::IMPORT).metadata;
 
-  auto module_path  = std::get<string>(ps.expect(TokenType::STRING_LITERAL).value);
+  auto module_path =
+      std::get<string>(ps.expect(TokenType::STRING_LITERAL).value);
 
   ASTNode result;
 
   // handle optional named import (e.g. import "x" as y; )
   if (ps.matchTokenType(TokenType::AS)) {
     auto module_name = std::get<string>(ps.expect(TokenType::IDENTIFIER).value);
-    result = ASTNode::makeModuleImport(module_path, module_name, first_token_metadata);
-  }
-  else {
+    result = ASTNode::makeModuleImport(module_path, module_name,
+                                       first_token_metadata);
+  } else {
     result = ASTNode::makeModuleImport(module_path, first_token_metadata);
   }
 

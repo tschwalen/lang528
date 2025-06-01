@@ -29,10 +29,8 @@ op          lhs         rhs
 >=          int/float   int/float
 <           int/float   int/float
 >           int/float   int/float
-()          function    expr-list                                       --
-handled elsewhere --
-[]          vec         int         (in future: lhs=indexable, rhs=key) --
-handled elsewhere -- .           [any]       identifier -- handled elsewhere --
+()          function    expr-list
+[]          indexable   key
 &           bool        bool
 |           bool        bool
 

@@ -22,12 +22,10 @@ RuntimeObject *_op_add_int(int64_t lhs, RuntimeObject *rhs) {
     obj->value.v_float = lhs + rhs_value;
     break;
   }
-
   default: {
-    // runtime error
   }
   }
-
+  runtime_error("Invalid type for integer add.");
   return obj;
 }
 
@@ -46,12 +44,142 @@ RuntimeObject *_op_add_float(double lhs, RuntimeObject *rhs) {
     obj->value.v_float = lhs + rhs_value;
     break;
   }
-
   default: {
-    // runtime error
   }
   }
+  runtime_error("Invalid type for floating-point add.");
+  return obj;
+}
 
+RuntimeObject *_op_sub_int(int64_t lhs, RuntimeObject *rhs) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  switch (rhs->type) {
+  case T_INT: {
+    int64_t rhs_value = rhs->value.v_int;
+    obj->type = T_INT;
+    obj->value.v_int = lhs - rhs_value;
+    break;
+  }
+  case T_FLOAT: {
+    double rhs_value = rhs->value.v_float;
+    obj->type = T_FLOAT;
+    obj->value.v_float = lhs - rhs_value;
+    break;
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for integer subtract.");
+  return obj;
+}
+
+RuntimeObject *_op_sub_float(double lhs, RuntimeObject *rhs) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  switch (rhs->type) {
+  case T_INT: {
+    int64_t rhs_value = rhs->value.v_int;
+    obj->type = T_FLOAT;
+    obj->value.v_int = lhs - rhs_value;
+    break;
+  }
+  case T_FLOAT: {
+    double rhs_value = rhs->value.v_float;
+    obj->type = T_FLOAT;
+    obj->value.v_float = lhs - rhs_value;
+    break;
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for floating-point subtract.");
+  return obj;
+}
+
+RuntimeObject *_op_mul_int(int64_t lhs, RuntimeObject *rhs) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  switch (rhs->type) {
+  case T_INT: {
+    int64_t rhs_value = rhs->value.v_int;
+    obj->type = T_INT;
+    obj->value.v_int = lhs * rhs_value;
+    break;
+  }
+  case T_FLOAT: {
+    double rhs_value = rhs->value.v_float;
+    obj->type = T_FLOAT;
+    obj->value.v_float = lhs * rhs_value;
+    break;
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for integer multiply.");
+  return obj;
+}
+
+RuntimeObject *_op_mul_float(double lhs, RuntimeObject *rhs) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  switch (rhs->type) {
+  case T_INT: {
+    int64_t rhs_value = rhs->value.v_int;
+    obj->type = T_FLOAT;
+    obj->value.v_int = lhs * rhs_value;
+    break;
+  }
+  case T_FLOAT: {
+    double rhs_value = rhs->value.v_float;
+    obj->type = T_FLOAT;
+    obj->value.v_float = lhs * rhs_value;
+    break;
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for floating-point multiply.");
+  return obj;
+}
+
+RuntimeObject *_op_div_int(int64_t lhs, RuntimeObject *rhs) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  switch (rhs->type) {
+  case T_INT: {
+    int64_t rhs_value = rhs->value.v_int;
+    obj->type = T_INT;
+    obj->value.v_int = lhs / rhs_value;
+    break;
+  }
+  case T_FLOAT: {
+    double rhs_value = rhs->value.v_float;
+    obj->type = T_FLOAT;
+    obj->value.v_float = lhs / rhs_value;
+    break;
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for integer divide.");
+  return obj;
+}
+
+RuntimeObject *_op_div_float(double lhs, RuntimeObject *rhs) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  switch (rhs->type) {
+  case T_INT: {
+    int64_t rhs_value = rhs->value.v_int;
+    obj->type = T_FLOAT;
+    obj->value.v_int = lhs / rhs_value;
+    break;
+  }
+  case T_FLOAT: {
+    double rhs_value = rhs->value.v_float;
+    obj->type = T_FLOAT;
+    obj->value.v_float = lhs / rhs_value;
+    break;
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for floating-point divide.");
   return obj;
 }
 
@@ -118,10 +246,72 @@ RuntimeObject *op_add(RuntimeObject *lhs, RuntimeObject *rhs) {
     String *value = lhs->value.v_str;
     return _str_concat(value, rhs);
   }
-
   default: {
-    // runtime error, unsupported type
   }
   }
+  runtime_error("Invalid type for add.");
+  return NULL;
+}
+
+RuntimeObject *op_sub(RuntimeObject *lhs, RuntimeObject *rhs) {
+  switch (lhs->type) {
+  case T_FLOAT: {
+    double value = lhs->value.v_float;
+    return _op_sub_float(value, rhs);
+  }
+  case T_INT: {
+    int64_t value = lhs->value.v_int;
+    return _op_sub_int(value, rhs);
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for subtract.");
+  return NULL;
+}
+
+RuntimeObject *op_mul(RuntimeObject *lhs, RuntimeObject *rhs) {
+  switch (lhs->type) {
+  case T_FLOAT: {
+    double value = lhs->value.v_float;
+    return _op_mul_float(value, rhs);
+  }
+  case T_INT: {
+    int64_t value = lhs->value.v_int;
+    return _op_mul_int(value, rhs);
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for multiply.");
+  return NULL;
+}
+
+RuntimeObject *op_div(RuntimeObject *lhs, RuntimeObject *rhs) {
+  switch (lhs->type) {
+  case T_FLOAT: {
+    double value = lhs->value.v_float;
+    return _op_div_float(value, rhs);
+  }
+  case T_INT: {
+    int64_t value = lhs->value.v_int;
+    return _op_div_int(value, rhs);
+  }
+  default: {
+  }
+  }
+  runtime_error("Invalid type for divide.");
+  return NULL;
+}
+
+RuntimeObject *op_mod(RuntimeObject *lhs, RuntimeObject *rhs) {
+  // Modulo is only supported on two integers
+  if (lhs->type == T_INT && rhs->type == T_INT) {
+    int64_t lhs_value = lhs->value.v_int;
+    int64_t rhs_value = rhs->value.v_int;
+    return make_int(lhs_value % rhs_value);
+  }
+
+  runtime_error("Invalid type for modulo.");
   return NULL;
 }

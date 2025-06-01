@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
   // LEXER ENTRYPOINT
   if (opts.lex && !opts.input_file_path.empty()) {
     auto file_contents = UTIL::get_whole_file(opts.input_file_path);
-    // std::cout << file_contents;
     auto tokens = lex_string(file_contents);
 
     if (opts.dump_json) {
@@ -125,6 +124,7 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  // COMPILER ENTRYPOINT
   if (opts.comp && !opts.input_file_path.empty()) {
     auto file_path = opts.input_file_path;
     auto file_contents = UTIL::get_whole_file(file_path);

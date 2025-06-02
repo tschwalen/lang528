@@ -155,7 +155,6 @@ CompNodeResult gen_var_declare(ASTNode &node) {
   declare_stmt << local_id.str() << " = " << rhs_result.result_loc.value();
   auto s = declare_stmt.str();
   emit(s);
-
   return CompNodeResult{local_id.str()};
 }
 
@@ -279,6 +278,15 @@ CompNodeResult gen_binary_op(ASTNode &node) {
   return CompNodeResult{intmdt_str};
 }
 
+CompNodeResult gen_return(ASTNode &node) {
+  auto return_value_expr = node.children.at(0);
+  auto result = gen_node(return_value_expr);
+  emit("return ");
+  emit(result.result_loc.value());
+  emit(";\n");
+  return CompNodeResult{};
+}
+
 CompNodeResult gen_node(ASTNode &node) {
   //   std::cerr << "right here : " << node_type_to_string(node.type) << ", "
   //             << "line: " << node.metadata.line
@@ -306,9 +314,9 @@ CompNodeResult gen_node(ASTNode &node) {
   // case NodeType::IF:
   //   return eval_if(node, st);
   //   break;
-  // case NodeType::RETURN:
-  //   return eval_return(node, st);
-  //   break;
+  case NodeType::RETURN:
+    return gen_return(node);
+    break;
   // case NodeType::WHILE:
   //   return eval_while(node, st);
   //   break;

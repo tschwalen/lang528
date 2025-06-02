@@ -34,6 +34,40 @@ void emit(string &s) { std::cout << s; }
 
 void emit(const char *s) { std::cout << s; }
 
+string get_binary_op_method(TokenType op) {
+  switch (op) {
+  case TokenType::PLUS:
+    return "op_add";
+  case TokenType::MINUS:
+    return "op_sub";
+  case TokenType::TIMES:
+    return "op_mul";
+  case TokenType::DIV:
+    return "op_div";
+  case TokenType::MOD:
+    return "op_mod";
+  case TokenType::EQUALS_EQUALS:
+    return "op_eq";
+  case TokenType::NOT_EQUALS:
+    return "op_neq";
+  case TokenType::LESS_EQUALS:
+    return "op_leq";
+  case TokenType::GREATER_EQUALS:
+    return "op_geq";
+  case TokenType::LESS:
+    return "op_lt";
+  case TokenType::GREATER:
+    return "op_gt";
+  case TokenType::AND:
+    return "op_and";
+  case TokenType::OR:
+    return "op_or";
+  default:
+    break;
+  }
+  throw std::runtime_error("TokenType argument op must be a binary operator");
+}
+
 CompNodeResult gen_top_level(ASTNode &node) {
   emit("#include \"runtime.h\"\n");
 
@@ -225,21 +259,20 @@ CompNodeResult gen_binary_op(ASTNode &node) {
   const string op_key = "op";
   auto op = int_to_token_type(node.data.at(op_key).get<int>());
 
-  assert(op == TokenType::PLUS);
-
   std::stringstream intmdt;
   intmdt << "_intmdt" << SYMBOLS.intermediates;
   SYMBOLS.intermediates++;
   auto lhs = gen_node(node.children[LHS]);
   auto rhs = gen_node(node.children[RHS]);
 
+  auto op_method = get_binary_op_method(op);
   auto intmdt_str = intmdt.str();
   emit("RuntimeObject* ");
   emit(intmdt_str);
   emit(" = ");
   std::stringstream add;
-  add << "op_add(" << lhs.result_loc.value() << ", " << rhs.result_loc.value()
-      << ");\n";
+  add << op_method << "(" << lhs.result_loc.value() << ", "
+      << rhs.result_loc.value() << ");\n";
   auto s = add.str();
   emit(s);
 

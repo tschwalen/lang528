@@ -20,7 +20,7 @@ RuntimeObject *op_neq(RuntimeObject *lhs, RuntimeObject *rhs);
 RuntimeObject *op_leq(RuntimeObject *lhs, RuntimeObject *rhs);
 RuntimeObject *op_geq(RuntimeObject *lhs, RuntimeObject *rhs);
 RuntimeObject *op_lt(RuntimeObject *lhs, RuntimeObject *rhs);
-RuntimeObject *op_ge(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_gt(RuntimeObject *lhs, RuntimeObject *rhs);
 
 // BOOLEAN OP
 RuntimeObject *op_and(RuntimeObject *lhs, RuntimeObject *rhs);

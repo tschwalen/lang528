@@ -24,9 +24,9 @@ RuntimeObject *_op_add_int(int64_t lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for integer add.");
   }
   }
-  runtime_error("Invalid type for integer add.");
   return obj;
 }
 
@@ -46,9 +46,9 @@ RuntimeObject *_op_add_float(double lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point add.");
   }
   }
-  runtime_error("Invalid type for floating-point add.");
   return obj;
 }
 
@@ -68,9 +68,9 @@ RuntimeObject *_op_sub_int(int64_t lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for integer subtract.");
   }
   }
-  runtime_error("Invalid type for integer subtract.");
   return obj;
 }
 
@@ -90,9 +90,9 @@ RuntimeObject *_op_sub_float(double lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point subtract.");
   }
   }
-  runtime_error("Invalid type for floating-point subtract.");
   return obj;
 }
 
@@ -112,9 +112,9 @@ RuntimeObject *_op_mul_int(int64_t lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for integer multiply.");
   }
   }
-  runtime_error("Invalid type for integer multiply.");
   return obj;
 }
 
@@ -134,9 +134,9 @@ RuntimeObject *_op_mul_float(double lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point multiply.");
   }
   }
-  runtime_error("Invalid type for floating-point multiply.");
   return obj;
 }
 
@@ -156,9 +156,9 @@ RuntimeObject *_op_div_int(int64_t lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for integer divide.");
   }
   }
-  runtime_error("Invalid type for integer divide.");
   return obj;
 }
 
@@ -178,185 +178,186 @@ RuntimeObject *_op_div_float(double lhs, RuntimeObject *rhs) {
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point divide.");
   }
   }
-  runtime_error("Invalid type for floating-point divide.");
   return obj;
 }
 
 RuntimeObject *_op_leq_int(int64_t lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
+
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_INT;
-    obj->value.v_int = lhs <= rhs_value;
+    obj->value.v_bool = lhs <= rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
-    obj->value.v_float = lhs <= rhs_value;
+    obj->value.v_bool = lhs <= rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for integer less-equals.");
   }
   }
-  runtime_error("Invalid type for integer less-equals.");
   return obj;
 }
 
 RuntimeObject *_op_leq_float(double lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
+
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
     obj->type = T_FLOAT;
-    obj->value.v_int = lhs <= rhs_value;
+    obj->value.v_bool = lhs <= rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
     obj->type = T_FLOAT;
-    obj->value.v_float = lhs <= rhs_value;
+    obj->value.v_bool = lhs <= rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point less-equals.");
   }
   }
-  runtime_error("Invalid type for floating-point less-equals.");
   return obj;
 }
 
 RuntimeObject *_op_geq_int(int64_t lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
+
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_INT;
-    obj->value.v_int = lhs >= rhs_value;
+    obj->value.v_bool = lhs >= rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
-    obj->value.v_float = lhs >= rhs_value;
+    obj->value.v_bool = lhs >= rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for integer greater-equals.");
   }
   }
-  runtime_error("Invalid type for integer greater-equals.");
   return obj;
 }
 
 RuntimeObject *_op_geq_float(double lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
+
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_FLOAT;
-    obj->value.v_int = lhs >= rhs_value;
+    obj->value.v_bool = lhs >= rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
-    obj->value.v_float = lhs >= rhs_value;
+    obj->value.v_bool = lhs >= rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point greater-equals.");
   }
   }
-  runtime_error("Invalid type for floating-point greater-equals.");
   return obj;
 }
 
 RuntimeObject *_op_lt_int(int64_t lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
+
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_INT;
-    obj->value.v_int = lhs < rhs_value;
+    obj->value.v_bool = lhs < rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
-    obj->value.v_float = lhs < rhs_value;
+    obj->value.v_bool = lhs < rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for integer less-than.");
   }
   }
-  runtime_error("Invalid type for integer less-than.");
   return obj;
 }
 
 RuntimeObject *_op_lt_float(double lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_FLOAT;
-    obj->value.v_int = lhs < rhs_value;
+    obj->value.v_bool = lhs < rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
-    obj->value.v_float = lhs < rhs_value;
+    obj->value.v_bool = lhs < rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point less-than.");
   }
   }
-  runtime_error("Invalid type for floating-point less-than.");
   return obj;
 }
 
 RuntimeObject *_op_gt_int(int64_t lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
+
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_INT;
-    obj->value.v_int = lhs > rhs_value;
+    obj->value.v_bool = lhs > rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
-    obj->value.v_float = lhs > rhs_value;
+    obj->value.v_bool = lhs > rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for integer greater-than.");
   }
   }
-  runtime_error("Invalid type for integer greater-than.");
   return obj;
 }
 
 RuntimeObject *_op_gt_float(double lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_BOOL;
+
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_FLOAT;
-    obj->value.v_int = lhs > rhs_value;
+    obj->value.v_bool = lhs > rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
-    obj->value.v_float = lhs > rhs_value;
+    obj->value.v_bool = lhs > rhs_value;
     break;
   }
   default: {
+    runtime_error("Invalid type for floating-point greater-than.");
   }
   }
-  runtime_error("Invalid type for floating-point greater-than.");
   return obj;
 }
 

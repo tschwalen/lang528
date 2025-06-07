@@ -27,6 +27,7 @@ bool get_conditional_result(RuntimeObject *obj) {
   }
   runtime_error(
       "Conditional expression must have boolean or nothing result type.");
+  return NULL;
 }
 
 void _print_vector(Vector *vec);

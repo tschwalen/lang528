@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
     auto tokens = lex_string(file_contents);
     auto ast = parse_tokens(tokens);
 
-    gen_node(ast);
+    gen_node_root(ast);
     return 0;
   }
 

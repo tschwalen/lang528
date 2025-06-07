@@ -29,19 +29,17 @@ cd $WORKDIR
 # }
 # EOF
 
+
+
 # test_program="test1.src"
-test_program="test2.src"
+# test_program="test2.src"
+# test_program="if_elseif_else.src"
 # test_program="floats.src"
 
 "$PROJECT_ROOT/output" --comp --input="$PROJECT_ROOT/examples/$test_program" > "$WORKDIR/prog.c"
 
 INCLUDE_PATH="$PROJECT_ROOT/runtime/include"
 LIB_PATH="$PROJECT_ROOT/runtime"
-
-# Do we really need to precompile the library? TBD
-gcc -o compiled_exec prog.c -I"$INCLUDE_PATH" -L"$LIB_PATH" -lruntime
-
-# create a compile commands json file in the work dir so that clangd can be useful for the generated C file
 cat << EOF > "$WORKDIR/compile_commands.json"
 [
 {
@@ -52,6 +50,12 @@ cat << EOF > "$WORKDIR/compile_commands.json"
 }
 ]
 EOF
+
+
+# Do we really need to precompile the library? TBD
+gcc -o compiled_exec prog.c -I"$INCLUDE_PATH" -L"$LIB_PATH" -lruntime
+
+# create a compile commands json file in the work dir so that clangd can be useful for the generated C file
 
 # run the compiled executable
 ./compiled_exec

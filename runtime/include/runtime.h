@@ -1,8 +1,9 @@
 #pragma once
-
 #include "datatype.h"
+#include <stdbool.h>
 
 int placeholder(int x);
+bool get_conditional_result(RuntimeObject *obj);
 
 void builtin_print(RuntimeObject *arg);
 void runtime_error(char *msg);

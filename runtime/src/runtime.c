@@ -13,6 +13,22 @@ void runtime_error(char *msg) {
   exit(1);
 }
 
+bool get_conditional_result(RuntimeObject *obj) {
+  // Shouldn't happen, but handle it
+  if (obj == NULL) {
+    return false;
+  }
+  // "nothing" is falsey
+  if (obj->type == T_NOTHING) {
+    return false;
+  }
+  if (obj->type == T_BOOL) {
+    return obj->value.v_bool;
+  }
+  runtime_error(
+      "Conditional expression must have boolean or nothing result type.");
+}
+
 void _print_vector(Vector *vec);
 
 void _print_helper(RuntimeObject *obj) {

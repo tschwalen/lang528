@@ -287,6 +287,31 @@ CompNodeResult gen_return(ASTNode &node) {
   return CompNodeResult{};
 }
 
+CompNodeResult gen_if(ASTNode &node) {
+  const size_t CONDITION = 0, IF_BODY = 1, ELSE_BODY = 2, SIZE_IF_ELSE = 3;
+
+  // need test method runtime result?
+  auto condition_result = gen_node(node.children[CONDITION]);
+  emit("if (get_conditional_result(");
+  emit(condition_result.result_loc.value());
+  emit(")) {\n");
+  gen_node(node.children[IF_BODY]);
+  emit("}\n");
+
+  // an if-statement may or may not have an else
+  if (node.children.size() == SIZE_IF_ELSE) {
+    // could be another if (e.g., else if), or just a block
+    auto else_node = node.children[ELSE_BODY];
+    emit("else {\n");
+    // either way, we compile to a normal else-block because we need to be in
+    // a block to compile and execute the else-if statement expression.
+    gen_node(else_node);
+    emit("}\n");
+  }
+
+  return CompNodeResult{};
+}
+
 CompNodeResult gen_node(ASTNode &node) {
   //   std::cerr << "right here : " << node_type_to_string(node.type) << ", "
   //             << "line: " << node.metadata.line
@@ -311,9 +336,9 @@ CompNodeResult gen_node(ASTNode &node) {
   // case NodeType::MODULE_IMPORT:
   //   return eval_module_import(node, st);
   //   break;
-  // case NodeType::IF:
-  //   return eval_if(node, st);
-  //   break;
+  case NodeType::IF:
+    return gen_if(node);
+    break;
   case NodeType::RETURN:
     return gen_return(node);
     break;

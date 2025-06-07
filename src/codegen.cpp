@@ -158,6 +158,30 @@ CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
   return CompNodeResult{};
 }
 
+CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
+  const size_t LHS = 0, RHS = 1;
+  const string op_key = "op";
+  auto op = int_to_token_type(node.data.at(op_key).get<int>());
+  auto lhs = gen_node(node.children[LHS], st).result_loc.value();
+  auto rhs = gen_node(node.children[RHS], st).result_loc.value();
+
+  auto new_value = rhs;
+
+  if (op != TokenType::EQUALS) {
+    auto bin_op = assign_op_to_binary_op(op);
+    auto op_method = get_binary_op_method(bin_op);
+    std::stringstream new_value_ss;
+    new_value_ss << op_method << "(" << lhs << "," << rhs << ")";
+    new_value = new_value_ss.str();
+  }
+
+  std::stringstream assign_statement_ss;
+  assign_statement_ss << lhs << "=" << new_value;
+  auto assign_statement = assign_statement_ss.str();
+  emit(assign_statement);
+  return CompNodeResult{};
+}
+
 CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
   string identifier = node.data.at("identifier").get<string>();
   bool is_const = node.data.at("const").get<bool>();
@@ -183,7 +207,7 @@ CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
   declare_stmt << local_id.str() << " = " << rhs_result.result_loc.value();
   auto s = declare_stmt.str();
   emit(s);
-  return CompNodeResult{local_id.str()};
+  return CompNodeResult{};
 }
 
 CompNodeResult gen_bool_literal(ASTNode &node, CompSymbolTable &st) {
@@ -353,7 +377,8 @@ CompNodeResult gen_while(ASTNode &node, CompSymbolTable &st) {
   const size_t CONDITION = 0, BODY = 1;
   auto condition_label = get_new_label();
   emit(condition_label);
-  emit(":\n");
+  emit(":;\n"); // semicolon due to compiler error
+                // https://github.com/llvm/llvm-project/issues/77057
   auto condition_result = gen_node(node.children[CONDITION], st);
   emit("if (get_conditional_result(");
   emit(condition_result.result_loc.value());
@@ -362,7 +387,7 @@ CompNodeResult gen_while(ASTNode &node, CompSymbolTable &st) {
   gen_node(node.children[BODY], while_body_st);
   emit("goto ");
   emit(condition_label);
-  emit("\n}\n");
+  emit(";\n}\n");
   return CompNodeResult{};
 }
 
@@ -378,9 +403,9 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   case NodeType::BLOCK:
     return gen_block(node, st);
     break;
-    //   case NodeType::ASSIGN_OP:
-    //     return eval_assign_op(node, st);
-    //     break;
+  case NodeType::ASSIGN_OP:
+    return gen_assign_op(node, st);
+    break;
   case NodeType::VAR_DECLARE:
     return gen_var_declare(node, st);
     break;

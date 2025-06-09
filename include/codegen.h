@@ -3,6 +3,7 @@
 
 struct CompNodeResult {
   std::optional<string> result_loc;
+  bool final_return = false; // only used by gen_block
 };
 
 enum class CompTableEntryType { VAR, FUNC, BUILTIN };

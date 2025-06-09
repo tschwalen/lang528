@@ -8,6 +8,8 @@ bool get_conditional_result(RuntimeObject *obj);
 void builtin_print(RuntimeObject *arg);
 void runtime_error(char *msg);
 
+RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs);
+
 // ARITHMETIC OP + STRCAT
 RuntimeObject *op_add(RuntimeObject *lhs, RuntimeObject *rhs);
 RuntimeObject *op_sub(RuntimeObject *lhs, RuntimeObject *rhs);
@@ -40,3 +42,4 @@ RuntimeObject *make_string(char *value);
 RuntimeObject *make_string_nocopy(char *value);
 RuntimeObject *make_vector();
 RuntimeObject *make_dict();
+RuntimeObject *make_vector_known_size(size_t size);

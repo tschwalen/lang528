@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstddef>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -31,6 +32,7 @@ std::optional<CompTableEntry> st_lookup_symbol(CompSymbolTable &st,
 }
 
 CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st);
+CompNodeResult gen_var_lookup(ASTNode &node, CompSymbolTable &st);
 
 string get_new_label() {
   std::stringstream label;
@@ -150,13 +152,18 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   };
 
   emit("){\n");
-  gen_node(body, inner_st);
+  auto final = gen_node(body, inner_st);
+  if (!final.final_return) {
+    emit("return make_nothing();\n");
+  }
   emit("}");
   return CompNodeResult{};
 }
 
 CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
+  auto most_recent_node = NodeType::BLOCK;
   for (auto &child : node.children) {
+    most_recent_node = node.type;
     auto result = gen_node(child, st);
     if (result.result_loc.has_value()) {
       emit(result.result_loc.value());
@@ -167,14 +174,59 @@ CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
     //   return result;
     // }
   }
-  return CompNodeResult{};
+
+  return CompNodeResult{{}, most_recent_node == NodeType::RETURN};
+}
+
+CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
+  // Lvalue can be either a variable, an index access into a data type (e.g.
+  // x[y]) or a field access into a module (or class later)
+
+  if (node.type == NodeType::VAR_LOOKUP) {
+    return gen_var_lookup(node, st);
+  }
+
+  if (node.type == NodeType::INDEX_ACCESS) {
+    const size_t LHS = 0, RHS = 1;
+
+    auto lhs = gen_node(node.children[LHS], st).result_loc.value();
+    auto rhs = gen_node(node.children[RHS], st).result_loc.value();
+    std::stringstream intmdt;
+    intmdt << "_intmdt" << st.intermediates;
+    st.intermediates++;
+    auto intmdt_id = intmdt.str();
+    std::stringstream lvalue;
+    lvalue << "RuntimeObject * " << intmdt_id << " = get_index(" << lhs << ","
+           << rhs << ");";
+    auto lvalue_str = lvalue.str();
+    emit(lvalue_str);
+    return CompNodeResult{intmdt_id};
+  }
+
+  if (node.type == NodeType::FIELD_ACESS) {
+    throw std::runtime_error("Field access lvaue not implemented yet");
+  }
+
+  throw std::runtime_error("Invalid nodetype for lvalue, must be var lookup, "
+                           "index access, or field access.");
+}
+
+CompNodeResult gen_index_access(ASTNode &node, CompSymbolTable &st) {
+  const size_t LHS = 0, RHS = 1;
+
+  auto lhs = gen_node(node.children[LHS], st).result_loc.value();
+  auto rhs = gen_node(node.children[RHS], st).result_loc.value();
+  std::stringstream result;
+  result << "get_index(" << lhs << "," << rhs << ")";
+  auto result_str = result.str();
+  return CompNodeResult{result_str};
 }
 
 CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
   const size_t LHS = 0, RHS = 1;
   const string op_key = "op";
   auto op = int_to_token_type(node.data.at(op_key).get<int>());
-  auto lhs = gen_node(node.children[LHS], st).result_loc.value();
+  auto lhs = gen_node_lvalue(node.children[LHS], st).result_loc.value();
   auto rhs = gen_node(node.children[RHS], st).result_loc.value();
 
   auto new_value = rhs;
@@ -306,7 +358,6 @@ CompNodeResult gen_var_lookup(ASTNode &node, CompSymbolTable &st) {
 }
 
 CompNodeResult gen_expr_list(ASTNode &node, CompSymbolTable &st) {
-
   vector<string> results;
   for (auto &node : node.children) {
     auto result = gen_node(node, st);
@@ -321,6 +372,39 @@ CompNodeResult gen_expr_list(ASTNode &node, CompSymbolTable &st) {
   }
 
   return CompNodeResult{expr_list.str()};
+}
+
+CompNodeResult gen_vec_literal(ASTNode &node, CompSymbolTable &st) {
+  vector<string> results;
+  for (auto &node : node.children) {
+    auto result = gen_node(node, st);
+    results.push_back(result.result_loc.value());
+  }
+
+  std::stringstream intmdt;
+  intmdt << "_intmdt" << st.intermediates;
+  st.intermediates++;
+  auto intmdt_id = intmdt.str();
+
+  std::stringstream decl;
+  decl << "RuntimeObject * " << intmdt_id << " = "
+       << "make_vector_known_size(" << results.size() << ");\n";
+  auto decl_str = decl.str();
+
+  emit(decl_str);
+
+  size_t i = 0;
+  for (auto &result : results) {
+    std::stringstream stmt;
+    stmt << intmdt_id << "->value.v_vec->contents[" << i << "] = *" << result
+         << ";\n";
+
+    auto stmt_str = stmt.str();
+    emit(stmt_str);
+    ++i;
+  }
+
+  return CompNodeResult{intmdt_id};
 }
 
 CompNodeResult gen_binary_op(ASTNode &node, CompSymbolTable &st) {
@@ -469,9 +553,9 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   case NodeType::FUNC_CALL:
     return gen_function_call(node, st);
     break;
-    // case NodeType::INDEX_ACCESS:
-    //   return eval_index_access(node, st, vt);
-    //   break;
+  case NodeType::INDEX_ACCESS:
+    return gen_index_access(node, st);
+    break;
     // case NodeType::FIELD_ACESS:
     //   return eval_field_access(node, st, vt);
     //   break;
@@ -481,9 +565,9 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   case NodeType::EXPR_LIST:
     return gen_expr_list(node, st);
     break;
-  // case NodeType::VEC_LITERAL:
-  //   return eval_vec_literal(node, st);
-  //   break;
+  case NodeType::VEC_LITERAL:
+    return gen_vec_literal(node, st);
+    break;
   // case NodeType::DICT_LITERAL:
   //   return eval_dict_literal(node, st);
   //   break;

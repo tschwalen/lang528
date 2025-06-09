@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -5,6 +6,22 @@
 #include "runtime.h"
 
 int placeholder(int x) { return x + x; }
+
+/*
+ * Implements index access (x[y]) at runtime.
+ */
+RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
+  if (lhs->type == T_VECTOR) {
+    if (rhs->type != T_INT) {
+      runtime_error("Vector index value must be int.");
+    }
+    int64_t index = rhs->value.v_int;
+
+    return &(lhs->value.v_vec->contents[index]);
+  }
+
+  runtime_error("Not impemented (get_index)");
+}
 
 void runtime_error(char *msg) {
   // very barebones for now, could report more debug info like

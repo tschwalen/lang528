@@ -1,8 +1,11 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "datatype.h"
+
+#define max(a, b) a > b ? a : b;
 
 Vector *make_empty_vector() {
   Vector *vec = malloc(sizeof(Vector));
@@ -14,6 +17,19 @@ Vector *make_empty_vector() {
   //     vec->contents[i].value.v_bool = false;
   // }
   return vec;
+}
+
+RuntimeObject *make_vector_known_size(size_t size) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_VECTOR;
+  Vector *vec = malloc(sizeof(Vector));
+  size_t final_size = max(size, VEC_INITIAL_SIZE);
+  vec->size = size;
+  vec->internal_size = final_size;
+  vec->contents = calloc(final_size, sizeof(RuntimeObject));
+
+  obj->value.v_vec = vec;
+  return obj;
 }
 
 Dict *make_empty_dict() {

@@ -44,6 +44,18 @@ void emit(string &s) { std::cout << s; }
 
 void emit(const char *s) { std::cout << s; }
 
+string get_unary_op_method(TokenType op) {
+  switch (op) {
+  case TokenType::MINUS:
+    return "op_umin";
+  case TokenType::NOT:
+    return "op_unot";
+  default:
+    break;
+  }
+  throw std::runtime_error("TokenType argument op must be a unary operator");
+}
+
 string get_binary_op_method(TokenType op) {
   switch (op) {
   case TokenType::PLUS:
@@ -336,6 +348,30 @@ CompNodeResult gen_binary_op(ASTNode &node, CompSymbolTable &st) {
   return CompNodeResult{intmdt_str};
 }
 
+CompNodeResult gen_unary_op(ASTNode &node, CompSymbolTable &st) {
+  const size_t RHS = 0;
+  const string op_key = "op";
+  auto op = int_to_token_type(node.data.at(op_key).get<int>());
+  auto rhs = gen_node(node.children[RHS], st);
+  auto op_method = get_unary_op_method(op);
+
+  // NOTE intermediates are probably unneccesary, but are the right pattern to
+  // use if we were going to convert this to generating 3-address code later on.
+  std::stringstream intmdt;
+  intmdt << "_intmdt" << st.intermediates;
+  st.intermediates++;
+  auto intmdt_str = intmdt.str();
+  emit("RuntimeObject* ");
+  emit(intmdt_str);
+  emit(" = ");
+  std::stringstream expr;
+  expr << op_method << "(" << rhs.result_loc.value() << ");\n";
+  auto s = expr.str();
+  emit(s);
+
+  return CompNodeResult{intmdt_str};
+}
+
 CompNodeResult gen_return(ASTNode &node, CompSymbolTable &st) {
   auto return_value_expr = node.children.at(0);
   auto result = gen_node(return_value_expr, st);
@@ -427,9 +463,9 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   case NodeType::BINARY_OP:
     return gen_binary_op(node, st);
     break;
-    // case NodeType::UNARY_OP:
-    //   return eval_unary_op(node, st);
-    //   break;
+  case NodeType::UNARY_OP:
+    return gen_unary_op(node, st);
+    break;
   case NodeType::FUNC_CALL:
     return gen_function_call(node, st);
     break;

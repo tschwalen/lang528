@@ -46,7 +46,8 @@ EOF
 # test_program="test2.src"
 # test_program="if_elseif_else.src"
 # test_program="floats.src"
-test_program="fib.src"
+# test_program="fib.src"
+test_program="expr2.src"
 
 "$PROJECT_ROOT/output" --comp --input="$PROJECT_ROOT/examples/$test_program" > "$WORKDIR/prog.c"
 

@@ -26,3 +26,6 @@ tmp.json
 
 # don't include third-party libraries
 include/nlohmann
+
+# macos stuff
+.DS_Store

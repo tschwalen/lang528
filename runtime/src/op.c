@@ -625,3 +625,37 @@ RuntimeObject *op_or(RuntimeObject *lhs, RuntimeObject *rhs) {
   runtime_error("Invalid type for boolean or.");
   return NULL;
 }
+
+RuntimeObject *op_umin(RuntimeObject *rhs) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  // unary minus requires a numeric argument
+  switch (rhs->type) {
+  case T_INT: {
+    int64_t new_value = -(rhs->value.v_int);
+    obj->type = T_INT;
+    obj->value.v_int = new_value;
+    break;
+  }
+  case T_FLOAT: {
+    double new_value = -(rhs->value.v_float);
+    obj->type = T_FLOAT;
+    obj->value.v_float = new_value;
+    break;
+  }
+  default: {
+    runtime_error("Invalid type for unary minus");
+  }
+  }
+  return obj;
+}
+
+RuntimeObject *op_unot(RuntimeObject *rhs) {
+  // Not is only supported on booleans
+  if (rhs->type == T_BOOL) {
+    bool rhs_value = rhs->value.v_bool;
+    return make_bool(!rhs_value);
+  }
+
+  runtime_error("Invalid type for unary not.");
+  return NULL;
+}

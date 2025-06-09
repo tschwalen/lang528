@@ -28,7 +28,7 @@ RuntimeObject *op_and(RuntimeObject *lhs, RuntimeObject *rhs);
 RuntimeObject *op_or(RuntimeObject *lhs, RuntimeObject *rhs);
 
 // UNARY OP
-RuntimeObject *op_unot(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_unot(RuntimeObject *rhs);
 RuntimeObject *op_umin(RuntimeObject *rhs);
 
 // CONSTRUCTORS

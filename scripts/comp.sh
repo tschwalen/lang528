@@ -49,6 +49,7 @@ EOF
 # test_program="fib.src"
 # test_program="expr2.src"
 test_program=$1
+shift
 
 "$PROJECT_ROOT/output" --comp --input="$PROJECT_ROOT/examples/$test_program" > "$WORKDIR/prog.c"
 
@@ -58,4 +59,4 @@ gcc -o compiled_exec prog.c -I"$INCLUDE_PATH" -L"$LIB_PATH" -lruntime
 # create a compile commands json file in the work dir so that clangd can be useful for the generated C file
 
 # run the compiled executable
-./compiled_exec
+./compiled_exec $@

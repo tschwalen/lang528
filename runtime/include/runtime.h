@@ -8,6 +8,8 @@ bool get_conditional_result(RuntimeObject *obj);
 void builtin_print(RuntimeObject *arg);
 void runtime_error(char *msg);
 
+RuntimeObject *make_argv(int argc, char *argv[]);
+
 RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs);
 
 // ARITHMETIC OP + STRCAT

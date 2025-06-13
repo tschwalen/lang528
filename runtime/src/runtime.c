@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,6 +7,9 @@
 #include "runtime.h"
 
 int placeholder(int x) { return x + x; }
+
+RuntimeObject *handle_builtin(RuntimeObject *lhs, String name, size_t nargs,
+                              RuntimeObject *args[]) {}
 
 /*
  * Implements index access (x[y]) at runtime.
@@ -21,6 +25,15 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
   }
 
   runtime_error("Not impemented (get_index)");
+}
+
+RuntimeObject *make_argv(int argc, char *argv[]) {
+  RuntimeObject *rt_argv = make_vector_known_size(argc - 1);
+  Vector *vec = rt_argv->value.v_vec;
+  for (size_t i = 1; i < argc; ++i) {
+    vec->contents[i - 1] = *make_string(argv[i]);
+  }
+  return rt_argv;
 }
 
 void runtime_error(char *msg) {
@@ -95,4 +108,34 @@ void _print_vector(Vector *vec) {
 void builtin_print(RuntimeObject *arg) {
   _print_helper(arg);
   printf("\n");
+}
+
+// VECTOR methods
+RuntimeObject *vec_length(RuntimeObject *self) {
+  return make_int(self->value.v_vec->size);
+}
+
+RuntimeObject *vec_append(RuntimeObject *self, RuntimeObject *obj) {
+  Vector *vec = self->value.v_vec;
+  size_t new_size = vec->size + 1;
+
+  if (new_size > vec->internal_size) {
+    // double internal cap
+    size_t new_internal_size = vec->internal_size * 2;
+    // allocate new internal storage
+    RuntimeObject *new_contents =
+        calloc(new_internal_size, sizeof(RuntimeObject));
+    // copy existing elements over
+    for (size_t i = 0; i < vec->internal_size; i++) {
+      RuntimeObject *elem = &(vec->contents[i]);
+      new_contents[i] = *elem;
+    }
+    // free old array, assign new array to contents
+    free(vec->contents);
+    vec->contents = new_contents;
+    vec->internal_size = new_internal_size;
+  }
+  vec->size = new_size;
+  vec->contents[vec->size] = *obj;
+  return make_nothing();
 }

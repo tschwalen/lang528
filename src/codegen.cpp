@@ -102,7 +102,7 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
 
   // encode main entrypoint that goes from C main to program main.
   emit("int main(int argc, char **argv) { \n\
-    L528_main(); \n\
+    L528_main(make_argv(argc, argv)); \n\
     return 0; \n\
 }\n");
 
@@ -113,6 +113,11 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   string name = node.data.at("function_name").get<string>();
   vector<string> args = node.data.at("args").get<vector<string>>();
   auto body = node.children[0];
+
+  // implicitly add argv even if it isn't used
+  if (name == "main" && args.size() == 0) {
+    args.push_back("argv");
+  }
 
   // Make sure name isn't taken
   if (st_lookup_symbol(st, name)) {

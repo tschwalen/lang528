@@ -31,6 +31,14 @@ std::optional<CompTableEntry> st_lookup_symbol(CompSymbolTable &st,
   return {};
 }
 
+string st_new_intmdt(CompSymbolTable &st) {
+  std::stringstream intmdt;
+  intmdt << "_intmdt" << st.intermediates;
+  st.intermediates++;
+  auto intmdt_id = intmdt.str();
+  return intmdt_id;
+}
+
 CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st);
 CompNodeResult gen_var_lookup(ASTNode &node, CompSymbolTable &st);
 
@@ -180,7 +188,7 @@ CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
     // }
   }
 
-  return CompNodeResult{{}, most_recent_node == NodeType::RETURN};
+  return CompNodeResult{{}, {}, most_recent_node == NodeType::RETURN};
 }
 
 CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
@@ -196,10 +204,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
 
     auto lhs = gen_node(node.children[LHS], st).result_loc.value();
     auto rhs = gen_node(node.children[RHS], st).result_loc.value();
-    std::stringstream intmdt;
-    intmdt << "_intmdt" << st.intermediates;
-    st.intermediates++;
-    auto intmdt_id = intmdt.str();
+    auto intmdt_id = st_new_intmdt(st);
     std::stringstream lvalue;
     lvalue << "RuntimeObject * " << intmdt_id << " = get_index(" << lhs << ","
            << rhs << ");";
@@ -225,6 +230,20 @@ CompNodeResult gen_index_access(ASTNode &node, CompSymbolTable &st) {
   result << "get_index(" << lhs << "," << rhs << ")";
   auto result_str = result.str();
   return CompNodeResult{result_str};
+}
+
+CompNodeResult gen_field_access(ASTNode &node, CompSymbolTable &st) {
+  const size_t LHS = 0, RHS = 1;
+  auto lhs = gen_node(node.children[LHS], st).result_loc.value();
+
+  auto rhs_node = node.children[RHS];
+  assert(rhs_node.type == NodeType::VAR_LOOKUP);
+  string identifier = rhs_node.data.at("identifier").get<string>();
+
+  std::stringstream result;
+  result << "field_access(" << lhs << ", \"" << identifier << "\")";
+  auto result_str = result.str();
+  return CompNodeResult{result_str, lhs};
 }
 
 CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
@@ -284,7 +303,6 @@ CompNodeResult gen_bool_literal(ASTNode &node, CompSymbolTable &st) {
   std::stringstream ss;
   ss << "make_bool(" << value << ")";
   auto s = ss.str();
-  //   emit(s);
   return CompNodeResult{s};
 }
 
@@ -293,7 +311,6 @@ CompNodeResult gen_int_literal(ASTNode &node, CompSymbolTable &st) {
   std::stringstream ss;
   ss << "make_int(" << value << ")";
   auto s = ss.str();
-  //   emit(s);
   return CompNodeResult{s};
 }
 
@@ -322,32 +339,70 @@ CompNodeResult gen_nothing_literal(ASTNode &node, CompSymbolTable &st) {
 
 CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
   const size_t FUNCTION = 0, ARGS = 1;
-
-  // TODO: rigid, won't work everywhere
   auto lhs = node.children[FUNCTION];
-  assert(lhs.type == NodeType::VAR_LOOKUP);
-
   auto rhs = node.children[ARGS];
-  auto rhs_result = gen_node(rhs, st);
-  // build function name
-  auto identifier = lhs.data.at("identifier").get<string>();
-  auto lookup_result = st_lookup_symbol(st, identifier);
-  if (!lookup_result.has_value()) {
-    std::string msg = "Bad function name lookup: ";
-    msg += identifier;
-    throw std::runtime_error(msg);
-  }
-  auto lookup_value = lookup_result.value();
-  if (!(lookup_value.type == CompTableEntryType::BUILTIN ||
-        lookup_value.type == CompTableEntryType::FUNC)) {
-    std::string msg = identifier + " is not a function or builtin.";
-    throw std::runtime_error(msg);
-  }
-  auto fn_name = lookup_value.location;
 
-  // TODO: some kind of arg matching?
-  auto result = fn_name + "(" + rhs_result.result_loc.value() + ")";
-  return CompNodeResult{result};
+  //
+  // I guess we'd call this a "known" function call.
+  // These are function calls referred to by the name
+  // that we know in the symbol table at compile-time.
+  //
+  if (lhs.type == NodeType::VAR_LOOKUP) {
+    // build function name
+    auto identifier = lhs.data.at("identifier").get<string>();
+    auto lookup_result = st_lookup_symbol(st, identifier);
+    if (!lookup_result.has_value()) {
+      std::string msg = "Bad function name lookup: ";
+      msg += identifier;
+      throw std::runtime_error(msg);
+    }
+    auto lookup_value = lookup_result.value();
+    if (!(lookup_value.type == CompTableEntryType::BUILTIN ||
+          lookup_value.type == CompTableEntryType::FUNC)) {
+      std::string msg = identifier + " is not a function or builtin.";
+      throw std::runtime_error(msg);
+    }
+    auto fn_name = lookup_value.location;
+
+    // TODO: some kind of arg matching?
+    auto rhs_result = gen_node(rhs, st);
+    auto result = fn_name + "(" + rhs_result.result_loc.value() + ")";
+    return CompNodeResult{result};
+  }
+  // Dynamic function call where the function value itself is known only
+  // at run-time.
+  else {
+    /*
+        lhs contains a node which should evaluate to a dynamic function
+        rhs
+
+    */
+    auto lhs_result = gen_node(lhs, st);
+    auto rhs_result = gen_node(rhs, st);
+
+    auto fn_loc = lhs_result.result_loc.value();
+    auto argc = rhs_result.argc;
+
+    auto argv_intmdt = st_new_intmdt(st);
+    auto argv_arglist = rhs_result.result_loc.value();
+    if (lhs.type == NodeType::FIELD_ACESS) {
+      auto new_argv = lhs_result.accessee_loc.value();
+      argv_arglist = new_argv + "," + argv_arglist;
+      argc++;
+    }
+
+    std::stringstream argv;
+    argv << "RuntimeObject* " << argv_intmdt << "[] = {" << argv_arglist
+         << "};\n";
+    auto argv_str = argv.str();
+    emit(argv_str);
+    // for x.y(), need to pass x as an implicit first parameter\
+
+    std::stringstream result;
+    result << "dynamic_function_call(" << fn_loc << "," << argc << ","
+           << argv_intmdt << ")";
+    return CompNodeResult{result.str()};
+  }
 }
 
 CompNodeResult gen_var_lookup(ASTNode &node, CompSymbolTable &st) {
@@ -376,7 +431,7 @@ CompNodeResult gen_expr_list(ASTNode &node, CompSymbolTable &st) {
     }
   }
 
-  return CompNodeResult{expr_list.str()};
+  return CompNodeResult{expr_list.str(), {}, false, results.size()};
 }
 
 CompNodeResult gen_vec_literal(ASTNode &node, CompSymbolTable &st) {
@@ -386,10 +441,7 @@ CompNodeResult gen_vec_literal(ASTNode &node, CompSymbolTable &st) {
     results.push_back(result.result_loc.value());
   }
 
-  std::stringstream intmdt;
-  intmdt << "_intmdt" << st.intermediates;
-  st.intermediates++;
-  auto intmdt_id = intmdt.str();
+  auto intmdt_id = st_new_intmdt(st);
 
   std::stringstream decl;
   decl << "RuntimeObject * " << intmdt_id << " = "
@@ -561,9 +613,9 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   case NodeType::INDEX_ACCESS:
     return gen_index_access(node, st);
     break;
-    // case NodeType::FIELD_ACESS:
-    //   return eval_field_access(node, st, vt);
-    //   break;
+  case NodeType::FIELD_ACESS:
+    return gen_field_access(node, st);
+    break;
   case NodeType::VAR_LOOKUP:
     return gen_var_lookup(node, st);
     break;

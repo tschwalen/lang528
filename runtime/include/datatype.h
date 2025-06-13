@@ -42,6 +42,11 @@ typedef struct {
   size_t size;
 } Dict;
 
+typedef struct {
+  // potentially other things like number and names of args.
+  RuntimeObject *(*fn_ptr)(size_t argc, RuntimeObject *argv[]);
+} Function;
+
 struct RuntimeObject {
   enum DataType type;
   union {
@@ -51,5 +56,6 @@ struct RuntimeObject {
     String *v_str;
     Vector *v_vec;
     Dict *v_dict;
+    Function v_func;
   } value;
 };

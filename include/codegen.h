@@ -1,9 +1,12 @@
 #pragma once
 #include "astnode.h"
+#include <cstddef>
 
 struct CompNodeResult {
   std::optional<string> result_loc;
-  bool final_return = false; // only used by gen_block
+  std::optional<string> accessee_loc; // only used by field access
+  bool final_return = false;          // only used by gen_block
+  size_t argc = 0;                    // only used by expr_list
 };
 
 enum class CompTableEntryType { VAR, FUNC, BUILTIN };

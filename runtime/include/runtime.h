@@ -8,9 +8,13 @@ bool get_conditional_result(RuntimeObject *obj);
 void builtin_print(RuntimeObject *arg);
 void runtime_error(char *msg);
 
+RuntimeObject *dynamic_function_call(RuntimeObject *dynamic_fn, size_t argc,
+                                     RuntimeObject *argv[]);
+
 RuntimeObject *make_argv(int argc, char *argv[]);
 
 RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *field_access(RuntimeObject *lhs, char *identifier);
 
 // ARITHMETIC OP + STRCAT
 RuntimeObject *op_add(RuntimeObject *lhs, RuntimeObject *rhs);
@@ -45,3 +49,11 @@ RuntimeObject *make_string_nocopy(char *value);
 RuntimeObject *make_vector();
 RuntimeObject *make_dict();
 RuntimeObject *make_vector_known_size(size_t size);
+RuntimeObject *make_function(RuntimeObject *(*fn_ptr)(size_t argc,
+                                                      RuntimeObject *argv[]));
+
+// Vector Methods
+RuntimeObject *vec_length(RuntimeObject *self);
+RuntimeObject *vec_append(RuntimeObject *self, RuntimeObject *obj);
+RuntimeObject *vec_length_dynamic(size_t argc, RuntimeObject *argv[]);
+RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]);

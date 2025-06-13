@@ -101,3 +101,11 @@ RuntimeObject *make_dict() {
   obj->value.v_dict = make_empty_dict();
   return obj;
 }
+
+RuntimeObject *make_function(RuntimeObject *(*fn_ptr)(size_t argc,
+                                                      RuntimeObject *argv[])) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_FUNCTION;
+  obj->value.v_func.fn_ptr = fn_ptr;
+  return obj;
+}

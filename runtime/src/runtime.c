@@ -2,14 +2,42 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 
 #include "datatype.h"
 #include "runtime.h"
 
 int placeholder(int x) { return x + x; }
 
-RuntimeObject *handle_builtin(RuntimeObject *lhs, String name, size_t nargs,
-                              RuntimeObject *args[]) {}
+// RuntimeObject *handle_builtin(RuntimeObject *lhs, String name, size_t nargs,
+//                               RuntimeObject *args[]) {}
+
+RuntimeObject *dynamic_function_call(RuntimeObject *dynamic_fn, size_t argc,
+                                     RuntimeObject *argv[]) {
+  if (dynamic_fn->type != T_FUNCTION) {
+    runtime_error("Invalid type for dynamic function call.");
+  }
+
+  Function fn = dynamic_fn->value.v_func;
+  return fn.fn_ptr(argc, argv);
+}
+
+RuntimeObject *field_access(RuntimeObject *lhs, char *identifier) {
+  // For built-in data types we have known hard-coded function names
+
+  if (lhs->type == T_VECTOR) {
+    if (strcmp(identifier, "length") == 0) {
+      return make_function(vec_length_dynamic);
+    } else if (strcmp(identifier, "append") == 0) {
+      return make_function(vec_append_dynamic);
+    }
+  }
+
+  runtime_error("invalid or unimplemented field access");
+
+  // For modules (and later, classes) there will be a symbol table
+  // injected in the runtime.
+}
 
 /*
  * Implements index access (x[y]) at runtime.
@@ -23,6 +51,8 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
 
     return &(lhs->value.v_vec->contents[index]);
   }
+
+  // TODO: string, dict
 
   runtime_error("Not impemented (get_index)");
 }
@@ -39,7 +69,7 @@ RuntimeObject *make_argv(int argc, char *argv[]) {
 void runtime_error(char *msg) {
   // very barebones for now, could report more debug info like
   // line number later on.
-  printf("Runtime error: %s", msg);
+  printf("Runtime error: %s\n", msg);
   exit(1);
 }
 
@@ -138,4 +168,17 @@ RuntimeObject *vec_append(RuntimeObject *self, RuntimeObject *obj) {
   vec->size = new_size;
   vec->contents[vec->size] = *obj;
   return make_nothing();
+}
+
+RuntimeObject *vec_length_dynamic(size_t argc, RuntimeObject *argv[]) {
+  if (argc != 1) {
+    runtime_error("Argument number mismatch for vec length");
+  }
+  return vec_length(argv[0]);
+}
+RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]) {
+  if (argc != 2) {
+    runtime_error("Argument number mismatch for vec length");
+  }
+  return vec_append(argv[0], argv[1]);
 }

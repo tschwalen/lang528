@@ -9,9 +9,6 @@
 
 int placeholder(int x) { return x + x; }
 
-// RuntimeObject *handle_builtin(RuntimeObject *lhs, String name, size_t nargs,
-//                               RuntimeObject *args[]) {}
-
 RuntimeObject *dynamic_function_call(RuntimeObject *dynamic_fn, size_t argc,
                                      RuntimeObject *argv[]) {
   if (dynamic_fn->type != T_FUNCTION) {

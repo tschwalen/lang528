@@ -387,7 +387,9 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
     auto argv_arglist = rhs_result.result_loc.value();
     if (lhs.type == NodeType::FIELD_ACESS) {
       auto new_argv = lhs_result.accessee_loc.value();
-      argv_arglist = new_argv + "," + argv_arglist;
+      if (argc != 0) {
+        argv_arglist = new_argv + "," + argv_arglist;
+      }
       argc++;
     }
 

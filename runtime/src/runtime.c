@@ -30,6 +30,12 @@ RuntimeObject *field_access(RuntimeObject *lhs, char *identifier) {
     }
   }
 
+  if (lhs->type == T_STRING) {
+    if (strcmp(identifier, "length") == 0) {
+      return make_function(str_length_dynamic);
+    }
+  }
+
   runtime_error("invalid or unimplemented field access");
 
   // For modules (and later, classes) there will be a symbol table
@@ -46,10 +52,28 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
     }
     int64_t index = rhs->value.v_int;
 
+    if (index >= lhs->value.v_vec->size) {
+      runtime_error("Vector index out of bounds.");
+    }
+
     return &(lhs->value.v_vec->contents[index]);
   }
 
   // TODO: string, dict
+
+  if (lhs->type == T_STRING) {
+    if (rhs->type != T_INT) {
+      runtime_error("String index value must be int.");
+    }
+    int64_t index = rhs->value.v_int;
+    if (index >= lhs->value.v_str->length) {
+      runtime_error("String index out of bounds.");
+    }
+
+    char *string_value = " ";
+    string_value[0] = lhs->value.v_str->contents[index];
+    return make_string(string_value);
+  }
 
   runtime_error("Not impemented (get_index)");
 }
@@ -173,9 +197,21 @@ RuntimeObject *vec_length_dynamic(size_t argc, RuntimeObject *argv[]) {
   }
   return vec_length(argv[0]);
 }
+
 RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]) {
   if (argc != 2) {
     runtime_error("Argument number mismatch for vec length");
   }
   return vec_append(argv[0], argv[1]);
+}
+
+RuntimeObject *str_length(RuntimeObject *self) {
+  return make_int(self->value.v_str->length);
+}
+
+RuntimeObject *str_length_dynamic(size_t argc, RuntimeObject *argv[]) {
+  if (argc != 1) {
+    runtime_error("Argument number mismatch for string length");
+  }
+  return vec_length(argv[0]);
 }

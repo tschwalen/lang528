@@ -57,3 +57,7 @@ RuntimeObject *vec_length(RuntimeObject *self);
 RuntimeObject *vec_append(RuntimeObject *self, RuntimeObject *obj);
 RuntimeObject *vec_length_dynamic(size_t argc, RuntimeObject *argv[]);
 RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]);
+
+// String Methods
+RuntimeObject *str_length(RuntimeObject *self);
+RuntimeObject *str_length_dynamic(size_t argc, RuntimeObject *argv[]);

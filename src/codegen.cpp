@@ -109,6 +109,7 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
   }
 
   // encode main entrypoint that goes from C main to program main.
+  // TODO: global declarations may need to go here
   emit("int main(int argc, char **argv) { \n\
     L528_main(make_argv(argc, argv)); \n\
     return 0; \n\
@@ -275,6 +276,8 @@ CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
   bool is_const = node.data.at("const").get<bool>();
 
   // TODO: check if taken
+  // also, using C's const doesn't work well. Symbol table should
+  // track constness
   std::stringstream declare_stmt;
   if (is_const) {
     declare_stmt << "const ";

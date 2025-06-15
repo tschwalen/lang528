@@ -18,6 +18,7 @@ using std::vector;
 // TODO: global context like this isn't great
 // Might need to pass around more context than that,
 static int LABELS = 0;
+static int LOCALS = 0;
 
 static vector<std::pair<string, ASTNode *>> toplevel_decls;
 
@@ -190,16 +191,12 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
 CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
   auto most_recent_node = NodeType::BLOCK;
   for (auto &child : node.children) {
-    most_recent_node = node.type;
+    most_recent_node = child.type;
     auto result = gen_node(child, st);
     if (result.result_loc.has_value()) {
       emit(result.result_loc.value());
     }
     emit(";\n");
-    // auto result = gen_node(child);
-    // if (result.returned) {
-    //   return result;
-    // }
   }
 
   return CompNodeResult{{}, {}, most_recent_node == NodeType::RETURN};
@@ -306,8 +303,8 @@ CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
     throw std::runtime_error("Variable name already taken in scope.");
   }
   std::stringstream local_id;
-  local_id << "local" << st.locals;
-  st.locals++;
+  local_id << "local" << LOCALS;
+  LOCALS++;
   string local_id_str = local_id.str();
   st.entries[identifier] = CompTableEntry{local_id_str, type};
 
@@ -423,7 +420,9 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
     // for x.y(), need to pass x as an implicit first parameter
     if (lhs.type == NodeType::FIELD_ACESS) {
       auto new_argv = lhs_result.accessee_loc.value();
-      if (argc != 0) {
+      if (argc == 0) {
+        argv_arglist = new_argv;
+      } else {
         argv_arglist = new_argv + "," + argv_arglist;
       }
       argc++;

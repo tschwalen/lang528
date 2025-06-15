@@ -9,7 +9,7 @@ struct CompNodeResult {
   size_t argc = 0;                    // only used by expr_list
 };
 
-enum class CompTableEntryType { VAR, FUNC, BUILTIN };
+enum class CompTableEntryType { VAR, CONST, FUNC, BUILTIN };
 
 struct CompTableEntry {
   std::string location;

@@ -59,8 +59,6 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
     return &(lhs->value.v_vec->contents[index]);
   }
 
-  // TODO: string, dict
-
   if (lhs->type == T_STRING) {
     if (rhs->type != T_INT) {
       runtime_error("String index value must be int.");
@@ -73,6 +71,11 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
     char *string_value = " ";
     string_value[0] = lhs->value.v_str->contents[index];
     return make_string(string_value);
+  }
+
+  if (rhs->type == T_DICT) {
+    // TODO: need to do dict key stuff
+    runtime_error("Not impemented (dict get_index)");
   }
 
   runtime_error("Not impemented (get_index)");
@@ -213,5 +216,5 @@ RuntimeObject *str_length_dynamic(size_t argc, RuntimeObject *argv[]) {
   if (argc != 1) {
     runtime_error("Argument number mismatch for string length");
   }
-  return vec_length(argv[0]);
+  return str_length(argv[0]);
 }

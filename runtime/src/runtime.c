@@ -73,11 +73,12 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
     return make_string(string_value);
   }
 
-  if (rhs->type == T_DICT) {
+  if (lhs->type == T_DICT) {
     // TODO: need to do dict key stuff
     runtime_error("Not impemented (dict get_index)");
   }
 
+  printf("LHS type: %d\n", lhs->type);
   runtime_error("Not impemented (get_index)");
 }
 

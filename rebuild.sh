@@ -5,5 +5,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   alias nproc="sysctl -n hw.logicalcpu"
 fi
 
-# runs both cmake and make for convenience
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+cd $PROJECT_ROOT
+cmake . && make -j$(nproc)
+cd ./runtime
 cmake . && make -j$(nproc)

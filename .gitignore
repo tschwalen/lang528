@@ -23,6 +23,7 @@ libruntime.a
 
 # temporary stuff
 tmp.json
+temp
 
 # don't include third-party libraries
 include/nlohmann

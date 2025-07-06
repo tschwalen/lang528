@@ -6,9 +6,9 @@
 class ArithmeticCompBinOp {
 protected:
   virtual bool apply_raw(int lhs, int rhs) = 0;
-  virtual bool apply_raw(int lhs, float rhs) = 0;
-  virtual bool apply_raw(float lhs, int rhs) = 0;
-  virtual bool apply_raw(float lhs, float rhs) = 0;
+  virtual bool apply_raw(int lhs, double rhs) = 0;
+  virtual bool apply_raw(double lhs, int rhs) = 0;
+  virtual bool apply_raw(double lhs, double rhs) = 0;
 
 public:
   BoxedValue apply(BoxedValue lhs, BoxedValue rhs);
@@ -16,38 +16,38 @@ public:
 
 class Less : public ArithmeticCompBinOp {
   bool apply_raw(int lhs, int rhs) override { return lhs < rhs; }
-  bool apply_raw(int lhs, float rhs) override { return lhs < rhs; }
-  bool apply_raw(float lhs, int rhs) override { return lhs < rhs; }
-  bool apply_raw(float lhs, float rhs) override { return lhs < rhs; }
+  bool apply_raw(int lhs, double rhs) override { return lhs < rhs; }
+  bool apply_raw(double lhs, int rhs) override { return lhs < rhs; }
+  bool apply_raw(double lhs, double rhs) override { return lhs < rhs; }
 };
 
 class Greater : public ArithmeticCompBinOp {
   bool apply_raw(int lhs, int rhs) override { return lhs > rhs; }
-  bool apply_raw(int lhs, float rhs) override { return lhs > rhs; }
-  bool apply_raw(float lhs, int rhs) override { return lhs > rhs; }
-  bool apply_raw(float lhs, float rhs) override { return lhs > rhs; }
+  bool apply_raw(int lhs, double rhs) override { return lhs > rhs; }
+  bool apply_raw(double lhs, int rhs) override { return lhs > rhs; }
+  bool apply_raw(double lhs, double rhs) override { return lhs > rhs; }
 };
 
 class LessEqual : public ArithmeticCompBinOp {
   bool apply_raw(int lhs, int rhs) override { return lhs <= rhs; }
-  bool apply_raw(int lhs, float rhs) override { return lhs <= rhs; }
-  bool apply_raw(float lhs, int rhs) override { return lhs <= rhs; }
-  bool apply_raw(float lhs, float rhs) override { return lhs <= rhs; }
+  bool apply_raw(int lhs, double rhs) override { return lhs <= rhs; }
+  bool apply_raw(double lhs, int rhs) override { return lhs <= rhs; }
+  bool apply_raw(double lhs, double rhs) override { return lhs <= rhs; }
 };
 
 class GreaterEqual : public ArithmeticCompBinOp {
   bool apply_raw(int lhs, int rhs) override { return lhs >= rhs; }
-  bool apply_raw(int lhs, float rhs) override { return lhs >= rhs; }
-  bool apply_raw(float lhs, int rhs) override { return lhs >= rhs; }
-  bool apply_raw(float lhs, float rhs) override { return lhs >= rhs; }
+  bool apply_raw(int lhs, double rhs) override { return lhs >= rhs; }
+  bool apply_raw(double lhs, int rhs) override { return lhs >= rhs; }
+  bool apply_raw(double lhs, double rhs) override { return lhs >= rhs; }
 };
 
 class ArithmeticBinOp {
 protected:
   virtual int apply_raw(int lhs, int rhs) = 0;
-  virtual float apply_raw(int lhs, float rhs) = 0;
-  virtual float apply_raw(float lhs, int rhs) = 0;
-  virtual float apply_raw(float lhs, float rhs) = 0;
+  virtual double apply_raw(int lhs, double rhs) = 0;
+  virtual double apply_raw(double lhs, int rhs) = 0;
+  virtual double apply_raw(double lhs, double rhs) = 0;
 
 public:
   BoxedValue apply(BoxedValue lhs, BoxedValue rhs);
@@ -55,30 +55,30 @@ public:
 
 class Multiply : public ArithmeticBinOp {
   int apply_raw(int lhs, int rhs) override { return lhs * rhs; }
-  float apply_raw(int lhs, float rhs) override { return lhs * rhs; }
-  float apply_raw(float lhs, int rhs) override { return lhs * rhs; }
-  float apply_raw(float lhs, float rhs) override { return lhs * rhs; }
+  double apply_raw(int lhs, double rhs) override { return lhs * rhs; }
+  double apply_raw(double lhs, int rhs) override { return lhs * rhs; }
+  double apply_raw(double lhs, double rhs) override { return lhs * rhs; }
 };
 
 class Add : public ArithmeticBinOp {
   int apply_raw(int lhs, int rhs) override { return lhs + rhs; }
-  float apply_raw(int lhs, float rhs) override { return lhs + rhs; }
-  float apply_raw(float lhs, int rhs) override { return lhs + rhs; }
-  float apply_raw(float lhs, float rhs) override { return lhs + rhs; }
+  double apply_raw(int lhs, double rhs) override { return lhs + rhs; }
+  double apply_raw(double lhs, int rhs) override { return lhs + rhs; }
+  double apply_raw(double lhs, double rhs) override { return lhs + rhs; }
 };
 
 class Subtract : public ArithmeticBinOp {
   int apply_raw(int lhs, int rhs) override { return lhs - rhs; }
-  float apply_raw(int lhs, float rhs) override { return lhs - rhs; }
-  float apply_raw(float lhs, int rhs) override { return lhs - rhs; }
-  float apply_raw(float lhs, float rhs) override { return lhs - rhs; }
+  double apply_raw(int lhs, double rhs) override { return lhs - rhs; }
+  double apply_raw(double lhs, int rhs) override { return lhs - rhs; }
+  double apply_raw(double lhs, double rhs) override { return lhs - rhs; }
 };
 
 class Divide : public ArithmeticBinOp {
   int apply_raw(int lhs, int rhs) override { return lhs / rhs; }
-  float apply_raw(int lhs, float rhs) override { return lhs / rhs; }
-  float apply_raw(float lhs, int rhs) override { return lhs / rhs; }
-  float apply_raw(float lhs, float rhs) override { return lhs / rhs; }
+  double apply_raw(int lhs, double rhs) override { return lhs / rhs; }
+  double apply_raw(double lhs, int rhs) override { return lhs / rhs; }
+  double apply_raw(double lhs, double rhs) override { return lhs / rhs; }
 };
 
 void runtime_assertion(bool condition, string message);

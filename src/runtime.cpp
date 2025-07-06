@@ -1,9 +1,12 @@
 #include <cstddef>
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <stdio.h>
 #include <string>
 
 #include "interpreter.h"
@@ -61,10 +64,16 @@ string toString(BoxedValue bv) {
   case DataType::BOOL:
     result << (std::get<bool>(bv.value) ? "true" : "false");
     break;
-  case DataType::FLOAT:
-    result << std::setprecision(std::numeric_limits<float>::max_digits10)
-           << std::get<float>(bv.value);
+  case DataType::FLOAT: {
+    // char buffer[64];
+    // const int DBL_DECIMAL_DIG = 10;
+    // snprintf(buffer, sizeof(buffer), "%.*g", DBL_DECIMAL_DIG,
+    //          std::get<double>(bv.value));
+    // result << buffer << "ahhhhhh";
+    result << std::setprecision(std::numeric_limits<double>::max_digits10)
+           << std::get<double>(bv.value);
     break;
+  }
   case DataType::INT:
     result << std::get<int>(bv.value);
     break;
@@ -241,7 +250,7 @@ bool equality_comparison(BoxedValue lhs, BoxedValue rhs) {
   case DataType::INT:
     return std::get<int>(lhs.value) == std::get<int>(rhs.value);
   case DataType::FLOAT:
-    return std::get<float>(lhs.value) == std::get<float>(rhs.value);
+    return std::get<double>(lhs.value) == std::get<double>(rhs.value);
   case DataType::BOOL:
     return std::get<bool>(lhs.value) == std::get<bool>(rhs.value);
   case DataType::STRING:
@@ -347,7 +356,7 @@ BoxedValue apply_unary_not(BoxedValue rhs) {
 
 BoxedValue apply_unary_minus(BoxedValue rhs) {
   if (rhs.type == DataType::FLOAT) {
-    return BoxedValue{DataType::FLOAT, -std::get<float>(rhs.value)};
+    return BoxedValue{DataType::FLOAT, -std::get<double>(rhs.value)};
   }
   if (rhs.type == DataType::INT) {
     return BoxedValue{DataType::INT, -std::get<int>(rhs.value)};
@@ -413,19 +422,19 @@ BoxedValue ArithmeticCompBinOp::apply(BoxedValue lhs, BoxedValue rhs) {
     if (rhs.type == DataType::FLOAT) {
       return BoxedValue{DataType::BOOL,
                         this->apply_raw(std::get<int>(lhs.value),
-                                        std::get<float>(rhs.value))};
+                                        std::get<double>(rhs.value))};
     }
   }
   if (lhs.type == DataType::FLOAT) {
     if (rhs.type == DataType::INT) {
       return BoxedValue{DataType::BOOL,
-                        this->apply_raw(std::get<float>(lhs.value),
+                        this->apply_raw(std::get<double>(lhs.value),
                                         std::get<int>(rhs.value))};
     }
     if (rhs.type == DataType::FLOAT) {
       return BoxedValue{DataType::BOOL,
-                        this->apply_raw(std::get<float>(lhs.value),
-                                        std::get<float>(rhs.value))};
+                        this->apply_raw(std::get<double>(lhs.value),
+                                        std::get<double>(rhs.value))};
     }
   }
 
@@ -443,19 +452,19 @@ BoxedValue ArithmeticBinOp::apply(BoxedValue lhs, BoxedValue rhs) {
     if (rhs.type == DataType::FLOAT) {
       return BoxedValue{DataType::FLOAT,
                         this->apply_raw(std::get<int>(lhs.value),
-                                        std::get<float>(rhs.value))};
+                                        std::get<double>(rhs.value))};
     }
   }
   if (lhs.type == DataType::FLOAT) {
     if (rhs.type == DataType::INT) {
       return BoxedValue{DataType::FLOAT,
-                        this->apply_raw(std::get<float>(lhs.value),
+                        this->apply_raw(std::get<double>(lhs.value),
                                         std::get<int>(rhs.value))};
     }
     if (rhs.type == DataType::FLOAT) {
       return BoxedValue{DataType::FLOAT,
-                        this->apply_raw(std::get<float>(lhs.value),
-                                        std::get<float>(rhs.value))};
+                        this->apply_raw(std::get<double>(lhs.value),
+                                        std::get<double>(rhs.value))};
     }
   }
 

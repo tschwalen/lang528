@@ -107,7 +107,7 @@ ASTNode basic_literal(ParserState &ps) {
     return ASTNode::makeLiteral(std::get<bool>(current_token.value),
                                 current_token.metadata);
   case TokenType::FLOAT_LITERAL:
-    return ASTNode::makeLiteral(std::get<float>(current_token.value),
+    return ASTNode::makeLiteral(std::get<double>(current_token.value),
                                 current_token.metadata);
   case TokenType::INT_LITERAL:
     return ASTNode::makeLiteral(std::get<int>(current_token.value),

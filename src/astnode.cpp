@@ -2,13 +2,12 @@
 #include <vector>
 
 #include "astnode.h"
+#include "nodetype.h"
 #include "parser.h"
 #include "token.h"
 #include "tokentype.h"
-#include "nodetype.h"
 
 using json = nlohmann::json;
-
 
 using std::string;
 using std::vector;
@@ -22,49 +21,50 @@ ASTNode ASTNode::makeTopLevel(vector<ASTNode> statements,
   return ASTNode{NodeType::TOP_LEVEL, statements, {}, metadata};
 }
 
-ASTNode ASTNode::makeFunctionDeclare(string name,
-                                     vector<string> args,
-                                     ASTNode body,
-                                     TokenMetadata metadata) {
+ASTNode ASTNode::makeFunctionDeclare(string name, vector<string> args,
+                                     ASTNode body, TokenMetadata metadata) {
   return ASTNode{NodeType::FUNC_DECLARE,
                  {body},
                  {{"function_name", name}, {"args", args}},
                  metadata};
 }
 
-ASTNode ASTNode::makeVarDeclare(string name, ASTNode rhs, bool is_const, TokenMetadata metadata) {
-  return ASTNode{NodeType::VAR_DECLARE, {rhs}, {{"identifier", name}, {"const", is_const}}, metadata};
-
+ASTNode ASTNode::makeVarDeclare(string name, ASTNode rhs, bool is_const,
+                                TokenMetadata metadata) {
+  return ASTNode{NodeType::VAR_DECLARE,
+                 {rhs},
+                 {{"identifier", name}, {"const", is_const}},
+                 metadata};
 }
 
 ASTNode ASTNode::makeModuleImport(string module_path, TokenMetadata metadata) {
-  return ASTNode{NodeType::MODULE_IMPORT, {}, {{"module_path", module_path}}, metadata};
+  return ASTNode{
+      NodeType::MODULE_IMPORT, {}, {{"module_path", module_path}}, metadata};
 }
 
-ASTNode ASTNode::makeModuleImport(string module_path, string module_name, TokenMetadata metadata) {
-  return ASTNode{
-    NodeType::MODULE_IMPORT, {}, {{"module_path", module_path}, {"module_name", module_name}}, metadata};
+ASTNode ASTNode::makeModuleImport(string module_path, string module_name,
+                                  TokenMetadata metadata) {
+  return ASTNode{NodeType::MODULE_IMPORT,
+                 {},
+                 {{"module_path", module_path}, {"module_name", module_name}},
+                 metadata};
 }
 
 ASTNode ASTNode::makeBlock(vector<ASTNode> statements, TokenMetadata metadata) {
   return ASTNode{NodeType::BLOCK, statements, {}, metadata};
 }
 
-ASTNode ASTNode::makeWhile(ASTNode condition,
-                           ASTNode body,
+ASTNode ASTNode::makeWhile(ASTNode condition, ASTNode body,
                            TokenMetadata metadata) {
   return ASTNode{NodeType::WHILE, {condition, body}, {}, metadata};
 }
 
-ASTNode ASTNode::makeIf(ASTNode condition,
-                        ASTNode body,
+ASTNode ASTNode::makeIf(ASTNode condition, ASTNode body,
                         TokenMetadata metadata) {
   return ASTNode{NodeType::IF, {condition, body}, {}, metadata};
 }
 
-ASTNode ASTNode::makeIfElse(ASTNode condition,
-                            ASTNode body,
-                            ASTNode else_body,
+ASTNode ASTNode::makeIfElse(ASTNode condition, ASTNode body, ASTNode else_body,
                             TokenMetadata metadata) {
   return ASTNode{NodeType::IF, {condition, body, else_body}, {}, metadata};
 }
@@ -75,7 +75,7 @@ ASTNode ASTNode::makeVectorLiteral(vector<ASTNode> elements,
 }
 
 ASTNode ASTNode::makeDictLiteral(vector<ASTNode> kv_pairs,
-                                   TokenMetadata metadata) {
+                                 TokenMetadata metadata) {
   return ASTNode{NodeType::DICT_LITERAL, kv_pairs, {}, metadata};
 }
 
@@ -84,8 +84,7 @@ ASTNode ASTNode::makeVarLookup(string identifier, TokenMetadata metadata) {
       NodeType::VAR_LOOKUP, {}, {{"identifier", identifier}}, metadata};
 }
 
-ASTNode ASTNode::makeFunctionCall(ASTNode lvalue_expr,
-                                  ASTNode arg_expr_list,
+ASTNode ASTNode::makeFunctionCall(ASTNode lvalue_expr, ASTNode arg_expr_list,
                                   TokenMetadata metadata) {
   return ASTNode{
       NodeType::FUNC_CALL, {lvalue_expr, arg_expr_list}, {}, metadata};
@@ -96,22 +95,19 @@ ASTNode ASTNode::makeExprList(vector<ASTNode> arg_exprs,
   return ASTNode{NodeType::EXPR_LIST, arg_exprs, {}, metadata};
 }
 
-ASTNode ASTNode::makeIndexAccess(ASTNode lvalue_expr,
-                                 ASTNode index_expr,
+ASTNode ASTNode::makeIndexAccess(ASTNode lvalue_expr, ASTNode index_expr,
                                  TokenMetadata metadata) {
-  return ASTNode{NodeType::INDEX_ACCESS, {lvalue_expr, index_expr}, {}, metadata};
+  return ASTNode{
+      NodeType::INDEX_ACCESS, {lvalue_expr, index_expr}, {}, metadata};
 }
 
-ASTNode ASTNode::makeFieldAccess(ASTNode lvalue_expr,
-                                 ASTNode field_expr,
+ASTNode ASTNode::makeFieldAccess(ASTNode lvalue_expr, ASTNode field_expr,
                                  TokenMetadata metadata) {
   return ASTNode{
       NodeType::FIELD_ACESS, {lvalue_expr, field_expr}, {}, metadata};
 }
 
-ASTNode ASTNode::makeBinaryOp(TokenType op,
-                              ASTNode lhs_expr,
-                              ASTNode rhs_expr,
+ASTNode ASTNode::makeBinaryOp(TokenType op, ASTNode lhs_expr, ASTNode rhs_expr,
                               TokenMetadata metadata) {
   // function call special case
   if (op == TokenType::LPAREN) {
@@ -136,8 +132,7 @@ ASTNode ASTNode::makeBinaryOp(TokenType op,
                  metadata};
 }
 
-ASTNode ASTNode::makeUnaryOp(TokenType op,
-                             ASTNode expr,
+ASTNode ASTNode::makeUnaryOp(TokenType op, ASTNode expr,
                              TokenMetadata metadata) {
   return ASTNode{NodeType::UNARY_OP,
                  {expr},
@@ -145,9 +140,7 @@ ASTNode ASTNode::makeUnaryOp(TokenType op,
                  metadata};
 }
 
-ASTNode ASTNode::makeAssignOp(TokenType op,
-                              ASTNode lhs_expr,
-                              ASTNode rhs_expr,
+ASTNode ASTNode::makeAssignOp(TokenType op, ASTNode lhs_expr, ASTNode rhs_expr,
                               TokenMetadata metadata) {
   // could probably rewrite rule this immediately
   return ASTNode{NodeType::ASSIGN_OP,
@@ -168,7 +161,7 @@ ASTNode ASTNode::makeLiteral(int value, TokenMetadata metadata) {
   return ASTNode{NodeType::INT_LITERAL, {}, {{"value", value}}, metadata};
 }
 
-ASTNode ASTNode::makeLiteral(float value, TokenMetadata metadata) {
+ASTNode ASTNode::makeLiteral(double value, TokenMetadata metadata) {
   return ASTNode{NodeType::FLOAT_LITERAL, {}, {{"value", value}}, metadata};
 }
 
@@ -180,9 +173,7 @@ ASTNode ASTNode::makeNothingLiteral(TokenMetadata metadata) {
   return ASTNode{NodeType::NOTHING_LITERAL, {}, {}, metadata};
 }
 
-ASTNode ASTNode::nothing() {
-  return ASTNode{};
-}
+ASTNode ASTNode::nothing() { return ASTNode{}; }
 
 //////////////////////////////////////////////////////////////////
 // END OF ASTNode factory methods
@@ -192,20 +183,18 @@ ASTNode ASTNode::nothing() {
 // json conversion methods
 //////////////////////////////////////////////////////////////////
 
-void to_json(json& j, const ASTNode& node) {
+void to_json(json &j, const ASTNode &node) {
   auto type_string = node_type_to_string(node.type);
   auto type_int = (int)node.type;
 
   j = json{
-      {"type_string", type_string},
-      {"type_int", type_int},
-      {"zchildren", node.children},
-      {"data", node.data},
+      {"type_string", type_string}, {"type_int", type_int},
+      {"zchildren", node.children}, {"data", node.data},
       {"xmetadata", node.metadata},
   };
 }
 
-void from_json(const json& j, ASTNode& node) {
+void from_json(const json &j, ASTNode &node) {
   auto ntype = j.at("type_int");
   assert(ntype.is_number_integer());
   auto ntype_int = ntype.get<int>();

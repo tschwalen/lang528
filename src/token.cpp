@@ -47,7 +47,7 @@ void to_json(json &j, const Token &t) {
     j["value"] = std::get<int>(value_variant);
     break;
   case 2: // float
-    j["value"] = std::get<float>(value_variant);
+    j["value"] = std::get<double>(value_variant);
     break;
   case 3: // string
     j["value"] = std::get<string>(value_variant);
@@ -75,7 +75,7 @@ void from_json(const json &j, Token &t) {
   if (value.is_null()) {
     t.value = {};
   } else if (value.is_number_float()) {
-    t.value = value.get<float>();
+    t.value = value.get<double>();
   } else if (value.is_number_integer()) {
     t.value = value.get<int>();
   } else if (value.is_string()) {

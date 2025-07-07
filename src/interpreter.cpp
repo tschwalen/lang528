@@ -334,7 +334,7 @@ EvalResult eval_string_literal(ASTNode &node, SymbolTable &st) {
 }
 
 EvalResult eval_float_literal(ASTNode &node, SymbolTable &st) {
-  auto value = node.data.at("value").get<float>();
+  auto value = node.data.at("value").get<double>();
   return EvalResult{BoxedValue{DataType::FLOAT, value}};
 }
 

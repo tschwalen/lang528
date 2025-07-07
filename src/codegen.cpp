@@ -349,7 +349,7 @@ CompNodeResult gen_int_literal(ASTNode &node, CompSymbolTable &st) {
 }
 
 CompNodeResult gen_float_literal(ASTNode &node, CompSymbolTable &st) {
-  auto value = node.data.at("value").get<float>();
+  auto value = node.data.at("value").get<double>();
   std::stringstream ss;
   ss << "make_float(" << value << ")";
   auto s = ss.str();

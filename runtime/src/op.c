@@ -421,7 +421,7 @@ RuntimeObject *_str_concat(String *lhs, RuntimeObject *rhs) {
     }
     break;
   case T_FLOAT:
-    snprintf(rhs_buffer, sizeof(rhs_buffer), "%f", rhs->value.v_float);
+    snprintf(rhs_buffer, sizeof(rhs_buffer), "%.1f", rhs->value.v_float);
     break;
   case T_INT:
     snprintf(rhs_buffer, sizeof(rhs_buffer), "%lld", rhs->value.v_int);

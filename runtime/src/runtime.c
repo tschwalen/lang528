@@ -130,7 +130,7 @@ void _print_helper(RuntimeObject *obj) {
     printf("%lld", obj->value.v_int);
     return;
   case T_FLOAT:
-    printf("%f", obj->value.v_float);
+    printf("%.1f", obj->value.v_float);
     return;
   case T_STRING:
     printf("%s", obj->value.v_str->contents);

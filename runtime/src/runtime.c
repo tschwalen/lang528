@@ -150,13 +150,24 @@ void _print_helper(RuntimeObject *obj) {
 
 void _print_vector(Vector *vec) {
   printf("[");
-  // fencepost problem
   int i = 0;
-  for (; i < vec->size - 1; ++i) {
-    _print_helper(&vec->contents[i]);
-    printf(", ");
+  int length = vec->size;
+  while (i < length) {
+    RuntimeObject *elem = &(vec->contents[i]);
+    bool is_str = elem->type == T_STRING;
+    if (is_str) {
+      printf("\"");
+    }
+    _print_helper(elem);
+    if (is_str) {
+      printf("\"");
+    }
+    if (i != length - 1) {
+      printf(", ");
+    }
+    ++i;
   }
-  _print_helper(&vec->contents[i]);
+
   printf("]");
 }
 

@@ -68,7 +68,7 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
       runtime_error("String index out of bounds.");
     }
 
-    char *string_value = " ";
+    char string_value[2] = " ";
     string_value[0] = lhs->value.v_str->contents[index];
     return make_string(string_value);
   }

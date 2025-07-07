@@ -233,6 +233,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
            << rhs << ");";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
+    intmdt_id = "*" + intmdt_id;
     return CompNodeResult{intmdt_id};
   }
 
@@ -287,7 +288,12 @@ CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
   }
 
   std::stringstream assign_statement_ss;
-  assign_statement_ss << lhs << "=" << new_value;
+  assign_statement_ss << lhs << "=";
+  // assign ptr to new address in this case
+  if (lhs[0] == '*') {
+    assign_statement_ss << "*";
+  }
+  assign_statement_ss << new_value;
   auto assign_statement = assign_statement_ss.str();
   emit(assign_statement);
   return CompNodeResult{};

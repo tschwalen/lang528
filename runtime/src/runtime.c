@@ -7,8 +7,6 @@
 #include "datatype.h"
 #include "runtime.h"
 
-static const int DBL_DECIMAL_DIG = 10;
-
 int placeholder(int x) { return x + x; }
 
 RuntimeObject *dynamic_function_call(RuntimeObject *dynamic_fn, size_t argc,
@@ -132,7 +130,7 @@ void _print_helper(RuntimeObject *obj) {
     printf("%lld", obj->value.v_int);
     return;
   case T_FLOAT:
-    printf("%.17g", obj->value.v_float);
+    printf("%.1f", obj->value.v_float);
     return;
   case T_STRING:
     printf("%s", obj->value.v_str->contents);

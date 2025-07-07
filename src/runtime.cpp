@@ -65,13 +65,9 @@ string toString(BoxedValue bv) {
     result << (std::get<bool>(bv.value) ? "true" : "false");
     break;
   case DataType::FLOAT: {
-    // char buffer[64];
-    // const int DBL_DECIMAL_DIG = 10;
-    // snprintf(buffer, sizeof(buffer), "%.*g", DBL_DECIMAL_DIG,
-    //          std::get<double>(bv.value));
-    // result << buffer << "ahhhhhh";
-    result << std::setprecision(std::numeric_limits<double>::max_digits10)
-           << std::get<double>(bv.value);
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "%.1f", std::get<double>(bv.value));
+    result << buffer;
     break;
   }
   case DataType::INT:

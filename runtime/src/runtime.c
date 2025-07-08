@@ -202,7 +202,7 @@ RuntimeObject *vec_append(RuntimeObject *self, RuntimeObject *obj) {
     vec->internal_size = new_internal_size;
   }
   vec->size = new_size;
-  vec->contents[vec->size] = *obj;
+  vec->contents[vec->size - 1] = *obj;
   return make_nothing();
 }
 

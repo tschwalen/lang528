@@ -381,7 +381,7 @@ bool equality_comparison(RuntimeObject *lhs, RuntimeObject *rhs) {
   case T_STRING: {
     char *lhs_str = lhs->value.v_str->contents;
     char *rhs_str = rhs->value.v_str->contents;
-    return strcmp(lhs_str, rhs_str);
+    return strcmp(lhs_str, rhs_str) == 0;
   }
   case T_FUNCTION:
     runtime_error("Equality Comparison not supported for function type");

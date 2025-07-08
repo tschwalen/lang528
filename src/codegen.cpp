@@ -233,8 +233,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
            << rhs << ");";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
-    intmdt_id = "*" + intmdt_id;
-    return CompNodeResult{intmdt_id};
+    return CompNodeResult{intmdt_id, {}, false, 0, true};
   }
 
   if (node.type == NodeType::FIELD_ACESS) {
@@ -274,7 +273,8 @@ CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
   const size_t LHS = 0, RHS = 1;
   const string op_key = "op";
   auto op = int_to_token_type(node.data.at(op_key).get<int>());
-  auto lhs = gen_node_lvalue(node.children[LHS], st).result_loc.value();
+  auto lhs_result = gen_node_lvalue(node.children[LHS], st);
+  auto lhs = lhs_result.result_loc.value();
   auto rhs = gen_node(node.children[RHS], st).result_loc.value();
 
   auto new_value = rhs;
@@ -288,9 +288,12 @@ CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
   }
 
   std::stringstream assign_statement_ss;
+  if (lhs_result.ptr_result) {
+    assign_statement_ss << "*";
+  }
   assign_statement_ss << lhs << "=";
   // assign ptr to new address in this case
-  if (lhs[0] == '*') {
+  if (lhs_result.ptr_result) {
     assign_statement_ss << "*";
   }
   assign_statement_ss << new_value;

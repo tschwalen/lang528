@@ -24,6 +24,15 @@ static vector<std::pair<string, ASTNode *>> toplevel_decls;
 
 bool is_toplevel_st(CompSymbolTable &st) { return st.parent == nullptr; }
 
+std::string replace_prefix(const std::string &str,
+                           const std::string &old_prefix,
+                           const std::string &new_prefix) {
+  if (str.rfind(old_prefix, 0) == 0) { // string starts with old_prefix
+    return new_prefix + str.substr(old_prefix.length());
+  }
+  return str; // unchanged if prefix doesn't match
+}
+
 // TODO: I'm basically reinventing OOP here, may just need to refactor
 std::optional<CompTableEntry> st_lookup_symbol(CompSymbolTable &st,
                                                string symbol) {
@@ -136,9 +145,10 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   string name = node.data.at("function_name").get<string>();
   vector<string> args = node.data.at("args").get<vector<string>>();
   auto body = node.children[0];
+  bool is_main = name == "main";
 
   // implicitly add argv even if it isn't used
-  if (name == "main" && args.size() == 0) {
+  if (is_main && args.size() == 0) {
     args.push_back("argv");
   }
 
@@ -185,6 +195,27 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
     emit("return make_nothing();\n");
   }
   emit("}");
+
+  // TODO: could selectively emit dynamic version?
+  std::string dynamic_fn_name = "DL528_";
+  dynamic_fn_name += name;
+  emit("RuntimeObject* ");
+  emit(dynamic_fn_name);
+  emit("(size_t _argc, RuntimeObject *argv[]) {\n");
+  std::stringstream return_line;
+  return_line << "    return " << internal_fn_name << "(";
+  for (size_t i = 0; i < args.size(); ++i) {
+    return_line << "\n  argv[" << i << "]";
+    if (i != args.size() - 1) {
+      return_line << ", ";
+    }
+  }
+  return_line << ");";
+  auto s = return_line.str();
+  emit(s);
+
+  emit("}\n");
+
   return CompNodeResult{};
 }
 
@@ -458,6 +489,14 @@ CompNodeResult gen_var_lookup(ASTNode &node, CompSymbolTable &st) {
     throw std::runtime_error(msg);
   }
   auto var = lookup_result->location;
+
+  // Or builtin, later if we choose to do that
+  if (lookup_result->type == CompTableEntryType::FUNC) {
+    auto dynamic_fn_name = replace_prefix(var, "L528_", "DL528_");
+    std::stringstream df_init;
+    df_init << "make_function(&" << dynamic_fn_name << ")";
+    var = df_init.str();
+  }
   return CompNodeResult{var};
 }
 

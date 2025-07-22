@@ -429,7 +429,42 @@ RuntimeObject *_str_concat(String *lhs, RuntimeObject *rhs) {
   case T_STRING:
     rhs_string = rhs->value.v_str->contents;
     break;
-  case T_VECTOR:
+  case T_VECTOR: {
+    // start a string accumulator, with an opening bracket
+    RuntimeObject *acc = _str_concat(lhs, make_string("["));
+
+    size_t length = rhs->value.v_vec->size;
+    RuntimeObject *vec = rhs->value.v_vec->contents;
+
+    for (size_t i = 0; i < length; ++i) {
+      RuntimeObject *elem = &vec[i];
+
+      // check if elem is a string
+      bool is_str = elem->type == T_STRING;
+
+      // add opening quote if string
+      if (is_str) {
+        acc = _str_concat(acc->value.v_str, make_string("\""));
+      }
+
+      acc = _str_concat(acc->value.v_str, elem);
+
+      // add closing quote if string
+      if (is_str) {
+        acc = _str_concat(acc->value.v_str, make_string("\""));
+      }
+
+      // add comma separator unless we're on the last element
+      if (i != length - 1) {
+        acc = _str_concat(acc->value.v_str, make_string(", "));
+      }
+    }
+
+    // add the closing bracket and then return
+    acc = _str_concat(acc->value.v_str, make_string("]"));
+    return acc;
+    break;
+  }
   case T_DICT:
   case T_MODULE:
   case T_FUNCTION:

@@ -1,5 +1,6 @@
 #pragma once
 #include "astnode.h"
+#include "interpreter.h"
 #include <cstddef>
 
 struct CompNodeResult {
@@ -15,6 +16,7 @@ enum class CompTableEntryType { VAR, CONST, FUNC, BUILTIN };
 struct CompTableEntry {
   std::string location;
   CompTableEntryType type;
+  std::optional<std::string> metadata;
 };
 
 struct CompSymbolTable {

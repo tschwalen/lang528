@@ -140,7 +140,12 @@ void _print_helper(RuntimeObject *obj) {
     return;
   case T_DICT:
   case T_MODULE:
-  case T_FUNCTION:
+  case T_FUNCTION: {
+    char *signature = obj->value.v_func.signature;
+    signature = signature == NULL ? "(Signature Unknown)" : signature;
+    printf("function:%s", signature);
+    return;
+  }
   default:
     break;
   }

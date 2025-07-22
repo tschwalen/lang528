@@ -51,6 +51,9 @@ RuntimeObject *make_dict();
 RuntimeObject *make_vector_known_size(size_t size);
 RuntimeObject *make_function(RuntimeObject *(*fn_ptr)(size_t argc,
                                                       RuntimeObject *argv[]));
+RuntimeObject *make_function_with_metadata(
+    RuntimeObject *(*fn_ptr)(size_t argc, RuntimeObject *argv[]),
+    char *signature);
 
 // Vector Methods
 RuntimeObject *vec_length(RuntimeObject *self);

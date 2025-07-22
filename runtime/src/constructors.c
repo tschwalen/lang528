@@ -107,5 +107,16 @@ RuntimeObject *make_function(RuntimeObject *(*fn_ptr)(size_t argc,
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
   obj->type = T_FUNCTION;
   obj->value.v_func.fn_ptr = fn_ptr;
+  obj->value.v_func.signature = NULL;
+  return obj;
+}
+
+RuntimeObject *make_function_with_metadata(
+    RuntimeObject *(*fn_ptr)(size_t argc, RuntimeObject *argv[]),
+    char *signature) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_FUNCTION;
+  obj->value.v_func.fn_ptr = fn_ptr;
+  obj->value.v_func.signature = signature;
   return obj;
 }

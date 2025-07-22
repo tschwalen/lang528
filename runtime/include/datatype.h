@@ -45,6 +45,7 @@ typedef struct {
 typedef struct {
   // potentially other things like number and names of args.
   RuntimeObject *(*fn_ptr)(size_t argc, RuntimeObject *argv[]);
+  char *signature;
 } Function;
 
 struct RuntimeObject {

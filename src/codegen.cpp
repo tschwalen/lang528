@@ -33,6 +33,20 @@ std::string replace_prefix(const std::string &str,
   return str; // unchanged if prefix doesn't match
 }
 
+std::string make_fn_signature_string(const string name,
+                                     const vector<string> args) {
+  std::stringstream sig;
+  sig << name << '(';
+  for (size_t i = 0; i < args.size(); ++i) {
+    sig << args[i];
+    if (i != args.size() - 1) {
+      sig << ", ";
+    }
+  }
+  sig << ')';
+  return sig.str();
+}
+
 // TODO: I'm basically reinventing OOP here, may just need to refactor
 std::optional<CompTableEntry> st_lookup_symbol(CompSymbolTable &st,
                                                string symbol) {
@@ -161,7 +175,9 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   std::string internal_fn_name = "L528_";
   internal_fn_name += name;
   // Add symbol table entry
-  st.entries[name] = CompTableEntry{internal_fn_name, CompTableEntryType::FUNC};
+  auto signature = make_fn_signature_string(name, args);
+  st.entries[name] =
+      CompTableEntry{internal_fn_name, CompTableEntryType::FUNC, signature};
 
   emit("RuntimeObject* ");
   emit(internal_fn_name);
@@ -197,6 +213,7 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   emit("}");
 
   // TODO: could selectively emit dynamic version?
+  // also, should do an argc check since dynamic function calls are given argc
   std::string dynamic_fn_name = "DL528_";
   dynamic_fn_name += name;
   emit("RuntimeObject* ");
@@ -490,11 +507,13 @@ CompNodeResult gen_var_lookup(ASTNode &node, CompSymbolTable &st) {
   }
   auto var = lookup_result->location;
 
-  // Or builtin, later if we choose to do that
+  // TODO: implement this for builtin as well. Will need runtime support
   if (lookup_result->type == CompTableEntryType::FUNC) {
     auto dynamic_fn_name = replace_prefix(var, "L528_", "DL528_");
+    auto signature = lookup_result->metadata.value();
     std::stringstream df_init;
-    df_init << "make_function(&" << dynamic_fn_name << ")";
+    df_init << "make_function_with_metadata(&" << dynamic_fn_name << ", \""
+            << signature << "\")";
     var = df_init.str();
   }
   return CompNodeResult{var};

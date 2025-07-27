@@ -60,6 +60,16 @@ RuntimeObject *field_access(RuntimeObject *lhs, char *identifier) {
     }
   }
 
+  if (lhs->type == T_DICT) {
+    if (strcmp(identifier, "length") == 0) {
+      return make_function(dict_length_dynamic);
+    } else if (strcmp(identifier, "contains") == 0) {
+      return make_function(dict_contains_dynamic);
+    } else if (strcmp(identifier, "keys") == 0) {
+      return make_function(dict_keys_dynamic);
+    }
+  }
+
   runtime_error("invalid or unimplemented field access");
 
   // For modules (and later, classes) there will be a symbol table
@@ -274,4 +284,50 @@ RuntimeObject *str_length_dynamic(size_t argc, RuntimeObject *argv[]) {
     runtime_error("Argument number mismatch for string length");
   }
   return str_length(argv[0]);
+}
+
+RuntimeObject *dict_length(RuntimeObject *self) {
+  return make_int(self->value.v_dict->size);
+}
+
+RuntimeObject *dict_keys(RuntimeObject *self) {
+  Dict *dict = self->value.v_dict;
+  size_t size = dict->size;
+  RuntimeObject *result_vec = make_vector_known_size(size);
+
+  for (size_t i = 0; i < dict->capacity; ++i) {
+    if (dict->entries[i].key_hash.contents != NULL) {
+      DictEntry *entry = &dict->entries[i];
+      vec_append(result_vec, entry->key);
+    }
+  }
+  return result_vec;
+}
+
+RuntimeObject *dict_contains(RuntimeObject *self, RuntimeObject *key) {
+  Dict *dict = self->value.v_dict;
+  String *hash_key = get_dict_key(key);
+  RuntimeObject *result = dict_get(dict, hash_key->contents);
+  return make_bool(result != NULL);
+}
+
+RuntimeObject *dict_length_dynamic(size_t argc, RuntimeObject *argv[]) {
+  if (argc != 1) {
+    runtime_error("Argument number mismatch for dict length");
+  }
+  return dict_length(argv[0]);
+}
+
+RuntimeObject *dict_keys_dynamic(size_t argc, RuntimeObject *argv[]) {
+  if (argc != 1) {
+    runtime_error("Argument number mismatch for dict keys");
+  }
+  return dict_keys(argv[0]);
+}
+
+RuntimeObject *dict_contains_dynamic(size_t argc, RuntimeObject *argv[]) {
+  if (argc != 2) {
+    runtime_error("Argument number mismatch for dict contains");
+  }
+  return dict_contains(argv[0], argv[1]);
 }

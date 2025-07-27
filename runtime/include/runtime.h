@@ -67,3 +67,9 @@ RuntimeObject *str_length_dynamic(size_t argc, RuntimeObject *argv[]);
 
 // Dictionary Methods
 void _dict_put(RuntimeObject *dict, RuntimeObject *key, RuntimeObject *value);
+RuntimeObject *dict_length(RuntimeObject *self);
+RuntimeObject *dict_keys(RuntimeObject *self);
+RuntimeObject *dict_contains(RuntimeObject *self, RuntimeObject *key);
+RuntimeObject *dict_length_dynamic(size_t argc, RuntimeObject *argv[]);
+RuntimeObject *dict_keys_dynamic(size_t argc, RuntimeObject *argv[]);
+RuntimeObject *dict_contains_dynamic(size_t argc, RuntimeObject *argv[]);

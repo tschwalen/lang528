@@ -39,8 +39,8 @@ typedef struct {
 
 typedef struct {
   DictEntry *entries;
-  size_t capacity;
-  size_t size;
+  size_t capacity; // internal size
+  size_t size;     // utilized size
 } Dict;
 
 typedef struct {

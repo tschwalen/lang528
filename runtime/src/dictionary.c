@@ -33,7 +33,6 @@ RuntimeObject *dict_get(Dict *dict, const char *key) {
   return NULL;
 }
 
-// Need to pass key object
 static const char *dict_set_entry(DictEntry *entries, size_t capacity,
                                   const char *key_hash, RuntimeObject *key,
                                   RuntimeObject *value, size_t *plength) {
@@ -66,7 +65,6 @@ static const char *dict_set_entry(DictEntry *entries, size_t capacity,
   }
   entries[index].key_hash.contents = (char *)key_hash;
   entries[index].key_hash.length = strlen(key_hash);
-  // Need to set key object
   entries[index].key = key;
   entries[index].value = value;
   return key_hash;

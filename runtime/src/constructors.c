@@ -38,6 +38,9 @@ Dict *make_empty_dict() {
   dict->size = 0;
   dict->capacity = DICT_INITIAL_SIZE;
   dict->entries = calloc(DICT_INITIAL_SIZE, sizeof(DictEntry));
+  for (size_t i = 0; i < DICT_INITIAL_SIZE; ++i) {
+    dict->entries[i].key_hash.contents = NULL;
+  }
   return dict;
 }
 

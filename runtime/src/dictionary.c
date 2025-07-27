@@ -82,6 +82,9 @@ static bool dict_expand(Dict *table) {
   if (new_entries == NULL) {
     return false;
   }
+  for (size_t i = 0; i < new_capacity; ++i) {
+    new_entries[i].key_hash.contents = NULL;
+  }
 
   // Iterate entries, move all non-empty ones to new table's entries.
   for (size_t i = 0; i < table->capacity; i++) {

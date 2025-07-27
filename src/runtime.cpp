@@ -102,11 +102,13 @@ string toString(BoxedValue bv) {
     size_t length = dict->size();
     for (const auto &[_raw_key, kv_pair] : *dict) {
       auto key = kv_pair.first;
-      auto quotes = key.type == DataType::STRING ? "\"" : "";
-
       auto value = kv_pair.second;
-      result << quotes << toString(key) << quotes << ": "
-             << toString(BoxedValue{value->type, value->value});
+      auto key_quotes = key.type == DataType::STRING ? "\"" : "";
+      auto value_quotes = value->type == DataType::STRING ? "\"" : "";
+
+      result << key_quotes << toString(key) << key_quotes << ": "
+             << value_quotes << toString(BoxedValue{value->type, value->value})
+             << value_quotes;
       if (i != length - 1) {
         result << ", ";
       }

@@ -183,13 +183,15 @@ void _print_helper(RuntimeObject *obj) {
     _print_vector(obj->value.v_vec);
     return;
   case T_DICT:
-  case T_MODULE:
+    printf("%s", to_string_raw(obj)->contents);
+    return;
   case T_FUNCTION: {
     char *signature = obj->value.v_func.signature;
     signature = signature == NULL ? "(Signature Unknown)" : signature;
     printf("function:%s", signature);
     return;
   }
+  case T_MODULE:
   default:
     break;
   }
@@ -299,8 +301,7 @@ RuntimeObject *dict_length(RuntimeObject *self) {
 
 RuntimeObject *dict_keys(RuntimeObject *self) {
   Dict *dict = self->value.v_dict;
-  size_t size = dict->size;
-  RuntimeObject *result_vec = make_vector_known_size(size);
+  RuntimeObject *result_vec = make_vector();
 
   for (size_t i = 0; i < dict->capacity; ++i) {
     if (dict->entries[i].key_hash.contents != NULL) {

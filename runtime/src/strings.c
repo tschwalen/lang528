@@ -1,5 +1,7 @@
 #include "datatype.h"
+#include "dictionary.h"
 #include "rtutil.h"
+#include "runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,10 +99,51 @@ String *to_string_raw(RuntimeObject *obj) {
     break;
   } break;
   case T_DICT: {
+    // start a string accumulator, with an opening bracket
+    String *acc = make_string_raw("{");
+    Vector *keys = dict_keys(obj)->value.v_vec;
+
+    for (size_t i = 0; i < keys->size; ++i) {
+      RuntimeObject *key_obj = &keys->contents[i];
+      String *key_hash = get_dict_key(key_obj);
+      RuntimeObject *value_obj =
+          dict_get(obj->value.v_dict, key_hash->contents);
+
+      bool key_is_str = key_obj->type == T_STRING;
+      bool value_is_str = value_obj->type == T_STRING;
+
+      if (key_is_str) {
+        acc = str_concat_raw(acc, make_string_raw("\""));
+      }
+      acc = str_concat_raw(acc, to_string_raw(key_obj));
+      if (key_is_str) {
+        acc = str_concat_raw(acc, make_string_raw("\""));
+      }
+      acc = str_concat_raw(acc, make_string_raw(": "));
+
+      if (value_is_str) {
+        acc = str_concat_raw(acc, make_string_raw("\""));
+      }
+      acc = str_concat_raw(acc, to_string_raw(value_obj));
+      if (value_is_str) {
+        acc = str_concat_raw(acc, make_string_raw("\""));
+      }
+
+      // add comma separator unless we're on the last element
+      if (i != keys->size - 1) {
+        acc = str_concat_raw(acc, make_string_raw(", "));
+      }
+    }
+    // add the closing bracket and then return
+    acc = str_concat_raw(acc, make_string_raw("}"));
+    return acc;
   } break;
   case T_MODULE: {
   } break;
   case T_FUNCTION: {
+    char *signature = obj->value.v_func.signature;
+    signature = signature == NULL ? "(Signature Unknown)" : signature;
+    return make_string_raw(strdupcat("function:", signature));
   } break;
   }
   return make_string_raw("NOT_IMPLEMENTED");

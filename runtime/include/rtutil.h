@@ -11,3 +11,5 @@ String *make_string_nocopy_raw(char *value);
 String *str_concat_raw(String *lhs, String *rhs);
 
 String *to_string_raw(RuntimeObject *obj);
+
+String *get_dict_key(RuntimeObject *key);

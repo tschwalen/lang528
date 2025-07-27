@@ -384,6 +384,7 @@ bool equality_comparison(RuntimeObject *lhs, RuntimeObject *rhs) {
     char *rhs_str = rhs->value.v_str->contents;
     return strcmp(lhs_str, rhs_str) == 0;
   }
+  // TODO - vector and dict
   case T_FUNCTION:
     runtime_error("Equality Comparison not supported for function type");
   case T_MODULE:

@@ -9,6 +9,8 @@
 #include "rtutil.h"
 #include "runtime.h"
 
+bool equality_comparison(RuntimeObject *lhs, RuntimeObject *rhs);
+
 RuntimeObject *_op_add_int(int64_t lhs, RuntimeObject *rhs) {
   RuntimeObject *obj = malloc(sizeof(RuntimeObject));
   switch (rhs->type) {
@@ -362,6 +364,72 @@ RuntimeObject *_op_gt_float(double lhs, RuntimeObject *rhs) {
   return obj;
 }
 
+bool vector_equality_comparison(Vector *lhs, Vector *rhs) {
+  // trivially, if vectors don't have the same size then they're not equal
+  if (lhs->size != rhs->size) {
+    return false;
+  }
+
+  // trivially, if vectors are the same size and one is empty, then both are
+  // empty and they are equal
+  if (lhs->size == 0) {
+    return true;
+  }
+
+  // otherwise, do an equality comparison for every element, recursively
+  // checking any sub-vectors in the same way
+  for (size_t i = 0; i < lhs->size; ++i) {
+    RuntimeObject *lhs_elem = &lhs->contents[i];
+    RuntimeObject *rhs_elem = &rhs->contents[i];
+
+    if (!equality_comparison(lhs_elem, rhs_elem)) {
+      return false;
+    }
+  }
+
+  // if we've made it here, then both vectors are equal
+  return true;
+}
+
+bool dict_equality_comparison(Dict *lhs, Dict *rhs) {
+  // trivially, if dicts don't have the same size then they're not equal
+  if (lhs->size != rhs->size) {
+    return false;
+  }
+
+  // trivially, if dicts are the same size and one is empty, then both are
+  // empty and they are equal
+  if (lhs->size == 0) {
+    return true;
+  }
+
+  // otherwise, check that each key-value pair in the left dict matches
+  // the right dict. Since we checked the sizes, if we don't fail any
+  // equality checks then they're equal.
+  RuntimeObject *lhs_keys = dict_keys(lhs);
+
+  for (const auto &[_raw_key, kv_pair] : *lhs) {
+    auto str_key = getDictKey(kv_pair.first);
+
+    // if the lhs key isn't in the rhs dict, then we already know
+    // they're not equal
+    if (!rhs->contains(str_key)) {
+      return false;
+    }
+
+    // compare the values of each
+    auto lhs_value = kv_pair.second;
+    auto rhs_value = rhs->at(str_key).second;
+    if (!equality_comparison(BoxedValue{lhs_value->type, lhs_value->value},
+                             BoxedValue{rhs_value->type, rhs_value->value})) {
+      return false;
+    }
+  }
+
+  // if we've made it here, then both dicts are equal
+  return true;
+}
+
 bool equality_comparison(RuntimeObject *lhs, RuntimeObject *rhs) {
   if (lhs->type != rhs->type) {
     return false;
@@ -383,6 +451,11 @@ bool equality_comparison(RuntimeObject *lhs, RuntimeObject *rhs) {
     char *lhs_str = lhs->value.v_str->contents;
     char *rhs_str = rhs->value.v_str->contents;
     return strcmp(lhs_str, rhs_str) == 0;
+  }
+  case T_VECTOR: {
+    return vector_equality_comparison(lhs->value.v_vec, rhs->value.v_vec);
+  }
+  case T_DICT: {
   }
   // TODO - vector and dict
   case T_FUNCTION:

@@ -5,9 +5,33 @@
 #include <strings.h>
 
 #include "datatype.h"
+#include "dictionary.h"
+#include "rtutil.h"
 #include "runtime.h"
 
 int placeholder(int x) { return x + x; }
+
+String *get_dict_key(RuntimeObject *key) {
+  char *type_id = NULL;
+  switch (key->type) {
+  case T_BOOL:
+    type_id = "bool:";
+  case T_FLOAT:
+    type_id = "float:";
+    break;
+  case T_INT:
+    type_id = "int:";
+    break;
+  case T_STRING:
+    type_id = "string:";
+    break;
+  default: {
+    runtime_error("Unhashable type used for dictionary key");
+  }
+  }
+
+  return str_concat_raw(make_string_raw(type_id), to_string_raw(key));
+}
 
 RuntimeObject *dynamic_function_call(RuntimeObject *dynamic_fn, size_t argc,
                                      RuntimeObject *argv[]) {
@@ -74,8 +98,11 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
   }
 
   if (lhs->type == T_DICT) {
-    // TODO: need to do dict key stuff
-    runtime_error("Not impemented (dict get_index)");
+    String *key_hash = get_dict_key(rhs);
+    RuntimeObject *maybe_result =
+        dict_get(lhs->value.v_dict, key_hash->contents);
+
+    return maybe_result == NULL ? make_nothing() : maybe_result;
   }
 
   printf("LHS type: %d\n", lhs->type);
@@ -174,6 +201,19 @@ void _print_vector(Vector *vec) {
   }
 
   printf("]");
+}
+
+void _dict_put(RuntimeObject *dict, RuntimeObject *key, RuntimeObject *value) {
+  // make sure dict is a dict
+  if (dict->type != T_DICT) {
+    runtime_error("_dict_put called on a non-dictionary object.");
+  }
+
+  // Check if hashable, and get hash
+  String *key_hash = get_dict_key(key);
+
+  // create and insert dictionary entry
+  dict_set(dict->value.v_dict, *key_hash, key, value);
 }
 
 void builtin_print(RuntimeObject *arg) {

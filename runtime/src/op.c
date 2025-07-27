@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "datatype.h"
+#include "rtutil.h"
 #include "runtime.h"
 
 RuntimeObject *_op_add_int(int64_t lhs, RuntimeObject *rhs) {
@@ -391,20 +392,6 @@ bool equality_comparison(RuntimeObject *lhs, RuntimeObject *rhs) {
   }
   }
   return false;
-}
-
-/*
- * Take two C strings, allocate heap space for their combined length,
- * then concatenate them.
- */
-char *strdupcat(const char *str1, const char *str2) {
-  size_t len = strlen(str1) + strlen(str2) + 1;
-  char *result = malloc(len);
-  if (result) {
-    strcpy(result, str1);
-    strcat(result, str2);
-  }
-  return result;
 }
 
 RuntimeObject *_str_concat(String *lhs, RuntimeObject *rhs) {

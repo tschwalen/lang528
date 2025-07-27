@@ -32,7 +32,8 @@ typedef struct {
 } Vector;
 
 typedef struct {
-  String key;
+  String key_hash;
+  RuntimeObject *key;
   RuntimeObject *value;
 } DictEntry;
 

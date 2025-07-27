@@ -64,3 +64,6 @@ RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]);
 // String Methods
 RuntimeObject *str_length(RuntimeObject *self);
 RuntimeObject *str_length_dynamic(size_t argc, RuntimeObject *argv[]);
+
+// Dictionary Methods
+void _dict_put(RuntimeObject *dict, RuntimeObject *key, RuntimeObject *value);

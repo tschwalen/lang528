@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 #include "astnode.h"
 #include "codegen.h"
@@ -566,6 +567,46 @@ CompNodeResult gen_vec_literal(ASTNode &node, CompSymbolTable &st) {
   return CompNodeResult{intmdt_id};
 }
 
+CompNodeResult gen_dict_literal(ASTNode &node, CompSymbolTable &st) {
+  auto child_nodes = node.children;
+  if (child_nodes.size() % 2 != 0) {
+    throw std::runtime_error(
+        "Compile error - odd number of children in dict literal node");
+  }
+
+  // Process and collect and key/value child expressions:
+  // iterate two at a time to simulate pairs
+  // {a: b, c: d} -> [a, b, c, d]
+  vector<std::pair<string, string>> entries;
+  for (size_t v_index = 1; v_index < child_nodes.size(); v_index += 2) {
+    size_t k_index = v_index - 1;
+    auto key = gen_node(child_nodes[k_index], st).result_loc.value();
+    auto value = gen_node(child_nodes[v_index], st).result_loc.value();
+    entries.push_back(std::make_pair(key, value));
+  }
+
+  // Generate the declaration statement for the actual runtime object.
+  auto intmdt_id = st_new_intmdt(st);
+  std::stringstream decl;
+  decl << "RuntimeObject * " << intmdt_id << " = "
+       << "make_dict();"
+       << "\n";
+  auto decl_str = decl.str();
+  emit(decl_str);
+
+  // then generate the code to put all the entries into place.
+  for (auto &pair : entries) {
+    std::stringstream stmt;
+    stmt << "_dict_put(" << intmdt_id << ',' << pair.first << ',' << pair.second
+         << ");\n";
+    auto stmt_str = stmt.str();
+    emit(stmt_str);
+  }
+
+  // return the location of the created dictionary
+  return CompNodeResult{intmdt_id};
+}
+
 CompNodeResult gen_binary_op(ASTNode &node, CompSymbolTable &st) {
   const size_t LHS = 0, RHS = 1;
   const string op_key = "op";
@@ -600,10 +641,11 @@ CompNodeResult gen_unary_op(ASTNode &node, CompSymbolTable &st) {
 
   // NOTE intermediates are probably unneccesary, but are the right pattern to
   // use if we were going to convert this to generating 3-address code later on.
-  std::stringstream intmdt;
-  intmdt << "_intmdt" << st.intermediates;
-  st.intermediates++;
-  auto intmdt_str = intmdt.str();
+  // std::stringstream intmdt;
+  // intmdt << "_intmdt" << st.intermediates;
+  // st.intermediates++;
+  // auto intmdt_str = intmdt.str();
+  auto intmdt_str = st_new_intmdt(st);
   emit("RuntimeObject* ");
   emit(intmdt_str);
   emit(" = ");
@@ -727,9 +769,9 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   case NodeType::VEC_LITERAL:
     return gen_vec_literal(node, st);
     break;
-  // case NodeType::DICT_LITERAL:
-  //   return eval_dict_literal(node, st);
-  //   break;
+  case NodeType::DICT_LITERAL:
+    return gen_dict_literal(node, st);
+    break;
   case NodeType::BOOL_LITERAL:
     return gen_bool_literal(node, st);
     break;

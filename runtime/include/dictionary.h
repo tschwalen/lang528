@@ -9,4 +9,5 @@
 
 RuntimeObject *dict_get(Dict *dict, const char *key);
 
-const char *dict_set(Dict *dict, const char *key, RuntimeObject *value);
+const char *dict_set(Dict *dict, String key_hash, RuntimeObject *key,
+                     RuntimeObject *value);

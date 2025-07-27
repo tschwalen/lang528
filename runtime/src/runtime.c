@@ -112,7 +112,14 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
     RuntimeObject *maybe_result =
         dict_get(lhs->value.v_dict, key_hash->contents);
 
-    return maybe_result == NULL ? make_nothing() : maybe_result;
+    if (maybe_result != NULL) {
+      return maybe_result;
+    }
+
+    dict_set(lhs->value.v_dict, *key_hash, rhs, make_nothing());
+    maybe_result = dict_get(lhs->value.v_dict, key_hash->contents);
+
+    return maybe_result;
   }
 
   printf("LHS type: %d\n", lhs->type);

@@ -11,3 +11,5 @@ RuntimeObject *dict_get(Dict *dict, const char *key);
 
 const char *dict_set(Dict *dict, String key_hash, RuntimeObject *key,
                      RuntimeObject *value);
+
+DictEntry *dict_get_entry(Dict *dict, const char *key);

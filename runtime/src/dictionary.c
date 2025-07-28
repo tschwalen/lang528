@@ -33,6 +33,26 @@ RuntimeObject *dict_get(Dict *dict, const char *key) {
   return NULL;
 }
 
+DictEntry *dict_get_entry(Dict *dict, const char *key) {
+  // AND hash with capacity-1 to ensure it's within entries array.
+  uint64_t hash = hash_key(key);
+  size_t index = (size_t)(hash & (uint64_t)(dict->capacity - 1));
+
+  // Loop till we find an empty entry.
+  while (dict->entries[index].key_hash.contents != NULL) {
+    if (strcmp(key, dict->entries[index].key_hash.contents) == 0) {
+      return &dict->entries[index];
+    }
+    // Key wasn't in this slot, move to next (linear probing).
+    index++;
+    if (index >= dict->capacity) {
+      // At end of entries array, wrap around.
+      index = 0;
+    }
+  }
+  return NULL;
+}
+
 static const char *dict_set_entry(DictEntry *entries, size_t capacity,
                                   const char *key_hash, RuntimeObject *key,
                                   RuntimeObject *value, size_t *plength) {

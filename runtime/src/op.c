@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "datatype.h"
+#include "dictionary.h"
 #include "rtutil.h"
 #include "runtime.h"
 
@@ -406,22 +407,16 @@ bool dict_equality_comparison(Dict *lhs, Dict *rhs) {
   // otherwise, check that each key-value pair in the left dict matches
   // the right dict. Since we checked the sizes, if we don't fail any
   // equality checks then they're equal.
-  RuntimeObject *lhs_keys = dict_keys(lhs);
+  Vector *lhs_keys = dict_keys_raw(lhs)->value.v_vec;
 
-  for (const auto &[_raw_key, kv_pair] : *lhs) {
-    auto str_key = getDictKey(kv_pair.first);
+  for (size_t i = 0; i < lhs_keys->size; ++i) {
+    RuntimeObject *key = &lhs_keys->contents[i];
+    String *key_hash = get_dict_key(key);
 
-    // if the lhs key isn't in the rhs dict, then we already know
-    // they're not equal
-    if (!rhs->contains(str_key)) {
-      return false;
-    }
+    RuntimeObject *lhs_result = dict_get(lhs, key_hash->contents);
+    RuntimeObject *rhs_result = dict_get(rhs, key_hash->contents);
 
-    // compare the values of each
-    auto lhs_value = kv_pair.second;
-    auto rhs_value = rhs->at(str_key).second;
-    if (!equality_comparison(BoxedValue{lhs_value->type, lhs_value->value},
-                             BoxedValue{rhs_value->type, rhs_value->value})) {
+    if (!equality_comparison(lhs_result, rhs_result)) {
       return false;
     }
   }
@@ -456,8 +451,8 @@ bool equality_comparison(RuntimeObject *lhs, RuntimeObject *rhs) {
     return vector_equality_comparison(lhs->value.v_vec, rhs->value.v_vec);
   }
   case T_DICT: {
+    return dict_equality_comparison(lhs->value.v_dict, rhs->value.v_dict);
   }
-  // TODO - vector and dict
   case T_FUNCTION:
     runtime_error("Equality Comparison not supported for function type");
   case T_MODULE:

@@ -13,3 +13,5 @@ String *str_concat_raw(String *lhs, String *rhs);
 String *to_string_raw(RuntimeObject *obj);
 
 String *get_dict_key(RuntimeObject *key);
+
+RuntimeObject *dict_keys_raw(Dict *dict);

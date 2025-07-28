@@ -299,10 +299,8 @@ RuntimeObject *dict_length(RuntimeObject *self) {
   return make_int(self->value.v_dict->size);
 }
 
-RuntimeObject *dict_keys(RuntimeObject *self) {
-  Dict *dict = self->value.v_dict;
+RuntimeObject *dict_keys_raw(Dict *dict) {
   RuntimeObject *result_vec = make_vector();
-
   for (size_t i = 0; i < dict->capacity; ++i) {
     if (dict->entries[i].key_hash.contents != NULL) {
       DictEntry *entry = &dict->entries[i];
@@ -310,6 +308,11 @@ RuntimeObject *dict_keys(RuntimeObject *self) {
     }
   }
   return result_vec;
+}
+
+RuntimeObject *dict_keys(RuntimeObject *self) {
+  Dict *dict = self->value.v_dict;
+  return dict_keys_raw(dict);
 }
 
 RuntimeObject *dict_contains(RuntimeObject *self, RuntimeObject *key) {

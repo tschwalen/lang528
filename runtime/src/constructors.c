@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "datatype.h"
-#include "rtutil.h"
 
 #define max(a, b) a > b ? a : b;
 

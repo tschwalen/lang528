@@ -16,8 +16,8 @@ enum DataType {
   T_STRING,
   T_VECTOR,
   T_DICT,
-  T_MODULE,  // TBD
-  T_FUNCTION // TBD
+  T_MODULE,
+  T_FUNCTION
 };
 
 typedef struct {
@@ -48,6 +48,16 @@ typedef struct {
   RuntimeObject *(*fn_ptr)(size_t argc, RuntimeObject *argv[]);
   char *signature;
 } Function;
+
+/*
+thoughts:
+Module is just a function pointer to a lookup table.
+Need to figure out how to handle const vs var.
+*/
+typedef struct {
+  RuntimeObject *(*lookup_fn)(char *identifier);
+  char *name;
+} Module;
 
 struct RuntimeObject {
   enum DataType type;

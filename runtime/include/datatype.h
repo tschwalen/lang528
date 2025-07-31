@@ -49,14 +49,19 @@ typedef struct {
   char *signature;
 } Function;
 
-/*
-thoughts:
-Module is just a function pointer to a lookup table.
-Need to figure out how to handle const vs var.
-*/
 typedef struct {
-  RuntimeObject *(*lookup_fn)(char *identifier);
-  char *name;
+  const char *name;
+  RuntimeObject *value;
+} RuntimeSymbolTableEntry;
+
+typedef struct {
+  const size_t size;
+  RuntimeSymbolTableEntry *entries;
+} RuntimeSymbolTable;
+
+typedef struct {
+  const char *name;
+  RuntimeSymbolTable table;
 } Module;
 
 struct RuntimeObject {
@@ -68,6 +73,7 @@ struct RuntimeObject {
     String *v_str;
     Vector *v_vec;
     Dict *v_dict;
-    Function v_func;
+    Function v_func; // TODO replace with ptr to keep objects small
+    Module *v_mod;
   } value;
 };

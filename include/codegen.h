@@ -24,6 +24,7 @@ struct CompSymbolTable {
   std::unordered_map<string, CompTableEntry> entries;
   int locals = 0;
   int intermediates = 0;
+  bool is_module = false;
 };
 
 CompNodeResult gen_node_root(ASTNode &node);

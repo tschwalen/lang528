@@ -11,6 +11,7 @@
 #include "codegen.h"
 #include "nodetype.h"
 #include "tokentype.h"
+#include "util.h"
 
 using std::string;
 using std::unordered_map;
@@ -20,6 +21,9 @@ using std::vector;
 // Might need to pass around more context than that,
 static int LABELS = 0;
 static int LOCALS = 0;
+static int MODULES = 0;
+
+static string WORKING_DIRECTORY = std::getenv("PWD");
 
 static vector<std::pair<string, ASTNode *>> toplevel_decls;
 
@@ -173,8 +177,16 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   }
 
   // All program-defined functions get this prefix
-  std::string internal_fn_name = "L528_";
-  internal_fn_name += name;
+  std::stringstream fn_name_ss;
+  fn_name_ss << "L528_";
+
+  // add MOD here to prevent internal naming clashes
+  if (st.is_module) {
+    fn_name_ss << "MOD" << MODULES << '_';
+  }
+
+  fn_name_ss << name;
+  auto internal_fn_name = fn_name_ss.str();
   // Add symbol table entry
   auto signature = make_fn_signature_string(name, args);
   st.entries[name] =
@@ -235,6 +247,59 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   emit("}\n");
 
   return CompNodeResult{};
+}
+
+CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
+  string module_path = node.data.at("module_path").get<string>();
+  string path = WORKING_DIRECTORY + "/" + module_path;
+
+  // read the file at path if it exists, load its contents as AST
+  auto module_nodes = UTIL::load_module(path);
+
+  // AST root should always be TOP_LEVEL
+  assert(module_nodes.type == NodeType::TOP_LEVEL);
+
+  MODULES++;
+  CompSymbolTable t{&st, {}, 0, st.intermediates, true};
+
+  for (auto &child : module_nodes.children) {
+    gen_node(child, t);
+  }
+
+  // if this is a named import, create a module object and place it in the
+  // symbol table
+  if (node.data.contains("module_name")) {
+    auto module_name = node.data.at("module_name").get<string>();
+    throw std::runtime_error("NAMED IMPORT NOT IMPLEMENTED");
+
+    /* TODO:
+      Generate the lookup table, then create top-level variable of module type,
+      add that to symbol table.
+      */
+
+    // st.entries[module_name] = SymbolTableEntry{
+    //     VarType::CONST, std::make_shared<BoxedValue>(
+    //                         DataType::MODULE, Module{module_name,
+    //                         module_st})};
+  }
+  // otherwise merge all symbol table entries except for main
+  else {
+    for (const auto &[id, entry] : t.entries) {
+      // skip if main
+      if (id == "main") {
+        continue;
+      }
+
+      // throw error if name taken
+      if (st.entries.contains(id)) {
+        auto message = "Symbol aready defined in scope: " + id;
+        throw std::runtime_error(message);
+      }
+
+      // otherwise set entry
+      st.entries[id] = entry;
+    }
+  }
 }
 
 CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
@@ -733,9 +798,9 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   case NodeType::FUNC_DECLARE:
     return gen_function_declare(node, st);
     break;
-  // case NodeType::MODULE_IMPORT:
-  //   return eval_module_import(node, st);
-  //   break;
+  case NodeType::MODULE_IMPORT:
+    return gen_module_import(node, st);
+    break;
   case NodeType::IF:
     return gen_if(node, st);
     break;

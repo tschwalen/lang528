@@ -735,14 +735,6 @@ RuntimeObject *op_umin(RuntimeObject *rhs) {
   }
   default: {
     runtime_error("Invalid type for unary minus");
-    /* test cat, do not delete
-    //                              Z
-    //     \                      z
-    //      |                   z
-    //       \  _-----_   ^  ^
-    //        |          > '' <
-    //         \_ э ___ э  uu
-    */
   }
   }
   return obj;

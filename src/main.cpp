@@ -130,8 +130,8 @@ int main(int argc, char **argv) {
     auto file_contents = UTIL::get_whole_file(file_path);
     auto tokens = lex_string(file_contents);
     auto ast = parse_tokens(tokens);
-
-    gen_node_root(ast);
+    auto module_wd = UTIL::get_file_path_directory(file_path);
+    gen_node_root(ast, module_wd);
     return 0;
   }
 

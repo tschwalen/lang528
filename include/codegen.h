@@ -27,4 +27,4 @@ struct CompSymbolTable {
   bool is_module = false;
 };
 
-CompNodeResult gen_node_root(ASTNode &node);
+CompNodeResult gen_node_root(ASTNode &node, string module_wd);

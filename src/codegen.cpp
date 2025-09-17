@@ -27,7 +27,9 @@ static string WORKING_DIRECTORY = std::getenv("PWD");
 
 static vector<std::pair<string, ASTNode *>> toplevel_decls;
 
-bool is_toplevel_st(CompSymbolTable &st) { return st.parent == nullptr; }
+bool is_toplevel_st(CompSymbolTable &st) {
+  return st.parent == nullptr || st.is_module;
+}
 
 std::string replace_prefix(const std::string &str,
                            const std::string &old_prefix,
@@ -147,6 +149,8 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
   // global declarations go here
   for (auto &entry : toplevel_decls) {
     auto rhs = entry.second;
+    std::cout << "Node type: " << node_type_to_string(rhs->type) << "\n";
+    exit(0);
     auto rhs_result = gen_node(*rhs, st);
     std::stringstream stmt;
     stmt << entry.first << " = " << rhs_result.result_loc.value() << ";\n";
@@ -227,8 +231,8 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
 
   // TODO: could selectively emit dynamic version?
   // also, should do an argc check since dynamic function calls are given argc
-  std::string dynamic_fn_name = "DL528_";
-  dynamic_fn_name += name;
+  std::string dynamic_fn_name = "D";
+  dynamic_fn_name += internal_fn_name;
   emit("RuntimeObject* ");
   emit(dynamic_fn_name);
   emit("(size_t _argc, RuntimeObject *argv[]) {\n");
@@ -252,7 +256,6 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
 CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
   string module_path = node.data.at("module_path").get<string>();
   string path = WORKING_DIRECTORY + "/" + module_path;
-
   // read the file at path if it exists, load its contents as AST
   auto module_nodes = UTIL::load_module(path);
 
@@ -264,6 +267,7 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
 
   for (auto &child : module_nodes.children) {
     gen_node(child, t);
+    emit(";\n");
   }
 
   // if this is a named import, create a module object and place it in the
@@ -284,6 +288,7 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
   }
   // otherwise merge all symbol table entries except for main
   else {
+
     for (const auto &[id, entry] : t.entries) {
       // skip if main
       if (id == "main") {
@@ -300,6 +305,7 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
       st.entries[id] = entry;
     }
   }
+  return CompNodeResult{};
 }
 
 CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
@@ -441,10 +447,9 @@ CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
     auto s = declare_stmt.str();
     emit(s);
 
-    toplevel_decls.push_back({local_id_str, &node.children[0]});
+    toplevel_decls.push_back({local_id_str, &(node.children[0])});
     return CompNodeResult{};
   }
-
   // eval rhs
   auto rhs = node.children[0];
   auto rhs_result = gen_node(rhs, st);
@@ -859,7 +864,8 @@ CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
   }
 }
 
-CompNodeResult gen_node_root(ASTNode &node) {
+CompNodeResult gen_node_root(ASTNode &node, string module_wd) {
+  WORKING_DIRECTORY = module_wd;
   CompSymbolTable root_symbol_table{
       nullptr, {{"print", {"builtin_print", CompTableEntryType::BUILTIN}}}};
   return gen_node(node, root_symbol_table);

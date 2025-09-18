@@ -155,7 +155,12 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
     auto s = stmt.str();
     emit(s);
   }
-  emit("L528_main(make_argv(argc, argv)); \n");
+
+  // Generate the main method entrypoint if a main method is present
+  if (st.entries.contains("main") &&
+      st.entries["main"].type == CompTableEntryType::FUNC) {
+    emit("L528_main(make_argv(argc, argv)); \n");
+  }
   emit("return 0;\n");
   emit("}\n");
 
@@ -515,10 +520,13 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
       throw std::runtime_error(msg);
     }
     auto lookup_value = lookup_result.value();
+
+    // If we can't verify that the lhs value is a C function (a user defined
+    // function or a built-in), then we need to escape out to the dynamic
+    // function call code after all.
     if (!(lookup_value.type == CompTableEntryType::BUILTIN ||
           lookup_value.type == CompTableEntryType::FUNC)) {
-      std::string msg = identifier + " is not a function or builtin.";
-      throw std::runtime_error(msg);
+      goto DYNAMIC;
     }
     auto fn_name = lookup_value.location;
 
@@ -530,10 +538,10 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
   // Dynamic function call where the function value itself is known only
   // at run-time.
   else {
+  DYNAMIC:
     /*
         lhs contains a node which should evaluate to a dynamic function
         rhs
-
     */
     auto lhs_result = gen_node(lhs, st);
     auto rhs_result = gen_node(rhs, st);
@@ -709,10 +717,6 @@ CompNodeResult gen_unary_op(ASTNode &node, CompSymbolTable &st) {
 
   // NOTE intermediates are probably unneccesary, but are the right pattern to
   // use if we were going to convert this to generating 3-address code later on.
-  // std::stringstream intmdt;
-  // intmdt << "_intmdt" << st.intermediates;
-  // st.intermediates++;
-  // auto intmdt_str = intmdt.str();
   auto intmdt_str = st_new_intmdt(st);
   emit("RuntimeObject* ");
   emit(intmdt_str);

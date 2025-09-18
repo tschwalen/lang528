@@ -25,7 +25,7 @@ static int MODULES = 0;
 
 static string WORKING_DIRECTORY = std::getenv("PWD");
 
-static vector<std::pair<string, ASTNode *>> toplevel_decls;
+static vector<std::pair<string, ASTNode>> toplevel_decls;
 
 bool is_toplevel_st(CompSymbolTable &st) {
   return st.parent == nullptr || st.is_module;
@@ -149,9 +149,7 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
   // global declarations go here
   for (auto &entry : toplevel_decls) {
     auto rhs = entry.second;
-    std::cout << "Node type: " << node_type_to_string(rhs->type) << "\n";
-    exit(0);
-    auto rhs_result = gen_node(*rhs, st);
+    auto rhs_result = gen_node(rhs, st);
     std::stringstream stmt;
     stmt << entry.first << " = " << rhs_result.result_loc.value() << ";\n";
     auto s = stmt.str();
@@ -447,7 +445,7 @@ CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
     auto s = declare_stmt.str();
     emit(s);
 
-    toplevel_decls.push_back({local_id_str, &(node.children[0])});
+    toplevel_decls.push_back({local_id_str, node.children[0]});
     return CompNodeResult{};
   }
   // eval rhs

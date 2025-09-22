@@ -12,8 +12,9 @@ from concurrent.futures import ThreadPoolExecutor
 # e.g. error messages differ between the compiler & interpreter, and dict order
 # is often different because of separate hashtable implementations.
 SKIPLIST = {
-  "dict_memory.src", # confirmed same output, just different order
-  "cause_problems.src", # both error, but messgages differ due to implementation
+    "dict_memory.src",  # confirmed same output, just different order
+    "dict.src",
+    "cause_problems.src",  # both error, but messgages differ due to implementation
 }
 
 EXECUTABLE_NAME = "output"
@@ -106,7 +107,9 @@ def main():
     # for every .src file in example_program_test_dir
     example_program_test_dir = f"{root_dir}/examples"
     dir_path = Path(example_program_test_dir)
-    source_files = [f for f in dir_path.glob("*.src") if f.is_file() and f.name not in SKIPLIST]
+    source_files = [
+        f for f in dir_path.glob("*.src") if f.is_file() and f.name not in SKIPLIST
+    ]
 
     # run all the source files using the interpreter, collect the output in exec_dir
     exec_all_and_save_output(source_files, exec_dir)

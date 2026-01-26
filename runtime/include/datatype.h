@@ -55,7 +55,7 @@ typedef struct {
 } RuntimeSymbolTableEntry;
 
 typedef struct {
-  const size_t size;
+  size_t size;
   RuntimeSymbolTableEntry *entries;
 } RuntimeSymbolTable;
 

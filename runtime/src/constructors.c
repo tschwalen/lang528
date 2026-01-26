@@ -123,3 +123,22 @@ RuntimeObject *make_function_with_metadata(
   obj->value.v_func.signature = signature;
   return obj;
 }
+
+RuntimeObject *make_module(char *module_name, size_t num_entries) {
+  RuntimeObject *obj = malloc(sizeof(RuntimeObject));
+  obj->type = T_MODULE;
+
+  Module *mod = malloc(sizeof(Module));
+  mod->name = strdup(module_name);
+  mod->table.size = num_entries;
+  mod->table.entries = malloc(num_entries * sizeof(RuntimeSymbolTableEntry));
+
+  obj->value.v_mod = mod;
+  return obj;
+}
+
+void make_rtste(RuntimeSymbolTableEntry *rtste, char *name,
+                RuntimeObject *value) {
+  rtste->name = strdup(name);
+  rtste->value = value;
+}

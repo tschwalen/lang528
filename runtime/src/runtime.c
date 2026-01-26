@@ -10,6 +10,8 @@
 #include "runtime.h"
 
 int placeholder(int x) { return x + x; }
+RuntimeSymbolTableEntry *runtime_st_lookup(RuntimeSymbolTable *st,
+                                           char *identifier);
 
 String *get_dict_key(RuntimeObject *key) {
   char *type_id = NULL;
@@ -68,6 +70,10 @@ RuntimeObject *field_access(RuntimeObject *lhs, char *identifier) {
     } else if (strcmp(identifier, "keys") == 0) {
       return make_function(dict_keys_dynamic);
     }
+  }
+
+  if (lhs->type == T_MODULE) {
+    return runtime_st_lookup(&lhs->value.v_mod->table, identifier)->value;
   }
 
   runtime_error("invalid or unimplemented field access");
@@ -369,14 +375,16 @@ RuntimeObject *dict_contains_dynamic(size_t argc, RuntimeObject *argv[]) {
 //   return make_nothing();
 // }
 
-RuntimeObject *runtime_st_lookup(RuntimeSymbolTable *st, char *identifier) {
+RuntimeSymbolTableEntry *runtime_st_lookup(RuntimeSymbolTable *st,
+                                           char *identifier) {
   // dead simple linear lookup
   for (size_t i = 0; i < st->size; ++i) {
     RuntimeSymbolTableEntry *p = &st->entries[i];
     if (strcmp(p->name, identifier) == 0) {
-      return p->value;
+      return p;
     }
   }
 
+  runtime_error("Bad module lookup, identifier not found.");
   return NULL;
 }

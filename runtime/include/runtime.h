@@ -54,6 +54,7 @@ RuntimeObject *make_function(RuntimeObject *(*fn_ptr)(size_t argc,
 RuntimeObject *make_function_with_metadata(
     RuntimeObject *(*fn_ptr)(size_t argc, RuntimeObject *argv[]),
     char *signature);
+RuntimeObject *make_module(char *module_name, size_t num_entries);
 
 // Vector Methods
 RuntimeObject *vec_length(RuntimeObject *self);
@@ -73,3 +74,9 @@ RuntimeObject *dict_contains(RuntimeObject *self, RuntimeObject *key);
 RuntimeObject *dict_length_dynamic(size_t argc, RuntimeObject *argv[]);
 RuntimeObject *dict_keys_dynamic(size_t argc, RuntimeObject *argv[]);
 RuntimeObject *dict_contains_dynamic(size_t argc, RuntimeObject *argv[]);
+
+// Module Methods
+void make_rtste(RuntimeSymbolTableEntry *rtste, char *name,
+                RuntimeObject *value);
+RuntimeSymbolTableEntry *runtime_st_lookup(RuntimeSymbolTable *st,
+                                           char *identifier);

@@ -26,6 +26,7 @@ static int MODULES = 0;
 static string WORKING_DIRECTORY = std::getenv("PWD");
 
 static vector<std::pair<string, ASTNode>> toplevel_decls;
+static vector<string> pre_main_init_methods;
 
 bool is_toplevel_st(CompSymbolTable &st) {
   return st.parent == nullptr || st.is_module;
@@ -90,6 +91,58 @@ void emit(string &s) { std::cout << s; }
 
 void emit(const char *s) { std::cout << s; }
 
+void gen_module_init(string identifier, int module_num, string module_name,
+                     CompSymbolTable &t) {
+  std::stringstream name;
+  name << "INIT_L528_MOD" << module_num;
+  auto module_init_method_name = name.str();
+  emit("int ");
+  emit(module_init_method_name);
+  emit("() {\n");
+
+  // init module and assign to global variable
+  std::stringstream ss;
+  ss << identifier << " = make_module(\"" << module_name << "\", "
+     << t.entries.size() << ");\n";
+  auto init_stmt = ss.str();
+  emit(init_stmt);
+
+  // iterate over symbol table entries and place them into the
+  // module symbol table entry
+  size_t i = 0;
+  for (const auto &[id, entry] : t.entries) {
+    // skip if main
+    if (id == "main") {
+      continue;
+    }
+
+    // handle dynamic functions
+    auto location = entry.location;
+    if (entry.type == CompTableEntryType::FUNC) {
+      auto fn_name = location;
+      auto dynamic_fn_name = replace_prefix(fn_name, "L528_", "DL528_");
+      auto signature = entry.metadata.value();
+      std::stringstream df_init;
+      df_init << "make_function_with_metadata(&" << dynamic_fn_name << ", \""
+              << signature << "\")";
+      location = df_init.str();
+    }
+
+    std::stringstream ss;
+    ss << "make_rtste(&" << identifier << "->value.v_mod->table.entries[" << i
+       << "], "
+       << "\"" << id << "\", " << location << ");\n";
+
+    auto entry_init_stmt = ss.str();
+    emit(entry_init_stmt);
+
+    // increment location pointer
+    i++;
+  }
+  emit("return 0;\n}\n");
+  pre_main_init_methods.push_back(module_init_method_name);
+}
+
 string get_unary_op_method(TokenType op) {
   switch (op) {
   case TokenType::MINUS:
@@ -146,6 +199,14 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
 
   // encode main entrypoint that goes from C main to program main.
   emit("int main(int argc, char **argv) { \n");
+  // module inits
+  for (auto &pre_init_method : pre_main_init_methods) {
+    std::stringstream stmt;
+    stmt << pre_init_method << "();\n";
+    auto s = stmt.str();
+    emit(s);
+  }
+
   // global declarations go here
   for (auto &entry : toplevel_decls) {
     auto rhs = entry.second;
@@ -266,6 +327,7 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
   assert(module_nodes.type == NodeType::TOP_LEVEL);
 
   MODULES++;
+  auto module_num = MODULES;
   CompSymbolTable t{&st, {}, 0, st.intermediates, true};
 
   for (auto &child : module_nodes.children) {
@@ -277,17 +339,29 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
   // symbol table
   if (node.data.contains("module_name")) {
     auto module_name = node.data.at("module_name").get<string>();
-    throw std::runtime_error("NAMED IMPORT NOT IMPLEMENTED");
 
-    /* TODO:
-      Generate the lookup table, then create top-level variable of module type,
-      add that to symbol table.
-      */
+    /* new TODO
+      - generate global variable for module, add to symbol table
+      - generate DL528_INIT_<module> function
+      - call init module function before L528 main (add to a list)
+    */
 
-    // st.entries[module_name] = SymbolTableEntry{
-    //     VarType::CONST, std::make_shared<BoxedValue>(
-    //                         DataType::MODULE, Module{module_name,
-    //                         module_st})};
+    // generate global variable for module, add to symbol table
+    std::stringstream local_id;
+    local_id << "local" << LOCALS;
+    LOCALS++;
+    string local_id_str = local_id.str();
+    st.entries[module_name] =
+        CompTableEntry{local_id_str, CompTableEntryType::CONST};
+    std::stringstream declare_stmt;
+    declare_stmt << "RuntimeObject* " << local_id_str;
+    declare_stmt << ";\n";
+    auto s = declare_stmt.str();
+    emit(s);
+
+    // generate L528_INIT_<module> function
+    gen_module_init(local_id_str, module_num, module_name, t);
+
   }
   // otherwise merge all symbol table entries except for main
   else {
@@ -328,6 +402,7 @@ CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
 CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
   // Lvalue can be either a variable, an index access into a data type (e.g.
   // x[y]) or a field access into a module (or class later)
+  const size_t LHS = 0, RHS = 1;
 
   if (node.type == NodeType::VAR_LOOKUP) {
     const string identifier = node.data.at("identifier").get<string>();
@@ -346,8 +421,6 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
   }
 
   if (node.type == NodeType::INDEX_ACCESS) {
-    const size_t LHS = 0, RHS = 1;
-
     auto lhs = gen_node(node.children[LHS], st).result_loc.value();
     auto rhs = gen_node(node.children[RHS], st).result_loc.value();
     auto intmdt_id = st_new_intmdt(st);
@@ -360,7 +433,15 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
   }
 
   if (node.type == NodeType::FIELD_ACESS) {
-    throw std::runtime_error("Field access lvaue not implemented yet");
+    auto lhs = gen_node(node.children[LHS], st).result_loc.value();
+    auto rhs = node.children[RHS].data.at("identifier").get<string>();
+    auto intmdt_id = st_new_intmdt(st);
+    std::stringstream lvalue;
+    lvalue << "RuntimeObject * " << intmdt_id << " = field_access(" << lhs
+           << ", \"" << rhs << "\");";
+    auto lvalue_str = lvalue.str();
+    emit(lvalue_str);
+    return CompNodeResult{intmdt_id, {}, false, 0, true};
   }
 
   throw std::runtime_error("Invalid nodetype for lvalue, must be var lookup, "
@@ -785,10 +866,9 @@ CompNodeResult gen_while(ASTNode &node, CompSymbolTable &st) {
 }
 
 CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st) {
-  //   std::cerr << "right here : " << node_type_to_string(node.type) << ", "
-  //             << "line: " << node.metadata.line
-  //             << ", column: " << node.metadata.column << " \n";
-
+  // std::cerr << "right here : " << node_type_to_string(node.type) << ", "
+  //           << "line: " << node.metadata.line
+  //           << ", column: " << node.metadata.column << " \n";
   switch (node.type) {
   case NodeType::TOP_LEVEL:
     return gen_top_level(node, st);

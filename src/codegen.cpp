@@ -87,9 +87,9 @@ string get_new_label() {
   return label.str();
 }
 
-void emit(string &s) { std::cout << s; }
+void emit(string &s) { (*EMIT_TARGET) << s; }
 
-void emit(const char *s) { std::cout << s; }
+void emit(const char *s) { (*EMIT_TARGET) << s; }
 
 void gen_module_init(string identifier, int module_num, string module_name,
                      CompSymbolTable &t) {

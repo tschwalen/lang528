@@ -1,9 +1,15 @@
 #pragma once
 
+#include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 
 #include "astnode.h"
+
+static string RUNTIME_DIR_PATH;
+static string WORK_DIR_PATH;
+static std::ostream *EMIT_TARGET = &std::cout;
 
 namespace UTIL {
 std::string get_whole_file(std::string path);

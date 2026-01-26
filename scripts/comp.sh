@@ -6,30 +6,29 @@ set -e
 # our runtime library during compilation.
 #
 
+# get the project root from git
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 
+# build the L528 compiler (Main C++ project) and the runtime (C project under 
+# PROJECT_ROOT/runtime)
 cd "$PROJECT_ROOT"
 make 
 pushd runtime
 make
 popd
 
+# Clean up the work directory
 WORKDIR="$PROJECT_ROOT/.work"
 rm -r "$WORKDIR"
 mkdir "$WORKDIR"
 cd $WORKDIR
 
-
-# cat << 'EOF' > "$WORKDIR/prog.c"
-# #include <stdio.h>
-# #include "runtime.h"
-# int main(int argc, char* argv[]) {
-#     printf("%d\n", placeholder(3));
-#     return 0;
-# }
-# EOF
+# set the include and library paths to the runtime
 INCLUDE_PATH="$PROJECT_ROOT/runtime/include"
 LIB_PATH="$PROJECT_ROOT/runtime"
+
+# create a compile commands json file in the work dir so that clangd can be useful 
+# for the generated C file. (type anotations, go-to-definition, etc.)
 cat << EOF > "$WORKDIR/compile_commands.json"
 [
 {
@@ -42,21 +41,14 @@ cat << EOF > "$WORKDIR/compile_commands.json"
 EOF
 
 
-# test_program="test1.src"
-# test_program="test2.src"
-# test_program="if_elseif_else.src"
-# test_program="floats.src"
-# test_program="fib.src"
-# test_program="expr2.src"
+# get the test program name from the command line
 test_program=$1
 shift
 
 "$PROJECT_ROOT/output" --comp --input="$PROJECT_ROOT/examples/$test_program" > "$WORKDIR/prog.c"
 
 # Do we really need to precompile the library? TBD
-gcc -o compiled_exec prog.c -I"$INCLUDE_PATH" -L"$LIB_PATH" -lruntime
-
-# create a compile commands json file in the work dir so that clangd can be useful for the generated C file
+cc -o compiled_exec prog.c -I"$INCLUDE_PATH" -L"$LIB_PATH" -lruntime
 
 # run the compiled executable
 ./compiled_exec $@

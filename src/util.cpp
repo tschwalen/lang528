@@ -26,7 +26,6 @@ vector<string> UTIL::split_argv(string argv_raw) {
 
     Also unicode is probably totally unhandled here.
   */
-
   vector<string> argv;
   std::stringstream current_string;
   bool scratch = false;

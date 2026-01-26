@@ -12,6 +12,7 @@ _deps
 
 .cache
 .work
+.l528work
 
 # python stuff
 */__pycache__/

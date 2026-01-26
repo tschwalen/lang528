@@ -83,7 +83,7 @@ function test_str_cat()
     
     # TODO: rewrite this test once float tostring is better
     let strcat = "a" + 1 + 2.0 + true + [] + {};
-    assert(strcat == "a12true[]{}", "strcat converts everything to string"); 
+    assert(strcat == "a12.0true[]{}", "strcat converts everything to string"); 
 ..
 
 

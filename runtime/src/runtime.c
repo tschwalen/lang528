@@ -349,32 +349,6 @@ RuntimeObject *dict_contains_dynamic(size_t argc, RuntimeObject *argv[]) {
   return dict_contains(argv[0], argv[1]);
 }
 
-// TODO: delete this when you don't need it for reference anymore
-// RuntimeObject *ML528_module(char *identifier) {
-//   typedef struct item_t {
-//     const char *name;
-//     RuntimeObject *value;
-//   } item_t;
-
-//   const size_t table_sz = 2;
-//   item_t table[] = {{"foo", local1}, {"bar", local2}};
-
-//   for (int i = 0; i < table_sz; ++i) {
-//     item_t *p = &table[i];
-//     if (strcmp(p->name, identifier) == 0) {
-//       return p->value;
-//     }
-//   }
-
-//   for (item_t *p = table; p->name != NULL; ++p) {
-//     if (strcmp(p->name, identifier) == 0) {
-//       return p->value;
-//     }
-//   }
-//   runtime_error("Bad module var lookup");
-//   return make_nothing();
-// }
-
 RuntimeSymbolTableEntry *runtime_st_lookup(RuntimeSymbolTable *st,
                                            char *identifier) {
   // dead simple linear lookup

@@ -1,0 +1,66 @@
+#
+# Since the interpreter and compiler differ in their internal hashtable implementation,
+# the key order can differ. I do not consider this a correctness issue, so I've written
+# this file specifically to test the features in the dict.src and dict_memory.src 
+# example programs without creating any output which will differ based on key order.
+#
+
+function modify_dict(dict)
+    dict["y"] = "something";
+..
+
+function memory_test()
+    # make an empty dictionary and empty vector
+    const my_dict = {};
+    const my_vec = [];
+
+    # insert vector into dict
+    my_dict["x"] = my_vec;
+
+    # modify the original vector
+    my_vec.append(1);
+    my_vec.append(2);
+    my_vec.append(3);
+
+    # we should see these modifications here because it's the same object in memory
+    print(my_dict["x"].length());
+
+    modify_dict(my_dict);
+    print(my_dict["y"]);
+..
+
+function key_and_value_test()
+    const dict = {};
+
+    dict["hello"] = 123;
+
+    const dict2 = {
+        "x": 44,
+        "y": "asdf",
+        44: "hashable",
+        4.02 + 1.0: "still hashable",
+        "true" : "string true",
+        true: "bool true"
+    };
+
+    print(dict["hello"]); # should be 123
+    print(dict2["x"]); # should be 44
+    print(dict.length()); # should be 1
+    print(dict2.length());
+
+    # we want a "keys()" and "contains()" function
+    print("test contains: " + dict2.contains("x"));
+
+    print("test keys: " + dict2.keys().length());
+
+    # test some equality comparisons
+    print({} == {}); # should be true
+    print({"a": 1} == {} ); # should be false
+    print({"a": {}} == {"a": {}}); # should be true
+    print({} != {}); # should be false
+..
+
+function main()
+    memory_test();
+    key_and_value_test();
+..

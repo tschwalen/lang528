@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 # is often different because of separate hashtable implementations.
 SKIPLIST = {
     "dict_memory.src",  # confirmed same output, just different order
-    "dict.src",
+    "dict.src",  # confirmed same output, just different order
     "cause_problems.src",  # both error, but messgages differ due to implementation
 }
 

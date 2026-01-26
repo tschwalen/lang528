@@ -13,7 +13,7 @@ function main()
     # insert vector into dict
     my_dict["x"] = my_vec;
 
-    # modify the original dict
+    # modify the original vector
     my_vec.append(1);
     my_vec.append(2);
     my_vec.append(3);

@@ -199,13 +199,6 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
 
   // encode main entrypoint that goes from C main to program main.
   emit("int main(int argc, char **argv) { \n");
-  // module inits
-  for (auto &pre_init_method : pre_main_init_methods) {
-    std::stringstream stmt;
-    stmt << pre_init_method << "();\n";
-    auto s = stmt.str();
-    emit(s);
-  }
 
   // global declarations go here
   for (auto &entry : toplevel_decls) {
@@ -213,6 +206,14 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
     auto rhs_result = gen_node(rhs, st);
     std::stringstream stmt;
     stmt << entry.first << " = " << rhs_result.result_loc.value() << ";\n";
+    auto s = stmt.str();
+    emit(s);
+  }
+
+  // module inits
+  for (auto &pre_init_method : pre_main_init_methods) {
+    std::stringstream stmt;
+    stmt << pre_init_method << "();\n";
     auto s = stmt.str();
     emit(s);
   }
@@ -426,7 +427,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
     auto intmdt_id = st_new_intmdt(st);
     std::stringstream lvalue;
     lvalue << "RuntimeObject * " << intmdt_id << " = get_index(" << lhs << ","
-           << rhs << ");";
+           << rhs << ");\n";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
     return CompNodeResult{intmdt_id, {}, false, 0, true};
@@ -438,7 +439,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
     auto intmdt_id = st_new_intmdt(st);
     std::stringstream lvalue;
     lvalue << "RuntimeObject * " << intmdt_id << " = field_access(" << lhs
-           << ", \"" << rhs << "\");";
+           << ", \"" << rhs << "\");\n";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
     return CompNodeResult{intmdt_id, {}, false, 0, true};

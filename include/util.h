@@ -9,7 +9,7 @@
 
 static string RUNTIME_DIR_PATH;
 static string WORK_DIR_PATH;
-static std::ostream *EMIT_TARGET = &std::cout;
+extern std::ostream *EMIT_TARGET;
 
 namespace UTIL {
 std::string get_whole_file(std::string path);

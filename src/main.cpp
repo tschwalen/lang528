@@ -20,6 +20,8 @@ using json = nlohmann::json;
 using std::string;
 using std::vector;
 
+std::ostream *EMIT_TARGET = &std::cout;
+
 struct Options {
   bool test;
   bool dump_json;
@@ -155,19 +157,12 @@ void compile_to_file(Options opts) {
     throw std::runtime_error("waitpid failed");
   }
 
-  if (WIFEXITED(status)) {
-    std::cout << "Child exited with code " << WEXITSTATUS(status) << "\n";
-  } else if (WIFSIGNALED(status)) {
-    std::cout << "Child killed by signal " << WTERMSIG(status) << "\n";
-  }
-
   // Then, handle cleanup
-  // try {
-  //   std::uintmax_t count = std::filesystem::remove_all(work_dir);
-  //   std::cout << "Removed " << count << " files/directories\n";
-  // } catch (const std::filesystem::filesystem_error &e) {
-  //   std::cerr << "Error: " << e.what() << "\n";
-  // }
+  try {
+    std::uintmax_t count = std::filesystem::remove_all(work_dir);
+  } catch (const std::filesystem::filesystem_error &e) {
+    std::cerr << "Error: " << e.what() << "\n";
+  }
 }
 
 int main(int argc, char **argv) {

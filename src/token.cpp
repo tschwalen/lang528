@@ -1,7 +1,6 @@
+#include <stdexcept>
 #include <string>
 #include <variant>
-#include <vector>
-#include <stdexcept>
 
 #include <nlohmann/json.hpp>
 
@@ -16,19 +15,19 @@ using std::string;
 // json conversion methods
 //////////////////////////////////////////////////////////////////
 
-void to_json(json& j, const TokenMetadata& tm) {
+void to_json(json &j, const TokenMetadata &tm) {
   j = json{
       {"line", tm.line},
       {"column", tm.column},
   };
 }
 
-void from_json(const json& j, TokenMetadata& tm) {
+void from_json(const json &j, TokenMetadata &tm) {
   j.at("line").get_to(tm.line);
   j.at("column").get_to(tm.column);
 }
 
-void to_json(json& j, const Token& t) {
+void to_json(json &j, const Token &t) {
   auto type_string = token_type_to_string(t.type);
   auto type_int = (int)t.type;
 
@@ -41,25 +40,25 @@ void to_json(json& j, const Token& t) {
   auto value_variant = t.value;
   // <std::monostate, int, float, std::string, bool>
   switch (value_variant.index()) {
-    case 0:  // monostate
-      j["value"] = nullptr;
-      break;
-    case 1:  // int
-      j["value"] = std::get<int>(value_variant);
-      break;
-    case 2:  // float
-      j["value"] = std::get<float>(value_variant);
-      break;
-    case 3:  // string
-      j["value"] = std::get<string>(value_variant);
-      break;
-    case 4:  // bool
-      j["value"] = std::get<bool>(value_variant);
-      break;
+  case 0: // monostate
+    j["value"] = nullptr;
+    break;
+  case 1: // int
+    j["value"] = std::get<int>(value_variant);
+    break;
+  case 2: // float
+    j["value"] = std::get<double>(value_variant);
+    break;
+  case 3: // string
+    j["value"] = std::get<string>(value_variant);
+    break;
+  case 4: // bool
+    j["value"] = std::get<bool>(value_variant);
+    break;
   }
 }
 
-void from_json(const json& j, Token& t) {
+void from_json(const json &j, Token &t) {
   // metadata should be simple
   j.at("metadata").get_to(t.metadata);
 
@@ -76,7 +75,7 @@ void from_json(const json& j, Token& t) {
   if (value.is_null()) {
     t.value = {};
   } else if (value.is_number_float()) {
-    t.value = value.get<float>();
+    t.value = value.get<double>();
   } else if (value.is_number_integer()) {
     t.value = value.get<int>();
   } else if (value.is_string()) {
@@ -104,9 +103,9 @@ bool is_binary_op(TokenType tt) {
       tt == TokenType::OR
 
       // not infix 'operators' in the traditional sense, but still binary ops
-      || tt == TokenType::LBRACKET  // "[]", index/subscript access
-      || tt == TokenType::LPAREN    // "()", function call
-      || tt == TokenType::DOT       // ".field", struct/class access
+      || tt == TokenType::LBRACKET // "[]", index/subscript access
+      || tt == TokenType::LPAREN   // "()", function call
+      || tt == TokenType::DOT      // ".field", struct/class access
   );
 }
 
@@ -125,19 +124,20 @@ bool is_assign_op(TokenType tt) {
 
 TokenType assign_op_to_binary_op(TokenType tt) {
   switch (tt) {
-    case TokenType::PLUS_EQUALS:
-      return TokenType::PLUS;
-    case TokenType::MINUS_EQUALS:
-      return TokenType::MINUS;
-    case TokenType::TIMES_EQUALS:
-      return TokenType::TIMES;
-    case TokenType::DIV_EQUALS:
-      return TokenType::DIV;
-    case TokenType::MOD_EQUALS:
-      return TokenType::MOD;
-    default: break;
+  case TokenType::PLUS_EQUALS:
+    return TokenType::PLUS;
+  case TokenType::MINUS_EQUALS:
+    return TokenType::MINUS;
+  case TokenType::TIMES_EQUALS:
+    return TokenType::TIMES;
+  case TokenType::DIV_EQUALS:
+    return TokenType::DIV;
+  case TokenType::MOD_EQUALS:
+    return TokenType::MOD;
+  default:
+    break;
   }
-  
+
   throw std::runtime_error("argument must be an assign op");
 }
 
@@ -154,44 +154,42 @@ bool unary_precedence_test(TokenType op, TokenType lookahead) {
 // TODO: replace these magic numbers with a better system for
 //        setting op precedence in one place
 // TODO2: consider if unary not needs a different precendence.
-int unary_op_precedence(TokenType tt) {
-  return is_unary_op(tt) ? 11 : -1;
-}
+int unary_op_precedence(TokenType tt) { return is_unary_op(tt) ? 11 : -1; }
 
 int binary_op_precedence(TokenType tt) {
   switch (tt) {
-    case TokenType::LBRACKET:
-    case TokenType::LPAREN:
-    case TokenType::DOT:
-      return 12;
+  case TokenType::LBRACKET:
+  case TokenType::LPAREN:
+  case TokenType::DOT:
+    return 12;
 
-    case TokenType::TIMES:
-    case TokenType::MOD:
-    case TokenType::DIV:
-      return 9;
+  case TokenType::TIMES:
+  case TokenType::MOD:
+  case TokenType::DIV:
+    return 9;
 
-    case TokenType::MINUS:
-    case TokenType::PLUS:
-      return 8;
+  case TokenType::MINUS:
+  case TokenType::PLUS:
+    return 8;
 
-    case TokenType::GREATER_EQUALS:
-    case TokenType::LESS_EQUALS:
-    case TokenType::GREATER:
-    case TokenType::LESS:
-      return 7;
+  case TokenType::GREATER_EQUALS:
+  case TokenType::LESS_EQUALS:
+  case TokenType::GREATER:
+  case TokenType::LESS:
+    return 7;
 
-    case TokenType::EQUALS_EQUALS:
-    case TokenType::NOT_EQUALS:
-      return 6;
+  case TokenType::EQUALS_EQUALS:
+  case TokenType::NOT_EQUALS:
+    return 6;
 
-    case TokenType::AND:
-      return 5;
+  case TokenType::AND:
+    return 5;
 
-    case TokenType::OR:
-      return 4;
+  case TokenType::OR:
+    return 4;
 
-    default:
-      break;
+  default:
+    break;
   }
   return -1;
 }

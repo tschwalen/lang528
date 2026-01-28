@@ -11,15 +11,24 @@ CTestTestfile.cmake
 _deps
 
 .cache
+.work
+.l528work
+a.out
 
 # python stuff
 */__pycache__/
 
 # executable name
 output
+runtime_exec
+libruntime.a
 
 # temporary stuff
 tmp.json
+temp
 
 # don't include third-party libraries
 include/nlohmann
+
+# macos stuff
+.DS_Store

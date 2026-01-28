@@ -1,0 +1,11 @@
+
+function main ( ) 
+  const a_string = "Hello";
+  const another_string = "World";
+  const an_int = 44;
+  const a_float = 4.4;
+  const a_bool = true;
+  const no_thing = nothing;
+
+  print(a_string + another_string + an_int + a_float + a_bool + no_thing);
+..

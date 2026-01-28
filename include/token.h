@@ -13,8 +13,8 @@ struct TokenMetadata {
 };
 
 struct Token {
-  TokenType type; 
-  std::variant<std::monostate, int, float, std::string, bool> value;
+  TokenType type;
+  std::variant<std::monostate, int, double, std::string, bool> value;
   TokenMetadata metadata;
 };
 
@@ -30,7 +30,7 @@ bool binary_precedence_test(TokenType op, TokenType lookahead);
 
 bool unary_precedence_test(TokenType op, TokenType lookahead);
 
-bool is_assign_op(TokenType tt );
+bool is_assign_op(TokenType tt);
 
 TokenType assign_op_to_binary_op(TokenType tt);
 

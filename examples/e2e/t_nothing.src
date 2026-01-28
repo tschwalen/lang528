@@ -1,5 +1,15 @@
 import "testutils.src"; 
 
+# TODO:
+# Compiler is single-pass right now, so the code in this file fails if this function 
+# is not declared before main(). It only fails when compiled, not when run with the 
+# interpreter.
+function like_a_void ()
+  print("function called");
+
+  # no explicit return - so return "nothing"
+..
+
 function main ()
   # should be able to assign to "nothing" -- like "null" or "nil" or "undefined"
   let x = nothing;
@@ -23,10 +33,4 @@ function main ()
   # might remove this logic at some point
   const dictionary = {};
   assert(dictionary["nonexistent_key"] == nothing, "dict lookup failures produce nothing");
-..
-
-function like_a_void ()
-  print("function called");
-
-  # no explicit return - so return "nothing"
 ..

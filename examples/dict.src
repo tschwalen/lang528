@@ -8,7 +8,7 @@ function main ()
         "x": 44,
         "y": "asdf",
         44: "hashable",
-        1.0000002 + 2: "still hashable",
+        4.02 + 1.0: "still hashable",
         "true" : "string true",
         true: "bool true"
     };

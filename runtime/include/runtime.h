@@ -1,0 +1,82 @@
+#pragma once
+#include "datatype.h"
+#include <stdbool.h>
+
+int placeholder(int x);
+bool get_conditional_result(RuntimeObject *obj);
+
+void builtin_print(RuntimeObject *arg);
+void runtime_error(char *msg);
+
+RuntimeObject *dynamic_function_call(RuntimeObject *dynamic_fn, size_t argc,
+                                     RuntimeObject *argv[]);
+
+RuntimeObject *make_argv(int argc, char *argv[]);
+
+RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *field_access(RuntimeObject *lhs, char *identifier);
+
+// ARITHMETIC OP + STRCAT
+RuntimeObject *op_add(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_sub(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_mul(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_div(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_mod(RuntimeObject *lhs, RuntimeObject *rhs);
+
+// COMPARISON OP
+RuntimeObject *op_eq(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_neq(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_leq(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_geq(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_lt(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_gt(RuntimeObject *lhs, RuntimeObject *rhs);
+
+// BOOLEAN OP
+RuntimeObject *op_and(RuntimeObject *lhs, RuntimeObject *rhs);
+RuntimeObject *op_or(RuntimeObject *lhs, RuntimeObject *rhs);
+
+// UNARY OP
+RuntimeObject *op_unot(RuntimeObject *rhs);
+RuntimeObject *op_umin(RuntimeObject *rhs);
+
+// CONSTRUCTORS
+RuntimeObject *make_nothing();
+RuntimeObject *make_bool(bool value);
+RuntimeObject *make_int(int64_t value);
+RuntimeObject *make_float(double value);
+RuntimeObject *make_string(char *value);
+RuntimeObject *make_string_nocopy(char *value);
+RuntimeObject *make_vector();
+RuntimeObject *make_dict();
+RuntimeObject *make_vector_known_size(size_t size);
+RuntimeObject *make_function(RuntimeObject *(*fn_ptr)(size_t argc,
+                                                      RuntimeObject *argv[]));
+RuntimeObject *make_function_with_metadata(
+    RuntimeObject *(*fn_ptr)(size_t argc, RuntimeObject *argv[]),
+    char *signature);
+RuntimeObject *make_module(char *module_name, size_t num_entries);
+
+// Vector Methods
+RuntimeObject *vec_length(RuntimeObject *self);
+RuntimeObject *vec_append(RuntimeObject *self, RuntimeObject *obj);
+RuntimeObject *vec_length_dynamic(size_t argc, RuntimeObject *argv[]);
+RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]);
+
+// String Methods
+RuntimeObject *str_length(RuntimeObject *self);
+RuntimeObject *str_length_dynamic(size_t argc, RuntimeObject *argv[]);
+
+// Dictionary Methods
+void _dict_put(RuntimeObject *dict, RuntimeObject *key, RuntimeObject *value);
+RuntimeObject *dict_length(RuntimeObject *self);
+RuntimeObject *dict_keys(RuntimeObject *self);
+RuntimeObject *dict_contains(RuntimeObject *self, RuntimeObject *key);
+RuntimeObject *dict_length_dynamic(size_t argc, RuntimeObject *argv[]);
+RuntimeObject *dict_keys_dynamic(size_t argc, RuntimeObject *argv[]);
+RuntimeObject *dict_contains_dynamic(size_t argc, RuntimeObject *argv[]);
+
+// Module Methods
+void make_rtste(RuntimeSymbolTableEntry *rtste, char *name,
+                RuntimeObject *value);
+RuntimeSymbolTableEntry *runtime_st_lookup(RuntimeSymbolTable *st,
+                                           char *identifier);

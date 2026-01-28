@@ -2,9 +2,16 @@
 set -e
 
 #
-# Quick and dirty proof-of-concept for generating a C file and linking it against
-# our runtime library during compilation.
-#
+# Script used for testing and debugging during development of the compiler.
+# 
+# Given the name of a test program in the <root>/examples directory, the script
+# does the following:
+#    - Recompiles the main project and the runtime
+#    - Deletes and recreates the <root>/.work directory
+#    - Creates a clangd compile_commands.json file for the generated C file
+#    - runs the --comp command of the main project to generate prog.c
+#    - compiles prog.c and links it against the included runtime using system standard tooling
+#    - runs the resulting compiled executable passing along the arguments in the script (e.g. $@)
 
 # get the project root from git
 PROJECT_ROOT=$(git rev-parse --show-toplevel)

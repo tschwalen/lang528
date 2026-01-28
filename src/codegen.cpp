@@ -341,7 +341,7 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
   if (node.data.contains("module_name")) {
     auto module_name = node.data.at("module_name").get<string>();
 
-    /* new TODO
+    /* Steps:
       - generate global variable for module, add to symbol table
       - generate DL528_INIT_<module> function
       - call init module function before L528 main (add to a list)

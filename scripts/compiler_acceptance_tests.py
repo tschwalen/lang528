@@ -143,9 +143,9 @@ def main():
             different_files.append(src_file.name)
 
     printgreen(f"Identical outputs in: {identical} / {total_files} files.")
-    printred(f"Differing outputs in: {different} / {total_files} files")
 
     if different_files:
+        printred(f"Differing outputs in: {different} / {total_files} files")
         print("Files with differing output:")
         for fname in different_files:
             print(f"  - {fname}")

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+#
+# Modified version of comp.sh that does not recompile the runtime or run the resulting compiled executable.
+#
+
 # find the project root from git and set a clean work directory
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 WORKDIR="$PROJECT_ROOT/.work"
@@ -31,4 +35,4 @@ shift
 "$PROJECT_ROOT/output" --comp --input="$program" > "$WORKDIR/prog.c"
 
 # then compile the generated C program linked against the runtime library
-gcc -o compiled_exec prog.c -I"$INCLUDE_PATH" -L"$LIB_PATH" -lruntime
+cc -o compiled_exec prog.c -I"$INCLUDE_PATH" -L"$LIB_PATH" -lruntime

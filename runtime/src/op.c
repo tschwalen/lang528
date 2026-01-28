@@ -521,7 +521,12 @@ RuntimeObject *_str_concat(String *lhs, RuntimeObject *rhs) {
     return acc;
     break;
   }
-  case T_DICT:
+  case T_DICT: {
+    String *rhs_string = to_string_raw(rhs);
+    String *acc = str_concat_raw(lhs, rhs_string);
+    return make_string_nocopy(acc->contents);
+    break;
+  }
   case T_MODULE:
   case T_FUNCTION:
     strcpy(rhs_string, "NOT_IMPLEMENTED");

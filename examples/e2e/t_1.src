@@ -1,3 +1,4 @@
+# @COMPILE_ERROR@ variable lookup should fail
 function main()
     print("#EXPECT# variable lookup should fail");
     let x = f();

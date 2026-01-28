@@ -40,7 +40,7 @@ RuntimeObject *_op_add_float(double lhs, RuntimeObject *rhs) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
     obj->type = T_FLOAT;
-    obj->value.v_int = lhs + rhs_value;
+    obj->value.v_float = lhs + rhs_value;
     break;
   }
   case T_FLOAT: {
@@ -84,7 +84,7 @@ RuntimeObject *_op_sub_float(double lhs, RuntimeObject *rhs) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
     obj->type = T_FLOAT;
-    obj->value.v_int = lhs - rhs_value;
+    obj->value.v_float = lhs - rhs_value;
     break;
   }
   case T_FLOAT: {
@@ -128,7 +128,7 @@ RuntimeObject *_op_mul_float(double lhs, RuntimeObject *rhs) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
     obj->type = T_FLOAT;
-    obj->value.v_int = lhs * rhs_value;
+    obj->value.v_float = lhs * rhs_value;
     break;
   }
   case T_FLOAT: {
@@ -172,7 +172,7 @@ RuntimeObject *_op_div_float(double lhs, RuntimeObject *rhs) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
     obj->type = T_FLOAT;
-    obj->value.v_int = lhs / rhs_value;
+    obj->value.v_float = lhs / rhs_value;
     break;
   }
   case T_FLOAT: {
@@ -217,13 +217,11 @@ RuntimeObject *_op_leq_float(double lhs, RuntimeObject *rhs) {
   switch (rhs->type) {
   case T_INT: {
     int64_t rhs_value = rhs->value.v_int;
-    obj->type = T_FLOAT;
     obj->value.v_bool = lhs <= rhs_value;
     break;
   }
   case T_FLOAT: {
     double rhs_value = rhs->value.v_float;
-    obj->type = T_FLOAT;
     obj->value.v_bool = lhs <= rhs_value;
     break;
   }

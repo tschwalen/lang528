@@ -65,8 +65,7 @@ def run_e2e_test_compiled(directory: str, file: str, root_dir: str):
                 stderr = compiler_subproc.stderr.decode("utf-8")
                 print(f"COMPILER STDOUT:\n{stdout}\n#\nEND OF STDOUT\n#")
                 print(f"COMPILER STDERR:\n{stderr}\n#\nEND OF STDERR\n#")
-
-        no_failures = False
+            no_failures = False
     else:
         res = subprocess.run(
             [outfile_path],

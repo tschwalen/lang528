@@ -194,7 +194,6 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
 
   for (auto &child : node.children) {
     gen_node(child, st);
-    emit(";\n");
   }
 
   // encode main entrypoint that goes from C main to program main.
@@ -333,7 +332,6 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
 
   for (auto &child : module_nodes.children) {
     gen_node(child, t);
-    emit(";\n");
   }
 
   // if this is a named import, create a module object and place it in the
@@ -392,9 +390,12 @@ CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
     most_recent_node = child.type;
     auto result = gen_node(child, st);
     if (result.result_loc.has_value()) {
-      emit(result.result_loc.value());
+      auto s = result.result_loc.value();
+      if (!s.ends_with(";\n")) {
+        s += ";\n";
+      }
+      emit(s);
     }
-    emit(";\n");
   }
 
   return CompNodeResult{{}, {}, most_recent_node == NodeType::RETURN};
@@ -501,7 +502,7 @@ CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
   if (lhs_result.ptr_result) {
     assign_statement_ss << "*";
   }
-  assign_statement_ss << new_value;
+  assign_statement_ss << new_value << ";\n";
   auto assign_statement = assign_statement_ss.str();
   emit(assign_statement);
   return CompNodeResult{};
@@ -539,7 +540,7 @@ CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
   auto rhs = node.children[0];
   auto rhs_result = gen_node(rhs, st);
 
-  declare_stmt << " = " << rhs_result.result_loc.value();
+  declare_stmt << " = " << rhs_result.result_loc.value() << ";\n";
   auto s = declare_stmt.str();
   emit(s);
   return CompNodeResult{};
@@ -574,7 +575,6 @@ CompNodeResult gen_string_literal(ASTNode &node, CompSymbolTable &st) {
   std::stringstream ss;
   ss << "make_string(\"" << value << "\")";
   auto s = ss.str();
-  //   emit(s);
   return CompNodeResult{s};
 }
 
@@ -586,7 +586,6 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
   const size_t FUNCTION = 0, ARGS = 1;
   auto lhs = node.children[FUNCTION];
   auto rhs = node.children[ARGS];
-
   //
   // I guess we'd call this a "known" function call.
   // These are function calls referred to by the name

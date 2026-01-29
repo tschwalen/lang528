@@ -43,6 +43,10 @@ def run_e2e_test_compiled(directory: str, file: str, root_dir: str):
 
     # compile the target file
     outfile_path = f"{root_dir}/a.out"
+    try:
+        os.remove(outfile_path)
+    except FileNotFoundError:
+        pass
     compiler_subproc = subprocess.run(
         [
             EXECUTABLE_PATH,

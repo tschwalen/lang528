@@ -157,6 +157,22 @@ void compile_to_file(Options opts) {
     throw std::runtime_error("waitpid failed");
   }
 
+  if (WIFEXITED(status)) {
+    int exit_code = WEXITSTATUS(status);
+    if (exit_code != 0) {
+      // cc ran but failed
+      std::exit(exit_code);
+    }
+  } else if (WIFSIGNALED(status)) {
+    // cc was killed by a signal (e.g. SIGSEGV)
+    int sig = WTERMSIG(status);
+    std::fprintf(stderr, "cc terminated by signal %d\n", sig);
+    std::exit(128 + sig); // conventional shell mapping
+  } else {
+    // Other abnormal termination
+    std::exit(1);
+  }
+
   // Then, handle cleanup
   try {
     std::uintmax_t count = std::filesystem::remove_all(work_dir);

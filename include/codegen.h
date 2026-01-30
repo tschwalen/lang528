@@ -25,6 +25,9 @@ struct CompSymbolTable {
   int locals = 0;
   int intermediates = 0;
   bool is_module = false;
+  std::optional<CompTableEntry> lookup_symbol(string symbol);
+  std::string new_intmdt();
+  bool is_toplevel();
 };
 
 CompNodeResult gen_node_root(ASTNode &node, string module_wd);

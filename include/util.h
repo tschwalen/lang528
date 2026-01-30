@@ -7,8 +7,8 @@
 
 #include "astnode.h"
 
-static string RUNTIME_DIR_PATH;
 static string WORK_DIR_PATH;
+extern string RUNTIME_DIR_PATH;
 extern std::ostream *EMIT_TARGET;
 
 namespace UTIL {

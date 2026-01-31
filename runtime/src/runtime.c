@@ -80,6 +80,7 @@ RuntimeObject *field_access(RuntimeObject *lhs, char *identifier) {
 
   // For modules (and later, classes) there will be a symbol table
   // injected in the runtime.
+  return make_nothing();
 }
 
 /*
@@ -130,6 +131,7 @@ RuntimeObject *get_index(RuntimeObject *lhs, RuntimeObject *rhs) {
 
   printf("LHS type: %d\n", lhs->type);
   runtime_error("Not impemented (get_index)");
+  return make_nothing();
 }
 
 RuntimeObject *make_argv(int argc, char *argv[]) {
@@ -162,7 +164,7 @@ bool get_conditional_result(RuntimeObject *obj) {
   }
   runtime_error(
       "Conditional expression must have boolean or nothing result type.");
-  return NULL;
+  return make_nothing();
 }
 
 void _print_vector(Vector *vec);
@@ -171,10 +173,10 @@ void _print_helper(RuntimeObject *obj) {
   // prints object with no newline
   switch (obj->type) {
   case T_NOTHING:
-    printf("nothing");
+    printf(STRING_NOTHING);
     return;
   case T_BOOL:
-    printf(obj->value.v_bool ? "true" : "false");
+    printf(obj->value.v_bool ? STRING_TRUE : STRING_FALSE);
     return;
   case T_INT:
     printf("%lld", obj->value.v_int);
@@ -285,7 +287,7 @@ RuntimeObject *vec_length_dynamic(size_t argc, RuntimeObject *argv[]) {
 
 RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]) {
   if (argc != 2) {
-    runtime_error("Argument number mismatch for vec length");
+    runtime_error("Argument number mismatch for vec append./");
   }
   return vec_append(argv[0], argv[1]);
 }

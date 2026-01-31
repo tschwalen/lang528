@@ -242,11 +242,6 @@ EvalResult eval_unary_op(ASTNode &node, SymbolTable &st) {
 }
 
 EvalResult eval_func_call(ASTNode &node, SymbolTable &st) {
-  /*
-    return ASTNode{
-      NodeType::FUNC_CALL, {lvalue_expr, arg_expr_list}, {}, metadata};
-  */
-
   const size_t FUNCTION = 0, ARGS = 1;
 
   auto callee = eval_node(node.children[FUNCTION], st).rv_result.value();

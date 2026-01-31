@@ -61,14 +61,7 @@ struct Module {
   shared_ptr<SymbolTable> symbol_table;
 };
 
-enum class VarType {
-  // TODO: is there any reason to have "FUNCTION" here? We already have that in
-  // BoxedValue
-  // Consider removing...
-  CONST,
-  VAR,
-  FUNCTION
-};
+enum class VarType { CONST, VAR, FUNCTION };
 
 struct SymbolTableEntry {
   VarType type;
@@ -76,8 +69,7 @@ struct SymbolTableEntry {
 };
 
 struct SymbolTable {
-  // this is fine, I guess.
-  // But if closures are ever implemented, some kind of
+  // If closures are ever implemented, some kind of
   // ownership is going to have to happen here.
   SymbolTable *parent = nullptr;
   vector<shared_ptr<SymbolTable>> module_symbol_tables;

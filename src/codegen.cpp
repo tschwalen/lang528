@@ -433,7 +433,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
            << rhs << ");\n";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
-    return CompNodeResult{intmdt_id, {}, false, 0, true};
+    return CompNodeResult{intmdt_id, {}, 0, false, true};
   }
 
   if (node.type == NodeType::FIELD_ACESS) {
@@ -445,7 +445,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
            << ", \"" << rhs << "\");\n";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
-    return CompNodeResult{intmdt_id, {}, false, 0, true};
+    return CompNodeResult{intmdt_id, {}, 0, false, true};
   }
 
   throw std::runtime_error("Invalid nodetype for lvalue, must be var lookup, "
@@ -690,7 +690,12 @@ CompNodeResult gen_expr_list(ASTNode &node, CompSymbolTable &st) {
     }
   }
 
-  return CompNodeResult{expr_list.str(), {}, false, results.size()};
+  return CompNodeResult{
+      expr_list.str(),
+      {},
+      results.size(),
+      false,
+  };
 }
 
 CompNodeResult gen_vec_literal(ASTNode &node, CompSymbolTable &st) {

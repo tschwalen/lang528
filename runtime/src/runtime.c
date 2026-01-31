@@ -290,7 +290,7 @@ RuntimeObject *vec_length_dynamic(size_t argc, RuntimeObject *argv[]) {
 
 RuntimeObject *vec_append_dynamic(size_t argc, RuntimeObject *argv[]) {
   if (argc != 2) {
-    runtime_error("Argument number mismatch for vec append./");
+    runtime_error("Argument number mismatch for vec append.");
   }
   return vec_append(argv[0], argv[1]);
 }

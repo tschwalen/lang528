@@ -1,8 +1,6 @@
 #include <cstddef>
 #include <cstdio>
-#include <iomanip>
 #include <iostream>
-#include <limits>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -12,6 +10,7 @@
 #include "interpreter.h"
 #include "runtime.h"
 #include "tokentype.h"
+#include "util.h"
 
 using std::shared_ptr;
 using std::string;
@@ -59,7 +58,7 @@ string toString(BoxedValue bv) {
   std::stringstream result;
   switch (bv.type) {
   case DataType::NOTHING:
-    result << "nothing";
+    result << STRING_NOTHING;
     break;
   case DataType::BOOL:
     result << (std::get<bool>(bv.value) ? "true" : "false");

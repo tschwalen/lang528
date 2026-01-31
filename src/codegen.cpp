@@ -28,10 +28,6 @@ static string WORKING_DIRECTORY = std::getenv("PWD");
 static vector<std::pair<string, ASTNode>> toplevel_decls;
 static vector<string> pre_main_init_methods;
 
-bool is_toplevel_st(CompSymbolTable &st) {
-  return st.parent == nullptr || st.is_module;
-}
-
 std::string replace_prefix(const std::string &str,
                            const std::string &old_prefix,
                            const std::string &new_prefix) {
@@ -55,10 +51,8 @@ std::string make_fn_signature_string(const string name,
   return sig.str();
 }
 
-// TODO: I'm basically reinventing OOP here, may just need to refactor
-std::optional<CompTableEntry> st_lookup_symbol(CompSymbolTable &st,
-                                               string symbol) {
-  CompSymbolTable *curr_st = &st;
+std::optional<CompTableEntry> CompSymbolTable::lookup_symbol(string symbol) {
+  CompSymbolTable *curr_st = this;
   while (curr_st != nullptr) {
     if (curr_st->entries.contains(symbol)) {
       return curr_st->entries.at(symbol);
@@ -68,12 +62,16 @@ std::optional<CompTableEntry> st_lookup_symbol(CompSymbolTable &st,
   return {};
 }
 
-string st_new_intmdt(CompSymbolTable &st) {
+string CompSymbolTable::new_intmdt() {
   std::stringstream intmdt;
-  intmdt << "_intmdt" << st.intermediates;
-  st.intermediates++;
+  intmdt << "_intmdt" << this->intermediates;
+  this->intermediates++;
   auto intmdt_id = intmdt.str();
   return intmdt_id;
+}
+
+bool CompSymbolTable::is_toplevel() {
+  return this->parent == nullptr || this->is_module;
 }
 
 CompNodeResult gen_node(ASTNode &node, CompSymbolTable &st);
@@ -85,6 +83,13 @@ string get_new_label() {
   label << LABELS;
   LABELS++;
   return label.str();
+}
+
+string get_new_local() {
+  std::stringstream local_id;
+  local_id << "local" << LOCALS;
+  LOCALS++;
+  return local_id.str();
 }
 
 void emit(string &s) { (*EMIT_TARGET) << s; }
@@ -194,7 +199,6 @@ CompNodeResult gen_top_level(ASTNode &node, CompSymbolTable &st) {
 
   for (auto &child : node.children) {
     gen_node(child, st);
-    emit(";\n");
   }
 
   // encode main entrypoint that goes from C main to program main.
@@ -241,7 +245,7 @@ CompNodeResult gen_function_declare(ASTNode &node, CompSymbolTable &st) {
   }
 
   // Make sure name isn't taken
-  if (st_lookup_symbol(st, name)) {
+  if (st.lookup_symbol(name)) {
     throw std::runtime_error("Function/global name already taken");
   }
 
@@ -333,7 +337,6 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
 
   for (auto &child : module_nodes.children) {
     gen_node(child, t);
-    emit(";\n");
   }
 
   // if this is a named import, create a module object and place it in the
@@ -348,10 +351,7 @@ CompNodeResult gen_module_import(ASTNode &node, CompSymbolTable &st) {
     */
 
     // generate global variable for module, add to symbol table
-    std::stringstream local_id;
-    local_id << "local" << LOCALS;
-    LOCALS++;
-    string local_id_str = local_id.str();
+    string local_id_str = get_new_local();
     st.entries[module_name] =
         CompTableEntry{local_id_str, CompTableEntryType::CONST};
     std::stringstream declare_stmt;
@@ -392,9 +392,12 @@ CompNodeResult gen_block(ASTNode &node, CompSymbolTable &st) {
     most_recent_node = child.type;
     auto result = gen_node(child, st);
     if (result.result_loc.has_value()) {
-      emit(result.result_loc.value());
+      auto s = result.result_loc.value();
+      if (!s.ends_with(";\n")) {
+        s += ";\n";
+      }
+      emit(s);
     }
-    emit(";\n");
   }
 
   return CompNodeResult{{}, {}, most_recent_node == NodeType::RETURN};
@@ -407,7 +410,7 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
 
   if (node.type == NodeType::VAR_LOOKUP) {
     const string identifier = node.data.at("identifier").get<string>();
-    auto lookup_result = st_lookup_symbol(st, identifier);
+    auto lookup_result = st.lookup_symbol(identifier);
     if (!lookup_result.has_value()) {
       string msg = "Bad var name lookup: ";
       msg += identifier;
@@ -424,25 +427,25 @@ CompNodeResult gen_node_lvalue(ASTNode &node, CompSymbolTable &st) {
   if (node.type == NodeType::INDEX_ACCESS) {
     auto lhs = gen_node(node.children[LHS], st).result_loc.value();
     auto rhs = gen_node(node.children[RHS], st).result_loc.value();
-    auto intmdt_id = st_new_intmdt(st);
+    auto intmdt_id = st.new_intmdt();
     std::stringstream lvalue;
     lvalue << "RuntimeObject * " << intmdt_id << " = get_index(" << lhs << ","
            << rhs << ");\n";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
-    return CompNodeResult{intmdt_id, {}, false, 0, true};
+    return CompNodeResult{intmdt_id, {}, 0, false, true};
   }
 
   if (node.type == NodeType::FIELD_ACESS) {
     auto lhs = gen_node(node.children[LHS], st).result_loc.value();
     auto rhs = node.children[RHS].data.at("identifier").get<string>();
-    auto intmdt_id = st_new_intmdt(st);
+    auto intmdt_id = st.new_intmdt();
     std::stringstream lvalue;
     lvalue << "RuntimeObject * " << intmdt_id << " = field_access(" << lhs
            << ", \"" << rhs << "\");\n";
     auto lvalue_str = lvalue.str();
     emit(lvalue_str);
-    return CompNodeResult{intmdt_id, {}, false, 0, true};
+    return CompNodeResult{intmdt_id, {}, 0, false, true};
   }
 
   throw std::runtime_error("Invalid nodetype for lvalue, must be var lookup, "
@@ -501,7 +504,7 @@ CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
   if (lhs_result.ptr_result) {
     assign_statement_ss << "*";
   }
-  assign_statement_ss << new_value;
+  assign_statement_ss << new_value << ";\n";
   auto assign_statement = assign_statement_ss.str();
   emit(assign_statement);
   return CompNodeResult{};
@@ -510,16 +513,13 @@ CompNodeResult gen_assign_op(ASTNode &node, CompSymbolTable &st) {
 CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
   string identifier = node.data.at("identifier").get<string>();
   bool is_const = node.data.at("const").get<bool>();
-  bool is_toplevel = is_toplevel_st(st);
+  bool is_toplevel = st.is_toplevel();
   auto type = is_const ? CompTableEntryType::CONST : CompTableEntryType::VAR;
 
   if (st.entries.contains(identifier)) {
     throw std::runtime_error("Variable name already taken in scope.");
   }
-  std::stringstream local_id;
-  local_id << "local" << LOCALS;
-  LOCALS++;
-  string local_id_str = local_id.str();
+  string local_id_str = get_new_local();
   st.entries[identifier] = CompTableEntry{local_id_str, type};
 
   std::stringstream declare_stmt;
@@ -539,7 +539,7 @@ CompNodeResult gen_var_declare(ASTNode &node, CompSymbolTable &st) {
   auto rhs = node.children[0];
   auto rhs_result = gen_node(rhs, st);
 
-  declare_stmt << " = " << rhs_result.result_loc.value();
+  declare_stmt << " = " << rhs_result.result_loc.value() << ";\n";
   auto s = declare_stmt.str();
   emit(s);
   return CompNodeResult{};
@@ -574,7 +574,6 @@ CompNodeResult gen_string_literal(ASTNode &node, CompSymbolTable &st) {
   std::stringstream ss;
   ss << "make_string(\"" << value << "\")";
   auto s = ss.str();
-  //   emit(s);
   return CompNodeResult{s};
 }
 
@@ -586,7 +585,6 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
   const size_t FUNCTION = 0, ARGS = 1;
   auto lhs = node.children[FUNCTION];
   auto rhs = node.children[ARGS];
-
   //
   // I guess we'd call this a "known" function call.
   // These are function calls referred to by the name
@@ -595,7 +593,7 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
   if (lhs.type == NodeType::VAR_LOOKUP) {
     // build function name
     auto identifier = lhs.data.at("identifier").get<string>();
-    auto lookup_result = st_lookup_symbol(st, identifier);
+    auto lookup_result = st.lookup_symbol(identifier);
     if (!lookup_result.has_value()) {
       std::string msg = "Bad function name lookup: ";
       msg += identifier;
@@ -630,7 +628,7 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
 
     auto fn_loc = lhs_result.result_loc.value();
     auto argc = rhs_result.argc;
-    auto argv_intmdt = st_new_intmdt(st);
+    auto argv_intmdt = st.new_intmdt();
     auto argv_arglist = rhs_result.result_loc.value();
 
     // for x.y(), need to pass x as an implicit first parameter
@@ -658,7 +656,7 @@ CompNodeResult gen_function_call(ASTNode &node, CompSymbolTable &st) {
 
 CompNodeResult gen_var_lookup(ASTNode &node, CompSymbolTable &st) {
   const string identifier = node.data.at("identifier").get<string>();
-  auto lookup_result = st_lookup_symbol(st, identifier);
+  auto lookup_result = st.lookup_symbol(identifier);
   if (!lookup_result.has_value()) {
     std::string msg = "Bad var name lookup: ";
     msg += identifier;
@@ -692,7 +690,12 @@ CompNodeResult gen_expr_list(ASTNode &node, CompSymbolTable &st) {
     }
   }
 
-  return CompNodeResult{expr_list.str(), {}, false, results.size()};
+  return CompNodeResult{
+      expr_list.str(),
+      {},
+      results.size(),
+      false,
+  };
 }
 
 CompNodeResult gen_vec_literal(ASTNode &node, CompSymbolTable &st) {
@@ -702,7 +705,7 @@ CompNodeResult gen_vec_literal(ASTNode &node, CompSymbolTable &st) {
     results.push_back(result.result_loc.value());
   }
 
-  auto intmdt_id = st_new_intmdt(st);
+  auto intmdt_id = st.new_intmdt();
 
   std::stringstream decl;
   decl << "RuntimeObject * " << intmdt_id << " = "
@@ -744,7 +747,7 @@ CompNodeResult gen_dict_literal(ASTNode &node, CompSymbolTable &st) {
   }
 
   // Generate the declaration statement for the actual runtime object.
-  auto intmdt_id = st_new_intmdt(st);
+  auto intmdt_id = st.new_intmdt();
   std::stringstream decl;
   decl << "RuntimeObject * " << intmdt_id << " = "
        << "make_dict();"
@@ -799,7 +802,7 @@ CompNodeResult gen_unary_op(ASTNode &node, CompSymbolTable &st) {
 
   // NOTE intermediates are probably unneccesary, but are the right pattern to
   // use if we were going to convert this to generating 3-address code later on.
-  auto intmdt_str = st_new_intmdt(st);
+  auto intmdt_str = st.new_intmdt();
   emit("RuntimeObject* ");
   emit(intmdt_str);
   emit(" = ");

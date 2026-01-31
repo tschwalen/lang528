@@ -469,9 +469,9 @@ RuntimeObject *_str_concat(String *lhs, RuntimeObject *rhs) {
     break;
   case T_BOOL:
     if (rhs->value.v_bool) {
-      strcpy(rhs_string, "true");
+      strcpy(rhs_string, STRING_TRUE);
     } else {
-      strcpy(rhs_string, "false");
+      strcpy(rhs_string, STRING_FALSE);
     }
     break;
   case T_FLOAT:

@@ -10,6 +10,7 @@
 #include "lexer.h"
 #include "token.h"
 #include "tokentype.h"
+#include "util.h"
 
 using std::pair;
 using std::string;
@@ -146,13 +147,13 @@ Token LexerState::handle_wordlike() {
   }
 
   // check if it's a bool literal
-  if (word == "true" || word == "false") {
-    auto bool_value = word == "true"; // bit of a hack, but works
+  if (word == STRING_TRUE || word == STRING_FALSE) {
+    auto bool_value = word == STRING_TRUE;
     return Token{TokenType::BOOL_LITERAL, bool_value, metadata};
   }
 
   // check for the nothing literal
-  if (word == "nothing") {
+  if (word == STRING_NOTHING) {
     return Token{TokenType::NOTHING_LITERAL, 0, metadata};
   }
 

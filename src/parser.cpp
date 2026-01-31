@@ -251,15 +251,15 @@ ASTNode expr_helper(ParserState &ps, ASTNode lhs, int min_precedence) {
 
 ASTNode expr(ParserState &ps) { return expr_helper(ps, primary(ps)); }
 
-/*
+ASTNode statement(ParserState &ps) {
+  /*
     Parse any statement that could occur in a block:
        - variable declaration
        - assignments
        - conditionals
        - loops
        - standalone expressions with side-effects
-*/
-ASTNode statement(ParserState &ps) {
+  */
   auto current_token_type = ps.currentToken().type;
   switch (current_token_type) {
   case TokenType::IDENTIFIER: {
@@ -297,13 +297,12 @@ ASTNode statement(ParserState &ps) {
   return ASTNode::nothing();
 }
 
-/*
-    Parse a block.
-
-    A block is a series of zero or more statements, and then a DOT_DOT (..) to
-   close.
-*/
 ASTNode block(ParserState &ps) {
+  /*
+      Parse a block.
+      A block is a series of zero or more statements, and then a DOT_DOT (..) to
+     close.
+  */
 
   // grab first token metadata for debug/error info
   auto first_token_metadata = ps.currentToken().metadata;
@@ -376,10 +375,10 @@ ASTNode function_declare(ParserState &ps) {
                                       first_token_metadata);
 }
 
-/*
- * parse the top level of a file (variable and function definition statements)
- */
 ASTNode top_level(ParserState &ps) {
+  /*
+   * parse the top level of a file (variable and function definition statements)
+   */
   auto metadata = ps.currentToken().metadata;
   vector<ASTNode> children;
 
@@ -411,11 +410,10 @@ ASTNode top_level(ParserState &ps) {
   return ASTNode::makeTopLevel(children, metadata);
 }
 
-/*
- * parser entrypoint function
- */
 ASTNode parse_tokens(vector<Token> tokens) {
+  /*
+   * parser entrypoint function
+   */
   ParserState ps{tokens};
-
   return top_level(ps);
 }

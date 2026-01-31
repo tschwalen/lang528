@@ -5,9 +5,9 @@
 
 struct CompNodeResult {
   std::optional<string> result_loc;
-  std::optional<string> accessee_loc; // only used by field access
-  bool final_return = false;          // only used by gen_block
-  size_t argc = 0;                    // only used by expr_list
+  std::optional<string> accessee_loc; // used by field access
+  size_t argc = 0;                    // used by expr_list
+  bool final_return = false;          // used by gen_block
   bool ptr_result = false;
 };
 
@@ -25,6 +25,9 @@ struct CompSymbolTable {
   int locals = 0;
   int intermediates = 0;
   bool is_module = false;
+  std::optional<CompTableEntry> lookup_symbol(string symbol);
+  std::string new_intmdt();
+  bool is_toplevel();
 };
 
 CompNodeResult gen_node_root(ASTNode &node, string module_wd);

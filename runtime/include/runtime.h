@@ -2,7 +2,10 @@
 #include "datatype.h"
 #include <stdbool.h>
 
-int placeholder(int x);
+#define STRING_TRUE "true"
+#define STRING_FALSE "false"
+#define STRING_NOTHING "nothing"
+
 bool get_conditional_result(RuntimeObject *obj);
 
 void builtin_print(RuntimeObject *arg);

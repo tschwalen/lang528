@@ -44,11 +44,11 @@ String *to_string_raw(RuntimeObject *obj) {
   char buffer[256];
   switch (obj->type) {
   case T_NOTHING: {
-    return make_string_raw("nothing");
+    return make_string_raw(STRING_NOTHING);
   } break;
   case T_BOOL: {
-    return obj->value.v_bool ? make_string_raw("true")
-                             : make_string_raw("false");
+    return obj->value.v_bool ? make_string_raw(STRING_TRUE)
+                             : make_string_raw(STRING_FALSE);
   } break;
   case T_FLOAT: {
     snprintf(buffer, sizeof(buffer), "%.1f", obj->value.v_float);
@@ -139,6 +139,8 @@ String *to_string_raw(RuntimeObject *obj) {
     return acc;
   } break;
   case T_MODULE: {
+    const char *name = obj->value.v_mod->name;
+    return make_string_raw(strdupcat("module:", name));
   } break;
   case T_FUNCTION: {
     char *signature = obj->value.v_func.signature;

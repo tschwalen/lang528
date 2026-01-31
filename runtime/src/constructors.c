@@ -12,10 +12,6 @@ Vector *make_empty_vector() {
   vec->size = 0;
   vec->internal_size = VEC_INITIAL_SIZE;
   vec->contents = calloc(VEC_INITIAL_SIZE, sizeof(RuntimeObject));
-  // for(size_t i = 0; i < VEC_INITIAL_SIZE; ++i) {
-  //     vec->contents[i].type = T_NOTHING;
-  //     vec->contents[i].value.v_bool = false;
-  // }
   return vec;
 }
 

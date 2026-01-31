@@ -44,9 +44,9 @@ language's functionality.
 ```
 
 include
-| ...
-\- nlohmann
-\- json.hpp
+  | ...
+   \- nlohmann
+    \- json.hpp
 
 ```
 
@@ -114,10 +114,8 @@ $ ./output --test
 test option passed
 Running all unit tests:
 ...
-
-- test_that_token_serializes_to_json_as_expected [✓]
-- test_that_token_serializes_from_json_as_expected [✓]
-
+  - test_that_token_serializes_to_json_as_expected [✓]
+  - test_that_token_serializes_from_json_as_expected [✓]
 ```
 
 #### Getting JSON-serialized output from the parser or lexer
@@ -132,13 +130,13 @@ Dumping lexer output (truncated):
 $ ./output --lex --dump-json --input=examples/test1.src
 [
 {
-"metadata": {
-"column": 0,
-"line": 1
-},
-"type_int": 0,
-"type_string": "FUNCTION",
-"value": null
+  "metadata": {
+    "column": 0,
+    "line": 1
+  },
+  "type_int": 0,
+  "type_string": "FUNCTION",
+  "value": null
 },
 ...
 
@@ -150,14 +148,14 @@ Dumping parser output (truncated):
 
 $ ./output --parse --dump-json --input=examples/test1.src | head
 {
-"data": null,
-"type_int": 0,
-"type_string": "TOP_LEVEL",
-"xmetadata": {
-"column": 0,
-"line": 1
-},
-"zchildren": [
+  "data": null,
+  "type_int": 0,
+  "type_string": "TOP_LEVEL",
+  "xmetadata": {
+    "column": 0,
+    "line": 1
+  },
+  "zchildren": [
 {
 ...
 

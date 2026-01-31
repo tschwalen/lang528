@@ -40,31 +40,28 @@ language's functionality.
 - cmake, make, and a C++20 compiler
 - [Niels Lohmann's JSON library for C++](https://github.com/nlohmann/json)
   - download version 3.11.2 as a header only library and place it in the include directory like so:
-
-```
-
-include
-  | ...
-   \- nlohmann
-    \- json.hpp
-
-```
+  ```
+  include
+    | ...
+    \- nlohmann
+      \- json.hpp
+  ```
 
 #### Setting up Dev environment
 
 1. Clone the repository
 2. Ensure you have cmake installed, then run `cmake .` in the same directory as the `CMakeLists.txt` file
 
-- At this point, you should have a `Makefile`, a `compile_commands.json` and several other files that cmake generates (and which git ignores).
+   - At this point, you should have a `Makefile`, a `compile_commands.json` and several other files that cmake generates (and which git ignores).
 
 3. Run `make` in the same directory as the `Makefile`
 
-- Address any errors, e.g. if you haven't resolved the `<nlohmann/json.hpp>` dependency yet, it will fail to compile.
+   - Address any errors, e.g. if you haven't resolved the `<nlohmann/json.hpp>` dependency yet, it will fail to compile.
 
 4. If `make` ran with no errors, and you have an executable file named `output` in the project root directory, then your build was successful.
 5. At this point your development environment should be configured correctly and you can follow standard cmake C++ procedures. E.g. changing any source file requires a rebuild with `make` and adding, removing, or renaming source files requires regeneration of the makefile with `cmake .`
 
-- Additionally, because I rolled my own basic codegen, if you change any target or template files you will need to rerun cmake before your changes are reflected in the build.
+   - Additionally, because I rolled my own basic codegen, if you change any target or template files you will need to rerun cmake before your changes are reflected in the build.
 
 6. Once cmake generates `compile_commands.json`, you can enjoy full linting and static analysis for this project in any LSP-compatible editor or IDE, assuming that you install and configure clangd correctly.
 

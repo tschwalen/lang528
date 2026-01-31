@@ -9,7 +9,6 @@
 #include "rtutil.h"
 #include "runtime.h"
 
-int placeholder(int x) { return x + x; }
 RuntimeSymbolTableEntry *runtime_st_lookup(RuntimeSymbolTable *st,
                                            char *identifier);
 
@@ -199,7 +198,11 @@ void _print_helper(RuntimeObject *obj) {
     printf("function:%s", signature);
     return;
   }
-  case T_MODULE:
+  case T_MODULE: {
+    const char *name = obj->value.v_mod->name;
+    printf("module:%s", name);
+    return;
+  }
   default:
     break;
   }

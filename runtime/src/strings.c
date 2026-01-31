@@ -139,6 +139,8 @@ String *to_string_raw(RuntimeObject *obj) {
     return acc;
   } break;
   case T_MODULE: {
+    const char *name = obj->value.v_mod->name;
+    return make_string_raw(strdupcat("module:", name));
   } break;
   case T_FUNCTION: {
     char *signature = obj->value.v_func.signature;

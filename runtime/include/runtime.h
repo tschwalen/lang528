@@ -6,7 +6,6 @@
 #define STRING_FALSE "false"
 #define STRING_NOTHING "nothing"
 
-int placeholder(int x);
 bool get_conditional_result(RuntimeObject *obj);
 
 void builtin_print(RuntimeObject *arg);

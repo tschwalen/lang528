@@ -92,6 +92,8 @@ Options handle_commandline_args(int argc, char **argv) {
 int main(int argc, char **argv) {
   init();
   auto opts = handle_commandline_args(argc, argv);
+  auto has_input_file_path = !opts.input_file_path.empty();
+  auto has_output_file_path = !opts.output_file_path.empty();
 
   // TEST ENTRYPOINT
   if (opts.test) {
@@ -99,28 +101,27 @@ int main(int argc, char **argv) {
   }
 
   // LEXER ENTRYPOINT
-  if (opts.lex && !opts.input_file_path.empty()) {
+  if (opts.lex && has_input_file_path) {
     return Commands::lex(opts.input_file_path, opts.dump_json);
   }
 
   // PARSER ENTRYPOINT
-  if (opts.parse && !opts.input_file_path.empty()) {
+  if (opts.parse && has_input_file_path) {
     return Commands::parse(opts.input_file_path, opts.dump_json);
   }
 
   // INTERPRETER ENTRYPOINT
-  if (opts.exec && !opts.input_file_path.empty()) {
+  if (opts.exec && has_input_file_path) {
     return Commands::interpret(opts.input_file_path, opts.program_args);
   }
 
   // COMPILER ENTRYPOINT
-  if (opts.comp && !opts.input_file_path.empty()) {
+  if (opts.comp && has_input_file_path) {
     return Commands::compile(opts.input_file_path);
   }
 
   // COMPILER E2E ENTRYPOINT
-  if (opts.comp_e2e && !opts.input_file_path.empty() &&
-      !opts.output_file_path.empty()) {
+  if (opts.comp_e2e && has_input_file_path && has_output_file_path) {
     return Commands::compile_end_to_end(opts.input_file_path,
                                         opts.output_file_path);
   }

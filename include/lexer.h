@@ -31,6 +31,8 @@ public:
 
   std::string report_metadata();
 
+  void error(std::string msg);
+
   bool has_next();
 
   char current_char();

@@ -69,10 +69,16 @@ TokenMetadata LexerState::current_metadata() {
 }
 
 string LexerState::report_metadata() {
-  // probably compeltely superfluous now that we have the json hooked up
   std::stringstream message;
   message << "{ line: " << this->line << ", column: " << this->column << " }";
   return message.str();
+}
+
+void LexerState::error(string msg) {
+  std::cerr << "Error encountered at line: " << this->line
+            << ", column: " << this->column << "\n";
+  std::cerr << msg << "\n";
+  exit(1);
 }
 
 bool LexerState::has_next() { return this->index < this->source.size(); }
@@ -233,7 +239,7 @@ Token LexerState::handle_symbols() {
     }
   }
 
-  // TODO: error if we've reached this point
+  this->error("Malformed symbol");
   return Token{TokenType::NULL_TOKEN, {}, metadata};
 }
 
@@ -243,7 +249,6 @@ Token LexerState::handle_symbols() {
 
 vector<Token> lex_string(string source) {
   vector<Token> result;
-  /// this constructor call is fucked up for some reason
   LexerState lex_state{source};
 
   while (lex_state.has_next()) {
@@ -266,8 +271,9 @@ vector<Token> lex_string(string source) {
       auto t = lex_state.handle_symbols();
       result.push_back(t);
     } else {
-      std::cout << "Invalid character for start of token: '" << curr << "'\n\n"
-                << "Encountered at: " << lex_state.report_metadata() << "\n";
+      std::stringstream err_msg;
+      err_msg << "Invalid character for start of token: '" << curr << "'\n";
+      lex_state.error(err_msg.str());
       break;
     }
   }

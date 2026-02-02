@@ -1,7 +1,6 @@
 ## Lang528
 
-This is an interpreter and compiler for a custom programming language which I'm using to explore programming language design and implementation. The name, Lang528, has no meaning other than to
-designate that I started work on it on May 28th. Perhaps a better name will come in the future.
+This is an interpreter and compiler for a custom programming language which I'm using to explore programming language design and implementation. The name Lang528 was chosen because I started work on May 28th. One day I'll come up with a better name.
 
 The language is a dynamically-typed scripting language, similar to Python, Javascript and Lua.
 It supports basic data types, strings, vectors/arrays, dictionaries, as well as user-defined functions and modules.
@@ -29,9 +28,26 @@ function main ()
 
 See `examples/` and `examples/e2e` for more sample programs.
 
-The implementation is written in C++. The interpreter is a simple AST-walk type, while the compiler
-generates a C program to be compiled and linked against a runtime library that provides much of the
-language's functionality.
+## Technical Details
+
+The implementation is written in C++20. The interpreter is a simple AST-walk type, while the compiler
+generates a C program to be compiled and linked against a runtime library written in C that provides much of the
+language's dynamic functionality (see `runtime/`).
+
+For example, if your code contains:
+```
+function something (a, b)
+  c = a + b;
+..
+```
+Then the compiler generates something like:
+```
+Object* something(Object* a, Object* b) {
+   Object* c = op_add(a, b);
+}
+```
+Where `op_add()` is a function provided by the runtime which unboxes, type-checks, and lowers the values so that the `something()` function works regardless of whether strings, integers, or floats are passed in. 
+
 
 ## Installation
 
@@ -157,3 +173,20 @@ $ ./output --parse --dump-json --input=examples/test1.src | head
 ...
 
 ```
+
+## References/Source
+
+I did not directly work based off of any prior codebase for this, save for one or two of my earlier interpreter/compiler projects. However the general background knowledge for the stuff implemented here (e.g. recursive-descent parsing, Pratt/Operator-precedence parsing, abstract syntax tree representation, single-pass code generation) came largely from the following, as well as reading wikipedia.
+
+[CS345 Programming Languages, Taught by Dr. William Cook at UT Austin in Spring 2020](https://www.cs.utexas.edu/~wcook/)
+
+[Crafting Interpreters, Robert Nystrom](https://craftinginterpreters.com/)
+
+[Programming Language Tutorial, Mihai Bazon](https://lisperator.net/pltut/)
+
+[Let's Build a Compiler, Jack Crenshaw](https://compilers.iecc.com/crenshaw/)
+
+
+
+
+

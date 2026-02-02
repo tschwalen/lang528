@@ -1,6 +1,8 @@
 ## Lang528
 
-This is an interpreter and compiler for a custom programming language which I'm using to explore programming language design and implementation. The name Lang528 was chosen because I started work on May 28th. One day I'll come up with a better name.
+This is an interpreter and compiler for a programming language of my own making which I'm using to explore different approaches to language design and implementation. Specifically, I wanted to explore different approaches to compiling dynamic languages.
+
+The name Lang528 was chosen because I started work on May 28th. One day I'll come up with a better name.
 
 The language is a dynamically-typed scripting language, similar to Python, Javascript and Lua.
 It supports basic data types, strings, vectors/arrays, dictionaries, as well as user-defined functions and modules.
@@ -47,7 +49,6 @@ Object* something(Object* a, Object* b) {
 }
 ```
 Where `op_add()` is a function provided by the runtime which unboxes, type-checks, and lowers the values so that the `something()` function works regardless of whether strings, integers, or floats are passed in. 
-
 
 ## Installation
 
